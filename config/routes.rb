@@ -48,6 +48,7 @@ Rails.application.routes.draw do
     collection do
       post :calculate
       get :chart_data
+      get :withdrawal_data
     end
     member do
       post :set_active

@@ -75,47 +75,95 @@
   </div>
 </div>
 
-<!-- Retirement Savings Chart -->
-<div class="card mb-4">
-  <div class="card-body">
-    <div class="mb-3">
-      <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Retirement Savings Over Time</h2>
-      <p class="text-muted mb-0" style="font-size: 0.875rem;">Track your retirement savings projections</p>
-    </div>
-    
-    <!-- Chart container - isolated at top -->
-    <div id="retirementChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
-      <div id="retirementChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
-    </div>
-    
-    <!-- Controls below chart -->
-    <div class="chart-controls-container">
-      <!-- Series Group -->
-      <div class="chart-control-group">
-        <label class="chart-control-label">Series</label>
-        <div class="chart-button-group">
-          <button type="button" class="chart-button-toggle active" data-series="actual_savings" id="btnActualSavings">
-            Actual Savings
-          </button>
-          <button type="button" class="chart-button-toggle active" data-series="projected_savings" id="btnProjectedSavings">
-            Projected Savings
-          </button>
-          <button type="button" class="chart-button-toggle active" data-series="target_savings" id="btnTargetSavings">
-            Target Savings
-          </button>
+<!-- Retirement Savings Charts -->
+<div class="row mb-4">
+  <!-- Accumulation Phase Chart -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="mb-3">
+          <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Retirement Savings Over Time</h2>
+          <p class="text-muted mb-0" style="font-size: 0.875rem;">Track your retirement savings projections</p>
+        </div>
+        
+        <!-- Chart container - isolated at top -->
+        <div id="retirementChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
+          <div id="retirementChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
+        </div>
+        
+        <!-- Controls below chart -->
+        <div class="chart-controls-container">
+          <!-- Series Group -->
+          <div class="chart-control-group">
+            <label class="chart-control-label">Series</label>
+            <div class="chart-button-group">
+              <button type="button" class="chart-button-toggle active" data-series="projected_savings" data-chart-id="retirement">
+                Projected Savings
+              </button>
+              <button type="button" class="chart-button-toggle active" data-series="target_savings" data-chart-id="retirement">
+                Target Savings
+              </button>
+            </div>
+          </div>
+          
+          <!-- Chart Type Group -->
+          <div class="chart-control-group">
+            <label class="chart-control-label">Chart Type</label>
+            <div class="chart-button-group">
+              <button type="button" class="chart-button-toggle active" data-chart-type="area" data-chart-id="retirement">
+                Area
+              </button>
+              <button type="button" class="chart-button-toggle" data-chart-type="line" data-chart-id="retirement">
+                Line
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <!-- Chart Type Group -->
-      <div class="chart-control-group">
-        <label class="chart-control-label">Chart Type</label>
-        <div class="chart-button-group">
-          <button type="button" class="chart-button-toggle active" data-chart-type="area" id="btnRetirementArea">
-            Area
-          </button>
-          <button type="button" class="chart-button-toggle" data-chart-type="line" id="btnRetirementLine">
-            Line
-          </button>
+    </div>
+  </div>
+  
+  <!-- Withdrawal Phase Chart -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="mb-3">
+          <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Retirement Withdrawal Phase</h2>
+          <p class="text-muted mb-0" style="font-size: 0.875rem;">Track your retirement savings during withdrawal</p>
+        </div>
+        
+        <!-- Chart container - isolated at top -->
+        <div id="withdrawalChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
+          <div id="withdrawalChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
+        </div>
+        
+        <!-- Controls below chart -->
+        <div class="chart-controls-container">
+          <!-- Series Group -->
+          <div class="chart-control-group">
+            <label class="chart-control-label">Series</label>
+            <div class="chart-button-group">
+              <button type="button" class="chart-button-toggle active" data-series="projected_savings" data-chart-id="withdrawal">
+                Projected Savings
+              </button>
+              <button type="button" class="chart-button-toggle active" data-series="target_savings" data-chart-id="withdrawal">
+                Target Savings
+              </button>
+            </div>
+          </div>
+          
+          <!-- Chart Type Group -->
+          <div class="chart-control-group">
+            <label class="chart-control-label">Chart Type</label>
+            <div class="chart-button-group">
+              <button type="button" class="chart-button-toggle active" data-chart-type="area" data-chart-id="withdrawal">
+                Area
+              </button>
+              <button type="button" class="chart-button-toggle" data-chart-type="line" data-chart-id="withdrawal">
+                Line
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -135,7 +183,7 @@
             <div class="d-flex justify-content-between align-items-start mb-3">
               <h5 class="mb-0"><%= scenario.name %></h5>
               <% if scenario.active == true %>
-                <span class="badge" style="background-color: #f0fdfa; color: #0d9488;">Active</span>
+                <span class="badge" style="background-color: #eff6ff; color: #3b82f6;">Active</span>
               <% end %>
             </div>
             
@@ -308,47 +356,125 @@
 
 <script>
 (function() {
-  let chartInstance = null;
-  let allSeries = {};
-  let allData = {};
-  
-  const currentSettings = {
-    chartType: 'area',
-    visibleSeries: {
-      actual_savings: true,
-      projected_savings: true,
-      target_savings: true
+  // Chart instances and data storage
+  const charts = {
+    retirement: {
+      instance: null,
+      series: {},
+      data: {},
+      settings: {
+        chartType: 'area',
+        visibleSeries: {
+          projected_savings: true,
+          target_savings: true
+        }
+      },
+      resizeObserver: null
+    },
+    withdrawal: {
+      instance: null,
+      series: {},
+      data: {},
+      settings: {
+        chartType: 'area',
+        visibleSeries: {
+          projected_savings: true,
+          target_savings: true
+        }
+      },
+      resizeObserver: null
     }
   };
 
-  function initChart() {
+  // Series configuration shared by both charts
+  const seriesConfig = {
+    projected_savings: {
+      title: 'Projected Savings',
+      lineColor: '#3b82f6',
+      topColor: 'rgba(59,130,246,0.2)',
+      bottomColor: 'rgba(59,130,246,0)',
+      color: '#3b82f6',
+      lineStyle: 2 // Dashed line
+    },
+    target_savings: {
+      title: 'Target Savings',
+      lineColor: '#8b5cf6',
+      topColor: 'rgba(139,92,246,0.2)',
+      bottomColor: 'rgba(139,92,246,0)',
+      color: '#8b5cf6'
+    }
+  };
+
+  // Helper function to create series
+  function createSeries(chart, type, name, config) {
+    const AreaSeries = window.LightweightCharts.AreaSeries;
+    const LineSeries = window.LightweightCharts.LineSeries;
+
+    if (type === 'area') {
+      if (typeof chart.addAreaSeries === 'function') {
+        const options = {
+          lineColor: config.lineColor,
+          topColor: config.topColor,
+          bottomColor: config.bottomColor,
+          lineWidth: 2
+        };
+        if (config.lineStyle !== undefined) {
+          options.lineStyle = config.lineStyle;
+        }
+        return chart.addAreaSeries(options);
+      } else if (AreaSeries && typeof chart.addSeries === 'function') {
+        const options = {
+          lineColor: config.lineColor,
+          topColor: config.topColor,
+          bottomColor: config.bottomColor,
+          lineWidth: 2
+        };
+        if (config.lineStyle !== undefined) {
+          options.lineStyle = config.lineStyle;
+        }
+        return chart.addSeries(AreaSeries, options);
+      }
+    } else {
+      if (typeof chart.addLineSeries === 'function') {
+        const options = {
+          color: config.color,
+          lineWidth: 2
+        };
+        if (config.lineStyle !== undefined) {
+          options.lineStyle = config.lineStyle;
+        }
+        return chart.addLineSeries(options);
+      } else if (LineSeries && typeof chart.addSeries === 'function') {
+        const options = {
+          color: config.color,
+          lineWidth: 2
+        };
+        if (config.lineStyle !== undefined) {
+          options.lineStyle = config.lineStyle;
+        }
+        return chart.addSeries(LineSeries, options);
+      }
+    }
+    return null;
+  }
+
+  // Initialize retirement chart (accumulation phase)
+  function initRetirementChart() {
     const container = document.getElementById('retirementChart');
     const containerRect = document.getElementById('retirementChartContainer');
     
     if (!container || !containerRect) {
-      console.log('Chart container not found, retrying...');
-      setTimeout(initChart, 100);
+      setTimeout(initRetirementChart, 100);
       return;
     }
 
-    if (!window.LightweightCharts) {
-      console.log('Waiting for Lightweight Charts...');
-      setTimeout(initChart, 100);
-      return;
-    }
-
-    const { createChart } = window.LightweightCharts;
-    const AreaSeries = window.LightweightCharts.AreaSeries;
-    const LineSeries = window.LightweightCharts.LineSeries;
-    
-    if (!createChart || typeof createChart !== 'function') {
-      console.error('createChart not available', window.LightweightCharts);
-      setTimeout(initChart, 100);
+    if (!window.LightweightCharts || !window.LightweightCharts.createChart) {
+      setTimeout(initRetirementChart, 100);
       return;
     }
 
     try {
-      const chart = createChart(container, {
+      const chart = window.LightweightCharts.createChart(container, {
         width: containerRect.clientWidth,
         height: containerRect.clientHeight,
         layout: {
@@ -361,162 +487,28 @@
         }
       });
 
-      // Fetch data from backend
       fetch('/retirement_scenarios/chart_data', {
         headers: { 'Accept': 'application/json' },
         cache: 'no-cache'
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        return response.json();
-      })
+      .then(response => response.json())
       .then(chartData => {
-        // Validate data structure
-        if (!chartData || 
-            !Array.isArray(chartData.actual_savings) || 
-            !Array.isArray(chartData.projected_savings) || 
-            !Array.isArray(chartData.target_savings) ||
-            chartData.actual_savings.length === 0) {
+        if (!chartData || !Array.isArray(chartData.projected_savings) || !Array.isArray(chartData.target_savings)) {
           throw new Error('Invalid data structure');
         }
         
-        allData = chartData;
+        charts.retirement.data = chartData;
 
-        // Create series configuration
-        const seriesConfig = {
-          actual_savings: {
-            title: 'Actual Savings',
-            lineColor: '#0d9488',
-            topColor: 'rgba(13,148,136,0.2)',
-            bottomColor: 'rgba(13,148,136,0)',
-            color: '#0d9488'
-          },
-          projected_savings: {
-            title: 'Projected Savings',
-            lineColor: '#3b82f6',
-            topColor: 'rgba(59,130,246,0.2)',
-            bottomColor: 'rgba(59,130,246,0)',
-            color: '#3b82f6',
-            lineStyle: 2 // Dashed line
-          },
-          target_savings: {
-            title: 'Target Savings',
-            lineColor: '#8b5cf6',
-            topColor: 'rgba(139,92,246,0.2)',
-            bottomColor: 'rgba(139,92,246,0)',
-            color: '#8b5cf6'
-          }
-        };
-
-        // Helper function to create series
-        function createSeries(type, name, config) {
-          if (type === 'area') {
-            if (typeof chart.addAreaSeries === 'function') {
-              const options = {
-                lineColor: config.lineColor,
-                topColor: config.topColor,
-                bottomColor: config.bottomColor,
-                lineWidth: 2
-              };
-              if (config.lineStyle !== undefined) {
-                options.lineStyle = config.lineStyle;
-              }
-              return chart.addAreaSeries(options);
-            } else if (AreaSeries && typeof chart.addSeries === 'function') {
-              const options = {
-                lineColor: config.lineColor,
-                topColor: config.topColor,
-                bottomColor: config.bottomColor,
-                lineWidth: 2
-              };
-              if (config.lineStyle !== undefined) {
-                options.lineStyle = config.lineStyle;
-              }
-              return chart.addSeries(AreaSeries, options);
-            }
-          } else {
-            if (typeof chart.addLineSeries === 'function') {
-              const options = {
-                color: config.color,
-                lineWidth: 2
-              };
-              if (config.lineStyle !== undefined) {
-                options.lineStyle = config.lineStyle;
-              }
-              return chart.addLineSeries(options);
-            } else if (LineSeries && typeof chart.addSeries === 'function') {
-              const options = {
-                color: config.color,
-                lineWidth: 2
-              };
-              if (config.lineStyle !== undefined) {
-                options.lineStyle = config.lineStyle;
-              }
-              return chart.addSeries(LineSeries, options);
-            }
-          }
-          return null;
-        }
-
-        // Create all series
+        // Create series
         Object.keys(seriesConfig).forEach(name => {
-          const series = createSeries(currentSettings.chartType, name, seriesConfig[name]);
+          const series = createSeries(chart, charts.retirement.settings.chartType, name, seriesConfig[name]);
           if (series) {
-            allSeries[name] = series;
+            charts.retirement.series[name] = series;
           }
         });
 
-        // Set data and visibility
-        const seriesNames = ['actual_savings', 'projected_savings', 'target_savings'];
-        const todayTimestamp = chartData.today_timestamp || Math.floor(Date.now() / 1000);
-        
-        seriesNames.forEach((name) => {
-          const series = allSeries[name];
-          if (!series) return;
-          
-          const isVisible = currentSettings.visibleSeries[name];
-          
-          if (isVisible && allData[name] && allData[name].length > 0) {
-            let formattedData;
-            
-            if (name === 'actual_savings') {
-              // Actual savings: historical data up to today (solid)
-              formattedData = allData[name].map(point => ({
-                time: point.time,
-                value: Number(point.value)
-              }));
-            } else if (name === 'projected_savings') {
-              // Projected savings: from today forward (dashed)
-              // Include today's point to connect with actual
-              formattedData = [
-                { time: todayTimestamp, value: allData.actual_savings[allData.actual_savings.length - 1].value },
-                ...allData[name].map(point => ({
-                  time: point.time,
-                  value: Number(point.value)
-                }))
-              ];
-            } else {
-              // Target savings: from today forward
-              formattedData = [
-                { time: todayTimestamp, value: allData.actual_savings[allData.actual_savings.length - 1].value },
-                ...allData[name].map(point => ({
-                  time: point.time,
-                  value: Number(point.value)
-                }))
-              ];
-            }
-            
-            series.setData(formattedData);
-            series.applyOptions({ visible: true });
-          } else {
-            series.applyOptions({ visible: false });
-          }
-        });
-
-        // Fit content
-        chart.timeScale().fitContent();
+        // Set data
+        updateRetirementChart(chart);
 
         // Handle resize
         const resizeObserver = new ResizeObserver((entries) => {
@@ -529,149 +521,168 @@
         });
         resizeObserver.observe(containerRect);
 
-        // Store references
-        chartInstance = chart;
-        window._retirementChart = chart;
-        window._retirementResizeObserver = resizeObserver;
-        
-        // Setup control event listeners
-        setupControls(chart);
-        
+        charts.retirement.instance = chart;
+        charts.retirement.resizeObserver = resizeObserver;
       })
       .catch(error => {
-        console.error('Error loading chart data:', error);
+        console.error('Error loading retirement chart data:', error);
         container.innerHTML = '<p class="text-muted text-center py-5">Chart data failed to load</p>';
       });
       
     } catch (error) {
-      console.error('Error initializing chart:', error);
-      container.innerHTML = '<p class="text-muted text-center py-5">Chart initialization failed: ' + error.message + '</p>';
+      console.error('Error initializing retirement chart:', error);
     }
   }
 
-  // Update chart based on current settings
-  function updateChart() {
-    if (!chartInstance) return;
-
-    const seriesNames = ['actual_savings', 'projected_savings', 'target_savings'];
-    const todayTimestamp = allData.today_timestamp || Math.floor(Date.now() / 1000);
+  // Initialize withdrawal chart
+  function initWithdrawalChart() {
+    const container = document.getElementById('withdrawalChart');
+    const containerRect = document.getElementById('withdrawalChartContainer');
     
-    // Update series visibility based on settings
-    seriesNames.forEach((name) => {
-      const series = allSeries[name];
+    if (!container || !containerRect) {
+      setTimeout(initWithdrawalChart, 100);
+      return;
+    }
+
+    if (!window.LightweightCharts || !window.LightweightCharts.createChart) {
+      setTimeout(initWithdrawalChart, 100);
+      return;
+    }
+
+    try {
+      const chart = window.LightweightCharts.createChart(container, {
+        width: containerRect.clientWidth,
+        height: containerRect.clientHeight,
+        layout: {
+          background: { color: '#ffffff' },
+          textColor: '#1e293b'
+        },
+        grid: {
+          vertLines: { color: '#e2e8f0' },
+          horzLines: { color: '#e2e8f0' }
+        }
+      });
+
+      fetch('/retirement_scenarios/withdrawal_data', {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-cache'
+      })
+      .then(response => response.json())
+      .then(chartData => {
+        if (!chartData || !Array.isArray(chartData.projected_savings) || !Array.isArray(chartData.target_savings)) {
+          throw new Error('Invalid data structure');
+        }
+        
+        charts.withdrawal.data = chartData;
+
+        // Create series
+        Object.keys(seriesConfig).forEach(name => {
+          const series = createSeries(chart, charts.withdrawal.settings.chartType, name, seriesConfig[name]);
+          if (series) {
+            charts.withdrawal.series[name] = series;
+          }
+        });
+
+        // Set data
+        updateWithdrawalChart(chart);
+
+        // Handle resize
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const { width, height } = entry.contentRect;
+            if (width > 0 && height > 0) {
+              chart.resize(width, height);
+            }
+          }
+        });
+        resizeObserver.observe(containerRect);
+
+        charts.withdrawal.instance = chart;
+        charts.withdrawal.resizeObserver = resizeObserver;
+      })
+      .catch(error => {
+        console.error('Error loading withdrawal chart data:', error);
+        container.innerHTML = '<p class="text-muted text-center py-5">Chart data failed to load</p>';
+      });
+      
+    } catch (error) {
+      console.error('Error initializing withdrawal chart:', error);
+    }
+  }
+
+  // Update retirement chart
+  function updateRetirementChart(chart) {
+    const data = charts.retirement.data;
+    const settings = charts.retirement.settings;
+    const todayTimestamp = data.today_timestamp || Math.floor(Date.now() / 1000);
+    
+    ['projected_savings', 'target_savings'].forEach((name) => {
+      const series = charts.retirement.series[name];
       if (!series) return;
 
-      const isVisible = currentSettings.visibleSeries[name];
+      const isVisible = settings.visibleSeries[name];
       series.applyOptions({ visible: isVisible });
       
-      // If making visible and data exists, ensure data is set
-      if (isVisible && allData[name] && allData[name].length > 0) {
-        let formattedData;
+      if (isVisible && data[name] && data[name].length > 0) {
+        const todayValue = data.actual_savings && data.actual_savings.length > 0 
+          ? data.actual_savings[data.actual_savings.length - 1].value 
+          : (data.projected_savings && data.projected_savings.length > 0 
+              ? data.projected_savings[0].value 
+              : 0);
         
-        if (name === 'actual_savings') {
-          // Actual savings: historical data up to today (solid)
-          formattedData = allData[name].map(point => ({
+        const formattedData = [
+          { time: todayTimestamp, value: Number(todayValue) },
+          ...data[name].map(point => ({
             time: point.time,
             value: Number(point.value)
-          }));
-        } else if (name === 'projected_savings') {
-          // Projected savings: from today forward (dashed)
-          // Include today's point to connect with actual
-          formattedData = [
-            { time: todayTimestamp, value: allData.actual_savings[allData.actual_savings.length - 1].value },
-            ...allData[name].map(point => ({
-              time: point.time,
-              value: Number(point.value)
-            }))
-          ];
-        } else {
-          // Target savings: from today forward
-          formattedData = [
-            { time: todayTimestamp, value: allData.actual_savings[allData.actual_savings.length - 1].value },
-            ...allData[name].map(point => ({
-              time: point.time,
-              value: Number(point.value)
-            }))
-          ];
-        }
+          }))
+        ];
         
         series.setData(formattedData);
       }
     });
 
-    // Fit content after update
-    chartInstance.timeScale().fitContent();
+    chart.timeScale().fitContent();
   }
 
-  // Setup control event listeners
-  function setupControls(chart) {
-    // Series toggle buttons - only for retirement chart
-    const chartCard = document.querySelector('#retirementChartContainer').closest('.card');
-    if (!chartCard) return;
+  // Update withdrawal chart
+  function updateWithdrawalChart(chart) {
+    const data = charts.withdrawal.data;
+    const settings = charts.withdrawal.settings;
+    const startTimestamp = data.retirement_start_timestamp || Math.floor(Date.now() / 1000);
     
-    chartCard.querySelectorAll('.chart-button-toggle[data-series]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const seriesName = e.target.dataset.series;
-        const isActive = e.target.classList.contains('active');
+    ['projected_savings', 'target_savings'].forEach((name) => {
+      const series = charts.withdrawal.series[name];
+      if (!series) return;
+
+      const isVisible = settings.visibleSeries[name];
+      series.applyOptions({ visible: isVisible });
+      
+      if (isVisible && data[name] && data[name].length > 0) {
+        // The data already starts from retirement start, so just use it directly
+        const formattedData = data[name].map(point => ({
+          time: point.time,
+          value: Number(point.value)
+        }));
         
-        // Toggle active state
-        e.target.classList.toggle('active');
-        currentSettings.visibleSeries[seriesName] = !isActive;
-        updateChart();
-      });
+        series.setData(formattedData);
+      }
     });
 
-    // Chart type buttons - only for retirement chart
-    chartCard.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const chartType = e.target.dataset.chartType;
-        
-        // Remove active from all chart type buttons in this container
-        chartCard.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(b => {
-          b.classList.remove('active');
-        });
-        
-        // Add active to clicked button
-        e.target.classList.add('active');
-        
-        currentSettings.chartType = chartType;
-        recreateSeries(chart);
-      });
-    });
+    chart.timeScale().fitContent();
   }
 
   // Recreate series when chart type changes
-  function recreateSeries(chart) {
-    const seriesConfig = {
-      actual_savings: {
-        title: 'Actual Savings',
-        lineColor: '#0d9488',
-        topColor: 'rgba(13,148,136,0.2)',
-        bottomColor: 'rgba(13,148,136,0)',
-        color: '#0d9488'
-      },
-      projected_savings: {
-        title: 'Projected Savings',
-        lineColor: '#3b82f6',
-        topColor: 'rgba(59,130,246,0.2)',
-        bottomColor: 'rgba(59,130,246,0)',
-        color: '#3b82f6',
-        lineStyle: 2 // Dashed line
-      },
-      target_savings: {
-        title: 'Target Savings',
-        lineColor: '#8b5cf6',
-        topColor: 'rgba(139,92,246,0.2)',
-        bottomColor: 'rgba(139,92,246,0)',
-        color: '#8b5cf6'
-      }
-    };
+  function recreateSeries(chartId) {
+    const chartData = charts[chartId];
+    if (!chartData.instance) return;
 
+    const chart = chartData.instance;
     const AreaSeries = window.LightweightCharts.AreaSeries;
     const LineSeries = window.LightweightCharts.LineSeries;
 
     // Remove existing series
-    Object.values(allSeries).forEach(series => {
+    Object.values(chartData.series).forEach(series => {
       try {
         chart.removeSeries(series);
       } catch (e) {
@@ -679,101 +690,111 @@
       }
     });
 
-    allSeries = {};
+    chartData.series = {};
 
     // Create new series with correct type
     Object.keys(seriesConfig).forEach(name => {
-      let series;
-      if (currentSettings.chartType === 'area') {
-        if (AreaSeries && typeof chart.addSeries === 'function') {
-          const options = {
-            lineColor: seriesConfig[name].lineColor,
-            topColor: seriesConfig[name].topColor,
-            bottomColor: seriesConfig[name].bottomColor,
-            lineWidth: 2
-          };
-          if (seriesConfig[name].lineStyle !== undefined) {
-            options.lineStyle = seriesConfig[name].lineStyle;
-          }
-          series = chart.addSeries(AreaSeries, options);
-        } else if (typeof chart.addAreaSeries === 'function') {
-          const options = {
-            lineColor: seriesConfig[name].lineColor,
-            topColor: seriesConfig[name].topColor,
-            bottomColor: seriesConfig[name].bottomColor,
-            lineWidth: 2
-          };
-          if (seriesConfig[name].lineStyle !== undefined) {
-            options.lineStyle = seriesConfig[name].lineStyle;
-          }
-          series = chart.addAreaSeries(options);
-        }
-      } else {
-        if (LineSeries && typeof chart.addSeries === 'function') {
-          const options = {
-            color: seriesConfig[name].color,
-            lineWidth: 2
-          };
-          if (seriesConfig[name].lineStyle !== undefined) {
-            options.lineStyle = seriesConfig[name].lineStyle;
-          }
-          series = chart.addSeries(LineSeries, options);
-        } else if (typeof chart.addLineSeries === 'function') {
-          const options = {
-            color: seriesConfig[name].color,
-            lineWidth: 2
-          };
-          if (seriesConfig[name].lineStyle !== undefined) {
-            options.lineStyle = seriesConfig[name].lineStyle;
-          }
-          series = chart.addLineSeries(options);
-        }
-      }
-      
+      const series = createSeries(chart, chartData.settings.chartType, name, seriesConfig[name]);
       if (series) {
-        allSeries[name] = series;
+        chartData.series[name] = series;
       }
     });
 
-    updateChart();
+    if (chartId === 'retirement') {
+      updateRetirementChart(chart);
+    } else {
+      updateWithdrawalChart(chart);
+    }
+  }
+
+  // Setup control event listeners
+  function setupControls() {
+    // Series toggle buttons
+    document.querySelectorAll('.chart-button-toggle[data-series]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const chartId = e.target.dataset.chartId;
+        const seriesName = e.target.dataset.series;
+        const isActive = e.target.classList.contains('active');
+        
+        e.target.classList.toggle('active');
+        charts[chartId].settings.visibleSeries[seriesName] = !isActive;
+        
+        if (chartId === 'retirement') {
+          updateRetirementChart(charts.retirement.instance);
+        } else {
+          updateWithdrawalChart(charts.withdrawal.instance);
+        }
+      });
+    });
+
+    // Chart type buttons
+    document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const chartId = e.target.dataset.chartId;
+        const chartType = e.target.dataset.chartType;
+        
+        // Remove active from all chart type buttons for this chart
+        const chartCard = document.querySelector(`#${chartId}ChartContainer`).closest('.card');
+        chartCard.querySelectorAll(`.chart-button-toggle[data-chart-type][data-chart-id="${chartId}"]`).forEach(b => {
+          b.classList.remove('active');
+        });
+        
+        e.target.classList.add('active');
+        charts[chartId].settings.chartType = chartType;
+        recreateSeries(chartId);
+      });
+    });
   }
 
   // Cleanup function
   function cleanup() {
-    if (window._retirementChart) {
-      try {
-        window._retirementChart.remove();
-      } catch (e) {
-        console.error('Error removing chart:', e);
+    Object.keys(charts).forEach(chartId => {
+      const chartData = charts[chartId];
+      if (chartData.instance) {
+        try {
+          chartData.instance.remove();
+        } catch (e) {
+          console.error('Error removing chart:', e);
+        }
+        chartData.instance = null;
+        chartData.series = {};
       }
-      window._retirementChart = null;
-      chartInstance = null;
-      allSeries = {};
-    }
-    if (window._retirementResizeObserver) {
-      window._retirementResizeObserver.disconnect();
-      window._retirementResizeObserver = null;
-    }
+      if (chartData.resizeObserver) {
+        chartData.resizeObserver.disconnect();
+        chartData.resizeObserver = null;
+      }
+    });
   }
 
   // Start initialization
+  function initAllCharts() {
+    if (!window.LightweightCharts) {
+      setTimeout(initAllCharts, 100);
+      return;
+    }
+    initRetirementChart();
+    initWithdrawalChart();
+    setupControls();
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initChart);
+    document.addEventListener('DOMContentLoaded', initAllCharts);
   } else {
-    initChart();
+    initAllCharts();
   }
 
   // Handle Turbo events
   document.addEventListener('turbo:load', function() {
     cleanup();
-    setTimeout(initChart, 50);
+    setTimeout(initAllCharts, 50);
   });
   document.addEventListener('turbo:before-cache', cleanup);
 })();
 </script>
 
 <style>
-  #retirementChartContainer {
+  #retirementChartContainer,
+  #withdrawalChartContainer {
     position: relative;
     width: 100%;
     height: 400px;
@@ -781,7 +802,8 @@
     background: white;
   }
   
-  #retirementChart {
+  #retirementChart,
+  #withdrawalChart {
     width: 100%;
     height: 100%;
     position: absolute;

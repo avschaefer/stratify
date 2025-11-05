@@ -57,9 +57,9 @@ export default class extends Controller {
     // Create three area series for comparison
     const portfolioSeries = this.chart.addAreaSeries({
       title: 'Portfolio',
-      lineColor: '#0d9488',
-      topColor: 'rgba(13,148,136,0.2)',
-      bottomColor: 'rgba(13,148,136,0)',
+      lineColor: '#3b82f6',
+      topColor: 'rgba(59,130,246,0.2)',
+      bottomColor: 'rgba(59,130,246,0)',
       lineWidth: 2
     })
 
