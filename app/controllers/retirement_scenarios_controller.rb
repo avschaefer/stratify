@@ -47,16 +47,58 @@ class RetirementScenariosController < ApplicationController
       @saved_amount = active_scenario.current_savings
       @goal_amount = active_scenario.target_amount
       @target_age = 65 # Would calculate from birth date and target_date
+      @annual_withdrawal = active_scenario.yearly_withdrawal || 0
       
       # Calculate years to goal
       years_to_goal = active_scenario.target_date.year - Date.today.year
       @years_to_goal = [years_to_goal, 0].max
+      
+      # Calculate additional metrics for 8 tiles
+      @expected_return_rate = 7.0 # Default expected return rate
+      
+      # Monthly contribution actual (mock data - would come from user's actual contributions)
+      @monthly_contribution_actual = 2000.0
+      
+      # Calculate projected value at retirement
+      monthly_rate = @expected_return_rate / 100.0 / 12.0
+      months_to_goal = @years_to_goal * 12
+      
+      if months_to_goal > 0 && monthly_rate > 0
+        @projected_value = @saved_amount * (1 + monthly_rate) ** months_to_goal + 
+                          @monthly_contribution_actual * (((1 + monthly_rate) ** months_to_goal - 1) / monthly_rate)
+      else
+        @projected_value = @saved_amount
+      end
+      
+      # Calculate gap to goal
+      @gap_to_goal = @projected_value - @goal_amount
+      
+      # Calculate monthly contribution needed to reach goal
+      if months_to_goal > 0 && monthly_rate > 0
+        future_value_of_current = @saved_amount * (1 + monthly_rate) ** months_to_goal
+        needed_from_contributions = @goal_amount - future_value_of_current
+        
+        if needed_from_contributions > 0
+          @monthly_contribution_needed = needed_from_contributions * monthly_rate / 
+                                        ((1 + monthly_rate) ** months_to_goal - 1)
+        else
+          @monthly_contribution_needed = 0
+        end
+      else
+        @monthly_contribution_needed = (@goal_amount - @saved_amount) / 12.0
+      end
     else
       @current_progress = 0
       @saved_amount = 0
       @years_to_goal = 0
       @goal_amount = 0
       @target_age = 65
+      @expected_return_rate = 7.0
+      @projected_value = 0
+      @gap_to_goal = 0
+      @monthly_contribution_needed = 0
+      @monthly_contribution_actual = 0
+      @annual_withdrawal = 0
     end
   end
   

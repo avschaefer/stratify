@@ -8,29 +8,68 @@
   </button>
 </div>
 
-<div class="row mb-4">
-  <div class="col-md-4">
-    <div class="card summary-card">
-      <div class="card-body">
-        <div class="summary-title">Current Progress</div>
-        <div class="summary-value"><%= @current_progress.round(0) %>%</div>
-        <div class="summary-subtext">Goal: $<%= number_with_delimiter(@goal_amount.round(0)) %> by age <%= @target_age %></div>
+<!-- Summary Metrics Tile -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="metrics-grid">
+      <!-- Row 1: Target Amount -->
+      <div class="metric-tile">
+        <div class="metric-label">Target Amount</div>
+        <div class="metric-value">$<%= number_with_delimiter(@goal_amount.round(0)) %></div>
+        <div class="metric-subtext">By age <%= @target_age %></div>
       </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card summary-card">
-      <div class="card-body">
-        <div class="summary-title">Saved Amount</div>
-        <div class="summary-value">$<%= number_with_delimiter(@saved_amount.round(0)) %></div>
+      
+      <!-- Saved Amount/% Complete -->
+      <div class="metric-tile">
+        <div class="metric-label">Saved Amount</div>
+        <div class="metric-value">$<%= number_with_delimiter(@saved_amount.round(0)) %></div>
+        <div class="metric-subtext"><%= @current_progress.round(0) %>% complete</div>
       </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card summary-card">
-      <div class="card-body">
-        <div class="summary-title">Years to Goal</div>
-        <div class="summary-value"><%= @years_to_goal %></div>
+      
+      <!-- Gap to Goal -->
+      <div class="metric-tile">
+        <div class="metric-label">Gap to Goal</div>
+        <div class="metric-value" style="color: <%= @gap_to_goal >= 0 ? '#059669' : '#dc2626' %>;">
+          $<%= number_with_delimiter(@gap_to_goal.abs.round(0)) %>
+        </div>
+        <div class="metric-subtext"><%= @gap_to_goal >= 0 ? 'Surplus' : 'Remaining' %></div>
+      </div>
+      
+      <!-- Years to Goal -->
+      <div class="metric-tile">
+        <div class="metric-label">Years to Goal</div>
+        <div class="metric-value"><%= @years_to_goal %></div>
+        <div class="metric-subtext">Until retirement</div>
+      </div>
+      
+      <!-- Row 2: Projected Value -->
+      <div class="metric-tile">
+        <div class="metric-label">Projected Value</div>
+        <div class="metric-value" style="color: #059669;">
+          $<%= number_with_delimiter(@projected_value.round(0)) %>
+        </div>
+        <div class="metric-subtext">At retirement</div>
+      </div>
+      
+      <!-- Monthly Contribution Actual -->
+      <div class="metric-tile">
+        <div class="metric-label">Monthly Contribution</div>
+        <div class="metric-value">$<%= number_with_delimiter(@monthly_contribution_actual.round(0)) %></div>
+        <div class="metric-subtext">Current actual</div>
+      </div>
+      
+      <!-- Monthly Contribution Required -->
+      <div class="metric-tile">
+        <div class="metric-label">Monthly Contribution</div>
+        <div class="metric-value">$<%= number_with_delimiter(@monthly_contribution_needed.round(0)) %></div>
+        <div class="metric-subtext">Required</div>
+      </div>
+      
+      <!-- Annual Withdrawal -->
+      <div class="metric-tile">
+        <div class="metric-label">Annual Withdrawal</div>
+        <div class="metric-value">$<%= number_with_delimiter(@annual_withdrawal.round(0)) %></div>
+        <div class="metric-subtext">Planned withdrawal</div>
       </div>
     </div>
   </div>
@@ -48,15 +87,9 @@
           <div class="card-body position-relative d-flex flex-column">
             <div class="d-flex justify-content-between align-items-start mb-3">
               <h5 class="mb-0"><%= scenario.name %></h5>
-              <div class="d-flex align-items-center gap-2">
-                <% if scenario.active == true %>
-                  <span class="badge bg-primary">Active</span>
-                <% end %>
-                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
-                    class: "btn btn-sm btn-outline-danger" do %>
-                  <i class="bi bi-trash"></i>
-                <% end %>
-              </div>
+              <% if scenario.active == true %>
+                <span class="badge" style="background-color: #0d9488; color: white;">Active</span>
+              <% end %>
             </div>
             
             <div class="mb-3 flex-grow-1">
@@ -87,13 +120,19 @@
             </div>
             
             <div class="mt-auto pt-3 border-top">
-              <% if scenario.active != true %>
-                <%= form_with url: set_active_retirement_scenario_path(scenario), method: :post, local: true do |f| %>
-                  <%= f.submit "Set as Active", class: "btn btn-primary w-100" %>
+              <div class="d-flex gap-2 align-items-center">
+                <% if scenario.active != true %>
+                  <%= form_with url: set_active_retirement_scenario_path(scenario), method: :post, local: true, class: "flex-grow-1" do |f| %>
+                    <%= f.submit "Set as Active", class: "btn btn-primary w-100" %>
+                  <% end %>
+                <% else %>
+                  <button class="btn btn-primary flex-grow-1" disabled>Currently Active</button>
                 <% end %>
-              <% else %>
-                <button class="btn btn-primary w-100" disabled>Currently Active</button>
-              <% end %>
+                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                    class: "btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
+              </div>
             </div>
           </div>
         </div>
