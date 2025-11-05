@@ -47,6 +47,7 @@ Rails.application.routes.draw do
   resources :retirement_scenarios, only: [:index, :create, :update, :destroy] do
     collection do
       post :calculate
+      get :chart_data
     end
     member do
       post :set_active

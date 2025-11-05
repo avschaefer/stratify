@@ -122,4 +122,160 @@ class RetirementScenariosController < ApplicationController
   def destroy
     redirect_to retirement_scenarios_path, notice: 'Scenario removed.'
   end
+  
+  def chart_data
+    # Mock scenarios for chart data (same as index)
+    scenarios = [
+      OpenStruct.new(
+        id: 1,
+        name: 'Conservative',
+        risk_level: 'conservative',
+        target_date: Date.new(2036, 1, 1),
+        target_amount: 1500000.00,
+        yearly_withdrawal: 45000.00,
+        progress_percentage: 68.0,
+        current_savings: 975000.00,
+        active: true
+      ),
+      OpenStruct.new(
+        id: 2,
+        name: 'Moderate',
+        risk_level: 'moderate',
+        target_date: Date.new(2035, 1, 1),
+        target_amount: 1800000.00,
+        yearly_withdrawal: 52000.00,
+        progress_percentage: 54.0,
+        current_savings: 975000.00,
+        active: false
+      ),
+      OpenStruct.new(
+        id: 3,
+        name: 'Aggressive',
+        risk_level: 'aggressive',
+        target_date: Date.new(2034, 1, 1),
+        target_amount: 2100000.00,
+        yearly_withdrawal: 60000.00,
+        progress_percentage: 46.0,
+        current_savings: 975000.00,
+        active: false
+      )
+    ]
+    
+    # Get active scenario for chart data
+    active_scenario = scenarios.find { |s| s.active == true } || scenarios.first
+    
+    if active_scenario
+      saved_amount = active_scenario.current_savings
+      goal_amount = active_scenario.target_amount
+      years_to_goal = [active_scenario.target_date.year - Date.today.year, 0].max
+      expected_return_rate = 7.0
+      monthly_contribution_actual = 2000.0
+      
+      # Calculate monthly contribution needed
+      monthly_rate = expected_return_rate / 100.0 / 12.0
+      months_to_goal = years_to_goal * 12
+      
+      if months_to_goal > 0 && monthly_rate > 0
+        future_value_of_current = saved_amount * (1 + monthly_rate) ** months_to_goal
+        needed_from_contributions = goal_amount - future_value_of_current
+        
+        if needed_from_contributions > 0
+          monthly_contribution_needed = needed_from_contributions * monthly_rate / 
+                                       ((1 + monthly_rate) ** months_to_goal - 1)
+        else
+          monthly_contribution_needed = 0
+        end
+      else
+        monthly_contribution_needed = (goal_amount - saved_amount) / 12.0
+      end
+    else
+      saved_amount = 0
+      goal_amount = 0
+      years_to_goal = 0
+      expected_return_rate = 7.0
+      monthly_contribution_actual = 0
+      monthly_contribution_needed = 0
+    end
+    
+    # Generate dates from today to retirement date
+    base_date = Date.today
+    target_date = base_date + years_to_goal.years
+    total_months = years_to_goal * 12
+    
+    # Generate historical data (past 24 months) up to today
+    historical_months = 24
+    historical_dates = (-historical_months..0).map { |i| base_date + i.months }
+    
+    # Generate future monthly data points (limit to 60 months max for performance)
+    future_monthly_dates = (1..[total_months, 60].min).map { |i| base_date + i.months }
+    
+    monthly_rate = expected_return_rate / 100.0 / 12.0
+    
+    # Actual savings - historical data going backwards from today
+    # We'll simulate growth backwards to get historical values
+    actual_savings_data = []
+    current_value = saved_amount
+    
+    # Work backwards from today to generate historical values
+    historical_dates.reverse.each do |date|
+      if monthly_rate > 0
+        # Reverse the calculation: remove contribution and divide by growth
+        current_value = (current_value - monthly_contribution_actual) / (1 + monthly_rate)
+      else
+        current_value = current_value - monthly_contribution_actual
+      end
+      actual_savings_data << {
+        time: date.to_time.to_i,
+        value: [current_value, 0].max.round(2)
+      }
+    end
+    
+    # Reverse to get chronological order (oldest to newest)
+    actual_savings_data.reverse!
+    
+    # Add today's point
+    actual_savings_data << {
+      time: base_date.to_time.to_i,
+      value: saved_amount.round(2)
+    }
+    
+    # Projected savings given settings (using current monthly contribution) - from today forward
+    projected_savings_data = []
+    current_value = saved_amount
+    future_monthly_dates.each do |date|
+      if monthly_rate > 0
+        current_value = current_value * (1 + monthly_rate) + monthly_contribution_actual
+      else
+        current_value = current_value + monthly_contribution_actual
+      end
+      projected_savings_data << {
+        time: date.to_time.to_i,
+        value: current_value.round(2)
+      }
+    end
+    
+    # Target goal savings given required settings (using required monthly contribution) - from today forward
+    target_savings_data = []
+    current_value = saved_amount
+    future_monthly_dates.each do |date|
+      if monthly_rate > 0
+        current_value = current_value * (1 + monthly_rate) + monthly_contribution_needed
+      else
+        current_value = current_value + monthly_contribution_needed
+      end
+      target_savings_data << {
+        time: date.to_time.to_i,
+        value: current_value.round(2)
+      }
+    end
+    
+    chart_data = {
+      actual_savings: actual_savings_data,
+      projected_savings: projected_savings_data,
+      target_savings: target_savings_data,
+      today_timestamp: base_date.to_time.to_i
+    }
+    
+    render json: chart_data
+  end
 end
