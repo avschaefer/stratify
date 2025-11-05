@@ -1,0 +1,132 @@
+<div class="page-header d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Overview of your financial health</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <button class="btn btn-primary">
+      <i class="bi bi-download"></i> Export to Excel
+    </button>
+    <button class="btn btn-primary">
+      <i class="bi bi-file-pdf"></i> Export to PDF
+    </button>
+  </div>
+</div>
+
+<!-- Dashboard Metrics -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="metrics-grid">
+      <!-- Net Worth -->
+      <div class="metric-tile">
+        <div class="metric-label">Net Worth</div>
+        <div class="metric-value">$<%= number_with_delimiter(@net_worth.round(0)) %></div>
+        <% if @net_worth_trend.present? %>
+          <div class="metric-subtext" style="color: <%= @net_worth_trend >= 0 ? '#059669' : '#dc2626' %>;">
+            <%= @net_worth_trend >= 0 ? '+' : '' %><%= number_with_precision(@net_worth_trend, precision: 0) %>% this year
+          </div>
+        <% end %>
+      </div>
+      
+      <!-- Total Assets -->
+      <div class="metric-tile">
+        <div class="metric-label">Total Assets</div>
+        <div class="metric-value">$<%= number_with_delimiter(@total_assets.round(0)) %></div>
+        <% if @assets_trend.present? %>
+          <div class="metric-subtext" style="color: <%= @assets_trend >= 0 ? '#059669' : '#dc2626' %>;">
+            <%= @assets_trend >= 0 ? '+' : '' %><%= number_with_precision(@assets_trend, precision: 0) %>% this year
+          </div>
+        <% end %>
+      </div>
+      
+      <!-- Total Liabilities -->
+      <div class="metric-tile">
+        <div class="metric-label">Total Liabilities</div>
+        <div class="metric-value">$<%= number_with_delimiter(@total_liabilities.round(0)) %></div>
+        <% if @liabilities_trend.present? %>
+          <div class="metric-subtext" style="color: <%= @liabilities_trend >= 0 ? '#059669' : '#dc2626' %>;">
+            <%= @liabilities_trend >= 0 ? '+' : '' %><%= number_with_precision(@liabilities_trend, precision: 0) %>% this year
+          </div>
+        <% end %>
+      </div>
+      
+      <!-- Net Monthly Savings -->
+      <div class="metric-tile">
+        <div class="metric-label">Net Monthly Savings</div>
+        <div class="metric-value">$<%= number_with_delimiter(@monthly_savings.round(0)) %></div>
+        <div class="metric-subtext">Average</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Asset Allocation</div>
+      <div class="card-body">
+        <p class="text-muted text-center py-5">No portfolio data yet. Add investments to see allocation.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Monthly Trends</div>
+      <div class="card-body">
+        <p class="text-muted text-center py-5">No monthly snapshot data yet. Add monthly updates to see trends.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="card mt-4 quick-actions">
+  <div class="card-body">
+    <div class="mb-3">
+      <h5 class="mb-1">Quick Actions</h5>
+      <p class="text-muted mb-0" style="font-size: 0.875rem;">Common tasks you may want to perform</p>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <%= link_to portfolios_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
+          <i class="bi bi-graph-up" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <span>Portfolio</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <%= link_to savings_accounts_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
+          <i class="bi bi-piggy-bank" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <span>Savings & Expenses</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <%= link_to loans_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
+          <i class="bi bi-cash-coin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <span>Loans</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <%= link_to insurance_policies_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
+          <i class="bi bi-shield-check" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <span>Insurance</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <%= link_to tax_scenarios_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
+          <i class="bi bi-receipt" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <span>Taxes</span>
+        <% end %>
+      </div>
+      <div class="col-md-3">
+        <%= link_to retirement_scenarios_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
+          <i class="bi bi-calendar-check" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+          <span>Retirement</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+

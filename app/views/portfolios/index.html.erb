@@ -1,0 +1,925 @@
+<div class="page-header d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1>Portfolio</h1>
+    <p class="text-muted mb-0">Manage your stocks, bonds, and assets</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+    <i class="bi bi-plus-circle"></i> Add Transaction
+  </button>
+</div>
+
+<!-- Summary Metrics Tile -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="metrics-grid">
+      <!-- Portfolio Value -->
+      <div class="metric-tile">
+        <div class="metric-label">Portfolio Value</div>
+        <div class="metric-value">$<%= number_with_delimiter(@portfolio_value.round(0)) %></div>
+      </div>
+      
+      <!-- Total Return -->
+      <div class="metric-tile">
+        <div class="metric-label">Total Return</div>
+        <div class="metric-value" style="color: #059669;">
+          +$<%= number_with_delimiter(@total_return_amount.round(0)) %>
+        </div>
+        <div class="metric-subtext">+<%= number_with_precision(@total_return_percent, precision: 2) %>%</div>
+      </div>
+      
+      <!-- Annual Return -->
+      <div class="metric-tile">
+        <div class="metric-label">Annual Return</div>
+        <div class="metric-value" style="color: #059669;">
+          +$<%= number_with_delimiter(@annual_return_amount.round(0)) %>
+        </div>
+        <div class="metric-subtext">+<%= number_with_precision(@annual_return_percent, precision: 2) %>%</div>
+      </div>
+      
+      <!-- Realized Gains/Losses -->
+      <div class="metric-tile">
+        <div class="metric-label">Realized P&L</div>
+        <div class="metric-value" style="color: <%= @realized_net >= 0 ? '#059669' : '#dc2626' %>;">
+          <%= @realized_net >= 0 ? '+' : '' %>$<%= number_with_delimiter(@realized_net.round(0)) %>
+        </div>
+        <div class="metric-subtext"><%= @realized_net >= 0 ? '+' : '' %><%= number_with_precision(@realized_percent, precision: 2) %>%</div>
+      </div>
+      
+      <!-- vs S&P 500 -->
+      <div class="metric-tile">
+        <div class="metric-label">vs S&P 500</div>
+        <div class="metric-value" style="color: <%= @vs_sp500 >= 0 ? '#059669' : '#dc2626' %>;">
+          <%= @vs_sp500 >= 0 ? '+' : '' %><%= number_with_precision(@vs_sp500, precision: 2) %>% 
+        </div>
+        <div class="metric-subtext">S&P 500: <%= number_with_precision(@sp500_return, precision: 2) %>%</div>
+      </div>
+      
+      <!-- NASDAQ Comparison -->
+      <div class="metric-tile">
+        <div class="metric-label">NASDAQ Comparison</div>
+        <div class="metric-value" style="color: <%= @vs_nasdaq >= 0 ? '#059669' : '#dc2626' %>;">
+          <%= @vs_nasdaq >= 0 ? '+' : '' %><%= number_with_precision(@vs_nasdaq, precision: 2) %>% 
+        </div>
+        <div class="metric-subtext">NASDAQ: <%= number_with_precision(@nasdaq_return, precision: 2) %>%</div>
+      </div>
+      
+      <!-- Sharpe Ratio -->
+      <div class="metric-tile">
+        <div class="metric-label">Sharpe Ratio</div>
+        <div class="metric-value"><%= number_with_precision(@sharpe_ratio, precision: 2) %></div>
+        <div class="metric-subtext">Risk-adjusted return</div>
+      </div>
+      
+      <!-- Std Deviation -->
+      <div class="metric-tile">
+        <div class="metric-label">Std Deviation</div>
+        <div class="metric-value"><%= number_with_precision(@std_deviation, precision: 2) %>%</div>
+        <div class="metric-subtext">Volatility measure</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Portfolio Chart -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="mb-3">
+      <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Portfolio Value Over Time</h2>
+      <p class="text-muted mb-0" style="font-size: 0.875rem;">Track your portfolio performance</p>
+    </div>
+    
+    <!-- Chart container - isolated at top -->
+    <div id="portfolioChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
+      <div id="portfolioChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
+    </div>
+    
+    <!-- Controls below chart -->
+    <div class="chart-controls-container">
+      <!-- Series Group -->
+      <div class="chart-control-group">
+        <label class="chart-control-label">Series</label>
+        <div class="chart-button-group">
+          <button type="button" class="chart-button-toggle active" data-series="portfolio" id="btnPortfolio">
+            Portfolio
+          </button>
+          <button type="button" class="chart-button-toggle active" data-series="nasdaq" id="btnNasdaq">
+            NASDAQ
+          </button>
+          <button type="button" class="chart-button-toggle active" data-series="sp500" id="btnSp500">
+            S&P 500
+          </button>
+        </div>
+      </div>
+      
+      <!-- Chart Type Group -->
+      <div class="chart-control-group">
+        <label class="chart-control-label">Chart Type</label>
+        <div class="chart-button-group">
+          <button type="button" class="chart-button-toggle active" data-chart-type="area" id="btnArea">
+            Area
+          </button>
+          <button type="button" class="chart-button-toggle" data-chart-type="line" id="btnLine">
+            Line
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Add Transaction Modal -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTransactionModalLabel">Add Transaction</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with model: @portfolio, local: true do |f| %>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :transaction_type, "Transaction Type", class: "form-label" %>
+                <%= f.select :transaction_type, options_for_select([
+                  ['Buy', 'buy'],
+                  ['Sell', 'sell']
+                ]), {}, { class: "form-select", required: true } %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :asset_type, "Asset Type", class: "form-label" %>
+                <%= f.select :asset_type, options_for_select([
+                  ['Stock', 'stock'],
+                  ['ETF', 'etf'],
+                  ['Bond ETF', 'bond_etf'],
+                  ['Bond', 'bond'],
+                  ['Crypto', 'crypto'],
+                  ['Other', 'other']
+                ]), {}, { class: "form-select", required: true } %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :ticker, "Ticker/Symbol", class: "form-label" %>
+                <%= f.text_field :ticker, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :purchase_date, "Date", class: "form-label" %>
+                <%= f.date_field :purchase_date, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :purchase_price, "Price", class: "form-label" %>
+                <%= f.number_field :purchase_price, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :quantity, "Quantity", class: "form-label" %>
+                <%= f.number_field :quantity, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :company, "Company Name", class: "form-label" %>
+                <%= f.text_field :company, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= f.submit "Add Transaction", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction History Section -->
+<div class="card mb-4">
+  <div class="card-body">
+    <button class="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#transactionHistoryCollapse" aria-expanded="false" aria-controls="transactionHistoryCollapse" style="border: none; background: none;">
+      <div>
+        <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Transaction History</h2>
+        <p class="text-muted mb-0" style="font-size: 0.875rem;">View all your buy and sell transactions</p>
+      </div>
+      <i class="bi bi-chevron-down collapse-icon" style="transition: transform 0.3s ease;"></i>
+    </button>
+    
+    <div class="collapse" id="transactionHistoryCollapse">
+      <div class="mt-4">
+        <% if @transactions.any? %>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Ticker</th>
+                  <th>Company</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @transactions.each do |transaction| %>
+                  <tr>
+                    <td><%= transaction.date.strftime('%Y-%m-%d') %></td>
+                    <td>
+                      <span class="badge <%= transaction.type == 'buy' ? 'bg-success' : 'bg-danger' %>">
+                        <%= transaction.type.upcase %>
+                      </span>
+                    </td>
+                    <td><strong><%= transaction.ticker %></strong></td>
+                    <td><%= transaction.company %></td>
+                    <td><%= transaction.quantity %></td>
+                    <td>$<%= number_with_precision(transaction.price, precision: 2) %></td>
+                    <td><strong>$<%= number_with_delimiter(transaction.total.round(2)) %></strong></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-muted text-center py-4">No transactions found.</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  let chartInstance = null;
+  let allSeries = {};
+  let allData = {};
+  let currentSettings = {
+    visibleSeries: {
+      portfolio: true,
+      nasdaq: true,
+      sp500: true
+    },
+    chartType: 'area'
+  };
+
+  // Wait for Lightweight Charts to load
+  function initChart() {
+    const container = document.getElementById('portfolioChart');
+    if (!container) {
+      setTimeout(initChart, 100);
+      return;
+    }
+
+    // Force container to be visible and get actual dimensions
+    const containerParent = container.parentElement;
+    if (!containerParent) {
+      setTimeout(initChart, 100);
+      return;
+    }
+
+    // Wait for layout to settle
+    requestAnimationFrame(() => {
+      const containerRect = container.getBoundingClientRect();
+      if (containerRect.width === 0 || containerRect.height === 0) {
+        console.log('Container not ready, retrying...', containerRect);
+        setTimeout(initChart, 100);
+        return;
+      }
+
+      // Check if Lightweight Charts is loaded (standalone version)
+      if (!window.LightweightCharts) {
+        console.log('Waiting for Lightweight Charts...');
+        setTimeout(initChart, 100);
+        return;
+      }
+
+      const { createChart } = window.LightweightCharts;
+      const AreaSeries = window.LightweightCharts.AreaSeries;
+      const LineSeries = window.LightweightCharts.LineSeries;
+      
+      if (!createChart || typeof createChart !== 'function') {
+        console.error('createChart not available', window.LightweightCharts);
+        setTimeout(initChart, 100);
+        return;
+      }
+
+      try {
+        // Create chart exactly like TradingView example
+        console.log('Creating chart with dimensions:', containerRect.width, containerRect.height);
+        const chart = createChart(container, {
+          width: containerRect.width,
+          height: containerRect.height,
+          layout: {
+            background: { color: '#ffffff' },
+            textColor: '#1e293b'
+          },
+          grid: {
+            vertLines: { color: '#e2e8f0' },
+            horzLines: { color: '#e2e8f0' }
+          }
+        });
+        
+        console.log('Chart created:', chart);
+        console.log('Chart methods:', Object.keys(chart).filter(k => typeof chart[k] === 'function'));
+
+        // Generate sample data for multiple series
+        function generateSampleData(baseValue, name) {
+          const randomFactor = 25 + Math.random() * 25;
+          const samplePoint = i =>
+            baseValue * (1 + 
+              i * 0.001 +
+              Math.sin(i / 10) * 0.2 +
+              Math.sin(i / 20) * 0.4 +
+              Math.sin(i / randomFactor) * 0.8 +
+              Math.sin(i / 500) * 0.5);
+
+          const res = [];
+          const date = new Date(Date.UTC(2018, 0, 1, 0, 0, 0, 0));
+          const numberOfPoints = 500;
+          
+          for (let i = 0; i < numberOfPoints; ++i) {
+            const time = date.getTime() / 1000;
+            const value = samplePoint(i);
+            res.push({ time, value: Math.round(value) });
+            date.setUTCDate(date.getUTCDate() + 1);
+          }
+
+          return res;
+        }
+
+        // Generate data for all series
+        allData = {
+          portfolio: generateSampleData(420000, 'portfolio'),
+          nasdaq: generateSampleData(12000, 'nasdaq'),
+          sp500: generateSampleData(4000, 'sp500')
+        };
+
+        // Create series configuration
+        const seriesConfig = {
+          portfolio: {
+            title: 'Portfolio',
+            lineColor: '#0d9488',
+            topColor: 'rgba(13,148,136,0.2)',
+            bottomColor: 'rgba(13,148,136,0)',
+            color: '#0d9488'
+          },
+          nasdaq: {
+            title: 'NASDAQ',
+            lineColor: '#3b82f6',
+            topColor: 'rgba(59,130,246,0.2)',
+            bottomColor: 'rgba(59,130,246,0)',
+            color: '#3b82f6'
+          },
+          sp500: {
+            title: 'S&P 500',
+            lineColor: '#8b5cf6',
+            topColor: 'rgba(139,92,246,0.2)',
+            bottomColor: 'rgba(139,92,246,0)',
+            color: '#8b5cf6'
+          }
+        };
+
+        // Helper function to create series
+        function createSeries(type, name, config) {
+          console.log(`Creating ${type} series for ${name}`);
+          
+          if (type === 'area') {
+            // Try standalone API first (most reliable)
+            if (typeof chart.addAreaSeries === 'function') {
+              console.log(`Using addAreaSeries for ${name}`);
+              return chart.addAreaSeries({
+                lineColor: config.lineColor,
+                topColor: config.topColor,
+                bottomColor: config.bottomColor,
+                lineWidth: 2
+              });
+            } else if (AreaSeries && typeof chart.addSeries === 'function') {
+              console.log(`Using addSeries with AreaSeries for ${name}`);
+              return chart.addSeries(AreaSeries, {
+                lineColor: config.lineColor,
+                topColor: config.topColor,
+                bottomColor: config.bottomColor,
+                lineWidth: 2
+              });
+            } else {
+              console.error(`Neither addAreaSeries nor addSeries available for ${name}`);
+            }
+          } else {
+            // Try standalone API first
+            if (typeof chart.addLineSeries === 'function') {
+              console.log(`Using addLineSeries for ${name}`);
+              return chart.addLineSeries({
+                color: config.color,
+                lineWidth: 2
+              });
+            } else if (LineSeries && typeof chart.addSeries === 'function') {
+              console.log(`Using addSeries with LineSeries for ${name}`);
+              return chart.addSeries(LineSeries, {
+                color: config.color,
+                lineWidth: 2
+              });
+            } else {
+              console.error(`Neither addLineSeries nor addSeries available for ${name}`);
+            }
+          }
+          return null;
+        }
+
+        // Create all series
+        Object.keys(seriesConfig).forEach(name => {
+          const series = createSeries(currentSettings.chartType, name, seriesConfig[name]);
+          if (series) {
+            allSeries[name] = series;
+            console.log(`Created ${name} series:`, series);
+          } else {
+            console.error(`Failed to create ${name} series`);
+          }
+        });
+
+        // Apply initial visibility and data
+        console.log('All data generated:', {
+          portfolio: allData.portfolio.length,
+          nasdaq: allData.nasdaq.length,
+          sp500: allData.sp500.length
+        });
+        
+        // Set data directly first
+        const seriesNames = ['portfolio', 'nasdaq', 'sp500'];
+        
+        console.log('Setting up series visibility:', currentSettings.visibleSeries);
+        
+        seriesNames.forEach((name, index) => {
+          const series = allSeries[name];
+          if (!series) {
+            console.error(`Series ${name} not found!`);
+            return;
+          }
+          
+          const isVisible = currentSettings.visibleSeries[name];
+          
+          if (isVisible) {
+            const dataToSet = allData[name];
+            console.log(`Setting data for ${name}:`, {
+              dataPoints: dataToSet.length,
+              firstPoint: dataToSet[0],
+              lastPoint: dataToSet[dataToSet.length - 1]
+            });
+            
+            // Ensure data is properly formatted
+            const formattedData = dataToSet.map(point => ({
+              time: point.time,
+              value: Number(point.value)
+            }));
+            
+            series.setData(formattedData);
+            series.applyOptions({ visible: true });
+            console.log(`${name} series visible and data set`);
+          } else {
+            series.applyOptions({ visible: false });
+            console.log(`${name} series hidden`);
+          }
+        });
+
+        // Fit content
+        chart.timeScale().fitContent();
+        
+        console.log('Chart setup complete, series count:', Object.keys(allSeries).length);
+        console.log('Chart timeScale:', chart.timeScale());
+
+        // Handle resize
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const { width, height } = entry.contentRect;
+            if (width > 0 && height > 0) {
+              chart.resize(width, height);
+            }
+          }
+        });
+        resizeObserver.observe(container);
+
+        // Store references
+        chartInstance = chart;
+        window._portfolioChart = chart;
+        window._portfolioResizeObserver = resizeObserver;
+        
+        // Setup control event listeners
+        setupControls(chart);
+        
+        console.log('Chart initialized successfully');
+        
+      } catch (error) {
+        console.error('Error initializing chart:', error);
+        container.innerHTML = '<p class="text-muted text-center py-5">Chart initialization failed: ' + error.message + '</p>';
+      }
+    });
+  }
+
+  // Update chart based on current settings
+  function updateChart() {
+    if (!chartInstance) return;
+
+    const seriesNames = ['portfolio', 'nasdaq', 'sp500'];
+    
+    // Update series visibility based on settings
+    seriesNames.forEach((name) => {
+      const series = allSeries[name];
+      if (!series) return;
+
+      const isVisible = currentSettings.visibleSeries[name];
+      series.applyOptions({ visible: isVisible });
+      
+      // If making visible and data exists, ensure data is set
+      if (isVisible && allData[name] && allData[name].length > 0) {
+        const formattedData = allData[name].map(point => ({
+          time: point.time,
+          value: Number(point.value)
+        }));
+        series.setData(formattedData);
+      }
+    });
+
+    // Fit content after update
+    chartInstance.timeScale().fitContent();
+  }
+
+  // Setup control event listeners
+  function setupControls(chart) {
+    // Series toggle buttons
+    document.querySelectorAll('.chart-button-toggle[data-series]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const seriesName = e.target.dataset.series;
+        const isActive = e.target.classList.contains('active');
+        
+        // Toggle active state
+        e.target.classList.toggle('active');
+        currentSettings.visibleSeries[seriesName] = !isActive;
+        updateChart();
+      });
+    });
+
+    // Chart type buttons
+    document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const chartType = e.target.dataset.chartType;
+        
+        // Remove active from all chart type buttons
+        document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(b => {
+          b.classList.remove('active');
+        });
+        
+        // Add active to clicked button
+        e.target.classList.add('active');
+        
+        currentSettings.chartType = chartType;
+        recreateSeries(chart);
+      });
+    });
+  }
+
+  // Recreate series when chart type changes
+  function recreateSeries(chart) {
+    const seriesConfig = {
+      portfolio: {
+        title: 'Portfolio',
+        lineColor: '#0d9488',
+        topColor: 'rgba(13,148,136,0.2)',
+        bottomColor: 'rgba(13,148,136,0)',
+        color: '#0d9488'
+      },
+      nasdaq: {
+        title: 'NASDAQ',
+        lineColor: '#3b82f6',
+        topColor: 'rgba(59,130,246,0.2)',
+        bottomColor: 'rgba(59,130,246,0)',
+        color: '#3b82f6'
+      },
+      sp500: {
+        title: 'S&P 500',
+        lineColor: '#8b5cf6',
+        topColor: 'rgba(139,92,246,0.2)',
+        bottomColor: 'rgba(139,92,246,0)',
+        color: '#8b5cf6'
+      }
+    };
+
+    const AreaSeries = window.LightweightCharts.AreaSeries;
+    const LineSeries = window.LightweightCharts.LineSeries;
+
+    // Remove existing series
+    Object.values(allSeries).forEach(series => {
+      try {
+        chart.removeSeries(series);
+      } catch (e) {
+        console.error('Error removing series:', e);
+      }
+    });
+
+    allSeries = {};
+
+    // Create new series with correct type
+    Object.keys(seriesConfig).forEach(name => {
+      let series;
+      if (currentSettings.chartType === 'area') {
+        if (AreaSeries && typeof chart.addSeries === 'function') {
+          series = chart.addSeries(AreaSeries, {
+            lineColor: seriesConfig[name].lineColor,
+            topColor: seriesConfig[name].topColor,
+            bottomColor: seriesConfig[name].bottomColor,
+            lineWidth: 2
+          });
+        } else if (typeof chart.addAreaSeries === 'function') {
+          series = chart.addAreaSeries({
+            lineColor: seriesConfig[name].lineColor,
+            topColor: seriesConfig[name].topColor,
+            bottomColor: seriesConfig[name].bottomColor,
+            lineWidth: 2
+          });
+        }
+      } else {
+        if (LineSeries && typeof chart.addSeries === 'function') {
+          series = chart.addSeries(LineSeries, {
+            color: seriesConfig[name].color,
+            lineWidth: 2
+          });
+        } else if (typeof chart.addLineSeries === 'function') {
+          series = chart.addLineSeries({
+            color: seriesConfig[name].color,
+            lineWidth: 2
+          });
+        }
+      }
+      
+      if (series) {
+        allSeries[name] = series;
+      }
+    });
+
+    updateChart();
+  }
+
+  // Cleanup function
+  function cleanup() {
+    if (window._portfolioChart) {
+      try {
+        window._portfolioChart.remove();
+      } catch (e) {
+        console.error('Error removing chart:', e);
+      }
+      window._portfolioChart = null;
+      chartInstance = null;
+      allSeries = {};
+    }
+    if (window._portfolioResizeObserver) {
+      window._portfolioResizeObserver.disconnect();
+      window._portfolioResizeObserver = null;
+    }
+  }
+
+  // Start initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChart);
+  } else {
+    initChart();
+  }
+
+  // Handle Turbo events
+  document.addEventListener('turbo:load', function() {
+    cleanup();
+    setTimeout(initChart, 50);
+  });
+  document.addEventListener('turbo:before-cache', cleanup);
+})();
+</script>
+
+<div class="mt-3">
+  <small class="text-muted">
+    <i class="bi bi-info-circle"></i> Use mouse wheel to zoom, click and drag to pan. Built-in zoom/pan powered by TradingView Lightweight Charts.
+  </small>
+</div>
+
+<style>
+  #portfolioChartContainer {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    background: white;
+  }
+  
+  #portfolioChart {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+  
+  /* Metrics Grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  @media (min-width: 768px) {
+    .metrics-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .metrics-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  .metric-tile {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+  
+  .metric-tile:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+  
+  .metric-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+  }
+  
+  .metric-subtext {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  /* Transaction History Collapse Icon Animation */
+  .collapse-icon {
+    font-size: 1.25rem;
+    color: #64748b;
+  }
+  
+  [data-bs-toggle="collapse"][aria-expanded="true"] .collapse-icon {
+    transform: rotate(180deg);
+  }
+  
+  /* Modern Chart Controls - Matching Reference Design */
+  .chart-controls-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  @media (min-width: 768px) {
+    .chart-controls-container {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  .chart-control-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chart-control-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .chart-button-group {
+    display: flex;
+    gap: 0.25rem;
+    background: #f3f4f6;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+  
+  .chart-button-toggle {
+    flex: 1;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .chart-button-toggle:hover {
+    color: #111827;
+  }
+  
+  .chart-button-toggle.active {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  .chart-button-toggle.active:hover {
+    background: #ffffff;
+    color: #111827;
+  }
+  
+  /* Legacy styles for backward compatibility */
+  .chart-control-label-inline {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 0.375rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .chart-segmented-control {
+    display: inline-flex;
+    background: #000000;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 0;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .segmented-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .segmented-label {
+    display: inline-block;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .segmented-input[type="checkbox"]:checked + .segmented-label {
+    background-color: #2a2a2a;
+    color: #ffffff;
+  }
+  
+  .segmented-input[type="radio"]:checked + .segmented-label {
+    background-color: #2a2a2a;
+    color: #ffffff;
+  }
+  
+  .segmented-input:checked + .segmented-label {
+    background-color: #2a2a2a;
+    color: #ffffff;
+  }
+  
+  .segmented-label:hover {
+    background-color: #1a1a1a;
+  }
+  
+  .segmented-input:checked + .segmented-label:hover {
+    background-color: #333333;
+  }
+</style>
+

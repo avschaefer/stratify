@@ -1,0 +1,381 @@
+<div class="page-header d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1>Loans</h1>
+    <p class="text-muted mb-0">Calculate and track your loans</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newLoanModal">
+    <i class="bi bi-plus-circle"></i> New Loan
+  </button>
+</div>
+
+<div class="mb-3">
+  <h2 style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Your Loans</h2>
+</div>
+
+<div class="row">
+  <% if @loans.any? %>
+    <% @loans.each do |loan| %>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body position-relative">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="mb-0"><%= loan.name rescue 'N/A' %></h5>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary">
+                  <%= (loan.rate_type rescue 'apr')&.upcase %>
+                </span>
+                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                    class: "btn btn-sm btn-outline-danger" do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Principal:</span>
+                <strong>$<%= number_with_delimiter((loan.principal rescue 0).round(0)) %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Interest Rate:</span>
+                <strong><%= loan.interest_rate rescue 0 %>%</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Term:</span>
+                <strong><%= loan.term_years rescue 0 %> years</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Payment Frequency:</span>
+                <strong><%= (loan.payment_frequency rescue 'monthly')&.humanize %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">Monthly Payment:</span>
+                <strong class="text-danger">$<%= number_with_delimiter((loan.monthly_payment rescue 0).round(0)) %></strong>
+              </div>
+              
+              <div class="mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Total Interest:</span>
+                  <strong class="text-danger">$<%= number_with_delimiter((loan.total_interest rescue 0).round(0)) %></strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted">Total Amount:</span>
+                  <strong>$<%= number_with_delimiter((loan.total_amount rescue 0).round(0)) %></strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="col-12">
+      <p class="text-muted text-center py-5">No loans saved yet. Click "New Loan" to get started.</p>
+    </div>
+  <% end %>
+</div>
+
+<!-- Loan Calculator Section -->
+<div class="card mt-4">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="bi bi-calculator"></i> Loan Calculator</h5>
+  </div>
+  <div class="card-body">
+    <!-- Guide Section -->
+    <div class="mb-4">
+      <h6 class="mb-3"><i class="bi bi-info-circle"></i> Understanding Loan Terms</h6>
+      <div class="mb-3">
+        <strong>Key Concepts:</strong>
+        <ul class="mb-0 mt-2">
+          <li><strong>APR (Annual Percentage Rate):</strong> The annual interest rate charged on the loan, not accounting for compounding.</li>
+          <li><strong>APY (Annual Percentage Yield):</strong> The actual annual rate including compounding effects. APY is typically higher than APR for the same interest rate.</li>
+          <li><strong>Payment Frequency:</strong> How often you make payments (weekly, bi-weekly, monthly, quarterly). More frequent payments can reduce total interest paid.</li>
+          <li><strong>Compounding Period:</strong> How often interest is calculated and added to the principal (daily, monthly, quarterly, annually). More frequent compounding increases the effective interest rate.</li>
+          <li><strong>Periodic Payment:</strong> The amount you pay each payment period, including both principal and interest.</li>
+        </ul>
+      </div>
+      <div class="alert mb-0" style="background-color: var(--active-bg); border-color: var(--primary-color); color: var(--primary-color);">
+        <small><strong>Tip:</strong> If your loan documents specify APY, select "APY" as the rate type. The calculator will convert it to APR for accurate payment calculations. More frequent payments and compounding periods can significantly affect your total interest paid.</small>
+      </div>
+    </div>
+    
+    <hr class="mb-4">
+    
+    <form id="loanCalculator">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Loan Amount</label>
+            <input type="number" id="principal" class="form-control" step="0.01" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Interest Rate (%)</label>
+            <input type="number" id="interest_rate" class="form-control" step="0.01" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">Rate Type</label>
+            <select id="rate_type" class="form-select" required>
+              <option value="apr">APR</option>
+              <option value="apy">APY</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">Term (years)</label>
+            <input type="number" id="term_years" class="form-control" step="0.25" required>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">Payment Frequency</label>
+            <select id="payment_frequency" class="form-select" required>
+              <option value="monthly">Monthly</option>
+              <option value="biweekly">Bi-weekly</option>
+              <option value="weekly">Weekly</option>
+              <option value="quarterly">Quarterly</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label class="form-label">Compounding Period</label>
+            <select id="compounding_period" class="form-select" required>
+              <option value="daily">Daily</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annually">Annually</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <button type="submit" class="btn btn-primary">Calculate</button>
+        </div>
+      </div>
+    </form>
+    
+    <div id="loanResults" class="mt-4" style="display: none;">
+      <hr>
+      <div class="row">
+        <div class="col-md-6">
+          <h6>Payment Summary:</h6>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Periodic Payment:</span>
+            <strong id="periodicPayment">$0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Total Payments:</span>
+            <strong id="totalPayments">0</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Total Principal:</span>
+            <strong id="totalPrincipal">$0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span>Total Interest:</span>
+            <strong class="text-danger" id="totalInterest">$0.00</strong>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6>Payment Breakdown:</h6>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Principal per Payment:</span>
+            <strong id="principalPerPayment">$0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Interest per Payment:</span>
+            <strong class="text-danger" id="interestPerPayment">$0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Total Amount Paid:</span>
+            <strong id="totalAmount">$0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span>Effective Interest Rate:</span>
+            <strong id="effectiveRate">0.00%</strong>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-3">
+        <button class="btn btn-sm btn-outline-secondary" id="toggleAmortization">Show Amortization Schedule</button>
+        <div id="amortizationSchedule" class="mt-3" style="display: none;">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Payment #</th>
+                  <th>Payment Amount</th>
+                  <th>Principal</th>
+                  <th>Interest</th>
+                  <th>Remaining Balance</th>
+                </tr>
+              </thead>
+              <tbody id="amortizationTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Loan Modal -->
+<div class="modal fade" id="newLoanModal" tabindex="-1" aria-labelledby="newLoanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newLoanModalLabel">New Loan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with model: @loan, local: true do |f| %>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :name, "Loan Name", class: "form-label" %>
+                <%= f.text_field :name, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :principal, "Loan Amount", class: "form-label" %>
+                <%= f.number_field :principal, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :interest_rate, "Interest Rate (%)", class: "form-label" %>
+                <%= f.number_field :interest_rate, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :rate_type, "Rate Type", class: "form-label" %>
+                <%= f.select :rate_type, options_for_select([
+                  ['APR', 'apr'],
+                  ['APY', 'apy']
+                ]), {}, { class: "form-select" } %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :term_years, "Term (years)", class: "form-label" %>
+                <%= f.number_field :term_years, step: 0.25, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :payment_frequency, "Payment Frequency", class: "form-label" %>
+                <%= f.select :payment_frequency, options_for_select([
+                  ['Monthly', 'monthly'],
+                  ['Bi-weekly', 'biweekly'],
+                  ['Weekly', 'weekly'],
+                  ['Quarterly', 'quarterly']
+                ]), {}, { class: "form-select", required: true } %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :compounding_period, "Compounding Period", class: "form-label" %>
+                <%= f.select :compounding_period, options_for_select([
+                  ['Daily', 'daily'],
+                  ['Monthly', 'monthly'],
+                  ['Quarterly', 'quarterly'],
+                  ['Annually', 'annually']
+                ]), {}, { class: "form-select" } %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <%= f.label :notes, "Notes", class: "form-label" %>
+                <%= f.text_field :notes, class: "form-control" %>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= f.submit "Save Loan", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('loanCalculator').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+      principal: parseFloat(document.getElementById('principal').value),
+      interest_rate: parseFloat(document.getElementById('interest_rate').value),
+      rate_type: document.getElementById('rate_type').value,
+      term_years: parseFloat(document.getElementById('term_years').value),
+      payment_frequency: document.getElementById('payment_frequency').value,
+      compounding_period: document.getElementById('compounding_period').value
+    };
+    
+    fetch('<%= calculate_loans_path %>', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('periodicPayment').textContent = '$' + Math.round(data.periodic_payment).toLocaleString('en-US');
+      document.getElementById('totalPayments').textContent = data.total_payments;
+      document.getElementById('totalPrincipal').textContent = '$' + Math.round(data.total_principal).toLocaleString('en-US');
+      document.getElementById('totalInterest').textContent = '$' + Math.round(data.total_interest).toLocaleString('en-US');
+      document.getElementById('principalPerPayment').textContent = '$' + Math.round(data.principal_per_payment).toLocaleString('en-US');
+      document.getElementById('interestPerPayment').textContent = '$' + Math.round(data.interest_per_payment).toLocaleString('en-US');
+      document.getElementById('totalAmount').textContent = '$' + Math.round(data.total_amount).toLocaleString('en-US');
+      document.getElementById('effectiveRate').textContent = data.effective_rate.toFixed(2) + '%';
+      
+      // Build amortization schedule
+      if (data.amortization_schedule) {
+        const tbody = document.getElementById('amortizationTableBody');
+        tbody.innerHTML = '';
+        data.amortization_schedule.forEach((payment, index) => {
+          const row = tbody.insertRow();
+          row.insertCell(0).textContent = index + 1;
+          row.insertCell(1).textContent = '$' + Math.round(payment.payment_amount).toLocaleString('en-US');
+          row.insertCell(2).textContent = '$' + Math.round(payment.principal).toLocaleString('en-US');
+          row.insertCell(3).textContent = '$' + Math.round(payment.interest).toLocaleString('en-US');
+          row.insertCell(4).textContent = '$' + Math.round(payment.balance).toLocaleString('en-US');
+        });
+      }
+      
+      document.getElementById('loanResults').style.display = 'block';
+    });
+  });
+  
+  document.getElementById('toggleAmortization').addEventListener('click', function() {
+    const schedule = document.getElementById('amortizationSchedule');
+    if (schedule.style.display === 'none') {
+      schedule.style.display = 'block';
+      this.textContent = 'Hide Amortization Schedule';
+    } else {
+      schedule.style.display = 'none';
+      this.textContent = 'Show Amortization Schedule';
+    }
+  });
+</script>

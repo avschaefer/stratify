@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Financial Planner</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <!-- importmap removed; using direct CDN scripts for libraries -->
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <style>
+      :root {
+        --primary-color: #0d9488;
+        --secondary-color: #0891b2;
+        --bg-color: #f8fafc;
+        --sidebar-bg: #ffffff;
+        --text-color: #1e293b;
+        --border-color: #e2e8f0;
+        --active-bg: #f0fdfa;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+      }
+      
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 260px;
+        background-color: var(--sidebar-bg);
+        border-right: 1px solid var(--border-color);
+        padding: 2rem 0;
+        overflow-y: auto;
+        z-index: 1000;
+      }
+      
+      .sidebar-header {
+        padding: 0 1.5rem 2rem;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+      }
+      
+      .sidebar-header h3 {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.5rem;
+      }
+      
+      .sidebar-nav {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      
+      .sidebar-nav li {
+        margin: 0;
+      }
+      
+      .sidebar-nav a {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1.5rem;
+        color: var(--text-color);
+        text-decoration: none;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+      }
+      
+      .sidebar-nav a:hover {
+        background-color: #f1f5f9;
+        color: var(--primary-color);
+      }
+      
+      .sidebar-nav a.active {
+        background-color: var(--active-bg);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+        font-weight: 500;
+      }
+      
+      .sidebar-nav i {
+        margin-right: 0.75rem;
+        width: 20px;
+        font-size: 1.1rem;
+      }
+      
+      .main-content {
+        margin-left: 260px;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      
+      .main-content.full-width {
+        margin-left: 0;
+      }
+      
+      .page-header {
+        margin-bottom: 2rem;
+      }
+      
+      .page-header h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 0.5rem;
+      }
+      
+      .page-header p {
+        color: #64748b;
+        margin: 0;
+      }
+      
+      .card {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+      }
+      
+      .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        background-color: #f8fafc;
+        font-weight: 600;
+      }
+      
+      .card-body {
+        padding: 1.5rem;
+      }
+      
+      .summary-card {
+        padding: 1.5rem;
+      }
+      
+      .summary-title {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin: 0 0 0.75rem;
+        font-weight: 500;
+      }
+      
+      .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.5rem;
+        line-height: 1.2;
+      }
+      
+      .summary-trend {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      
+      .summary-trend i {
+        font-size: 0.75rem;
+      }
+      
+      .summary-trend.trend-positive {
+        color: #059669;
+      }
+      
+      .summary-trend.trend-negative {
+        color: #dc2626;
+      }
+      
+      .summary-subtext {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin: 0.5rem 0 0;
+      }
+      
+      /* Comparison Card Styles */
+      .comparison-card {
+        border-left: 3px solid #0d9488;
+        transition: all 0.2s ease;
+      }
+      
+      .comparison-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      .comparison-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+      }
+      
+      .comparison-header .summary-title {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      
+      .comparison-month {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      
+      .comparison-change {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      
+      .comparison-change i {
+        font-size: 0.75rem;
+        margin-right: 0.25rem;
+      }
+      
+      /* Metrics Grid - Shared across dashboard and portfolio */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+      
+      @media (min-width: 768px) {
+        .metrics-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      
+      @media (min-width: 1200px) {
+        .metrics-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      
+      .metric-tile {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+      }
+      
+      .metric-tile:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+      }
+      
+      .metric-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+      }
+      
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
+      }
+      
+      .metric-subtext {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+      }
+      
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+      
+      .btn-primary:hover {
+        background-color: #0f766e;
+        border-color: #0f766e;
+      }
+      
+      .bg-primary {
+        background-color: var(--primary-color) !important;
+      }
+      
+      .progress-bar.bg-primary {
+        background-color: var(--primary-color) !important;
+      }
+      
+      .badge.bg-primary {
+        background-color: var(--primary-color) !important;
+      }
+      
+      .btn-primary:disabled,
+      .btn-primary.disabled {
+        background-color: var(--active-bg);
+        border-color: var(--active-bg);
+        color: var(--primary-color);
+        opacity: 1;
+      }
+      
+      .table {
+        margin-bottom: 0;
+      }
+      
+      .table thead th {
+        border-bottom: 2px solid var(--border-color);
+        font-weight: 600;
+        color: var(--text-color);
+        text-transform: none;
+        font-size: 0.875rem;
+        letter-spacing: normal;
+        padding: 0.75rem 0.5rem;
+        background-color: transparent;
+      }
+      
+      .table tbody td {
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-color);
+      }
+      
+      .table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      
+      .badge-draft {
+        background-color: #fbbf24;
+        color: #78350f;
+      }
+      
+      .badge-active {
+        background-color: #10b981;
+        color: #064e3b;
+      }
+      
+      .user-menu {
+        position: absolute;
+        top: 1rem;
+        right: 2rem;
+      }
+      
+      .logout-link:hover {
+        color: var(--primary-color);
+      }
+      
+      .logout-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+      
+      .quick-actions .btn-outline-primary {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background-color: var(--active-bg);
+      }
+      
+      .quick-actions .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+      }
+      
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+          transition: transform 0.3s;
+        }
+        
+        .sidebar.show {
+          transform: translateX(0);
+        }
+        
+        .main-content {
+          margin-left: 0;
+        }
+      }
+    </style>
+  </head>
+  
+  <body>
+    <% begin %>
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h3><i class="bi bi-wallet2"></i> Financial Planner</h3>
+        </div>
+        
+        <ul class="sidebar-nav">
+          <li>
+            <%= link_to dashboard_index_path, class: "nav-link #{'active' if current_page?(dashboard_index_path)}" do %>
+              <i class="bi bi-speedometer2"></i>
+              <span>Dashboard</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to portfolios_path, class: "nav-link #{'active' if current_page?(portfolios_path)}" do %>
+              <i class="bi bi-graph-up"></i>
+              <span>Portfolio</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to savings_accounts_path, class: "nav-link #{'active' if current_page?(savings_accounts_path)}" do %>
+              <i class="bi bi-piggy-bank"></i>
+              <span>Savings & Expenses</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to loans_path, class: "nav-link #{'active' if current_page?(loans_path)}" do %>
+              <i class="bi bi-cash-coin"></i>
+              <span>Loans</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to insurance_policies_path, class: "nav-link #{'active' if current_page?(insurance_policies_path)}" do %>
+              <i class="bi bi-shield-check"></i>
+              <span>Insurance</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to tax_scenarios_path, class: "nav-link #{'active' if current_page?(tax_scenarios_path)}" do %>
+              <i class="bi bi-receipt"></i>
+              <span>Taxes</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to retirement_scenarios_path, class: "nav-link #{'active' if current_page?(retirement_scenarios_path)}" do %>
+              <i class="bi bi-calendar-check"></i>
+              <span>Retirement</span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to settings_path, class: "nav-link #{'active' if current_page?(settings_path)}" do %>
+              <i class="bi bi-gear"></i>
+              <span>Settings</span>
+            <% end %>
+          </li>
+        </ul>
+        
+        <div class="sidebar-footer mt-auto pt-3 border-top" style="padding: 1rem 1.5rem; margin-top: auto;">
+          <div class="d-flex align-items-center">
+            <a href="#" class="text-muted small text-decoration-none logout-link" style="cursor: pointer;">Logout</a>
+          </div>
+        </div>
+      </div>
+    <% rescue => e %>
+      <% # Silently handle any errors in sidebar rendering %>
+    <% end %>
+    
+    <div class="main-content">
+      <% if notice %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <%= notice %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+      
+      <% if alert %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <%= alert %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% end %>
+      
+      <%= yield %>
+    </div>
+    
+  </body>
+</html>
+

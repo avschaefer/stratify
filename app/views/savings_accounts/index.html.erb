@@ -1,0 +1,740 @@
+<div class="page-header d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1>Accounts</h1>
+    <p class="text-muted mb-0">Track your savings and checking accounts</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newAccountModal">
+    <i class="bi bi-plus-circle"></i> New Account
+  </button>
+</div>
+
+<!-- Savings Chart -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="mb-3">
+      <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Savings & Spending Over Time</h2>
+      <p class="text-muted mb-0" style="font-size: 0.875rem;">Track your savings, spending, and net savings</p>
+    </div>
+    
+    <!-- Chart container - isolated at top -->
+    <div id="savingsChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
+      <div id="savingsChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
+    </div>
+    
+    <!-- Controls below chart -->
+    <div class="chart-controls-container">
+      <!-- Series Group -->
+      <div class="chart-control-group">
+        <label class="chart-control-label">Series</label>
+        <div class="chart-button-group">
+          <button type="button" class="chart-button-toggle active" data-series="savings" id="btnSavings">
+            Savings
+          </button>
+          <button type="button" class="chart-button-toggle active" data-series="spending" id="btnSpending">
+            Spending
+          </button>
+          <button type="button" class="chart-button-toggle active" data-series="net_savings" id="btnNetSavings">
+            Net Savings
+          </button>
+        </div>
+      </div>
+      
+      <!-- Chart Type Group -->
+      <div class="chart-control-group">
+        <label class="chart-control-label">Chart Type</label>
+        <div class="chart-button-group">
+          <button type="button" class="chart-button-toggle active" data-chart-type="area" id="btnArea">
+            Area
+          </button>
+          <button type="button" class="chart-button-toggle" data-chart-type="line" id="btnLine">
+            Line
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="mb-3">
+      <h2 class="mb-1" style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Account Summary</h2>
+      <p class="text-muted mb-0" style="font-size: 0.875rem;">Monthly balance overview</p>
+    </div>
+    
+    <% if @accounts.any? %>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th><%= 2.months.ago.strftime('%B %Y') %></th>
+              <th><%= 1.month.ago.strftime('%B %Y') %></th>
+              <th><%= Date.today.strftime('%B %Y') %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Net Savings Row -->
+            <tr class="account-type-divider">
+              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <strong style="color: #64748b; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                  Net Savings
+                </strong>
+              </td>
+              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <div style="display: flex; flex-direction: column;">
+                  <span class="<%= @net_savings_2_months_ago >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                    <%= @net_savings_2_months_ago >= 0 ? '+' : '' %>$<%= number_with_delimiter(@net_savings_2_months_ago.round(0)) %>
+                  </span>
+                  <% if @net_savings_1_month_ago && @net_savings_2_months_ago %>
+                    <% change = @net_savings_1_month_ago - @net_savings_2_months_ago %>
+                    <% if change != 0 %>
+                      <small class="<%= change >= 0 ? 'text-success' : 'text-danger' %>" style="font-size: 0.75rem;">
+                        <i class="bi bi-arrow-<%= change >= 0 ? 'up' : 'down' %>"></i>
+                        <%= change >= 0 ? '+' : '' %>$<%= number_with_delimiter(change.round(0)) %>
+                      </small>
+                    <% end %>
+                  <% end %>
+                </div>
+              </td>
+              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <div style="display: flex; flex-direction: column;">
+                  <span class="<%= @net_savings_1_month_ago >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                    <%= @net_savings_1_month_ago >= 0 ? '+' : '' %>$<%= number_with_delimiter(@net_savings_1_month_ago.round(0)) %>
+                  </span>
+                  <% if @net_savings_current && @net_savings_1_month_ago %>
+                    <% change = @net_savings_current - @net_savings_1_month_ago %>
+                    <% if change != 0 %>
+                      <small class="<%= change >= 0 ? 'text-success' : 'text-danger' %>" style="font-size: 0.75rem;">
+                        <i class="bi bi-arrow-<%= change >= 0 ? 'up' : 'down' %>"></i>
+                        <%= change >= 0 ? '+' : '' %>$<%= number_with_delimiter(change.round(0)) %>
+                      </small>
+                    <% end %>
+                  <% end %>
+                </div>
+              </td>
+              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+                <div style="display: flex; flex-direction: column;">
+                  <span class="<%= @net_savings_current >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                    <%= @net_savings_current >= 0 ? '+' : '' %>$<%= number_with_delimiter(@net_savings_current.round(0)) %>
+                  </span>
+                  <small class="text-muted" style="font-size: 0.75rem;">Current month</small>
+                </div>
+              </td>
+            </tr>
+            
+            <% previous_section = nil %>
+            <% @accounts.each do |account| %>
+              <% 
+                # Determine section: savings/checking = "Savings", credit_card = "Credit Cards"
+                current_section = account.account_type == 'credit_card' ? 'Credit Cards' : 'Savings'
+              %>
+              <% if previous_section.nil? || previous_section != current_section %>
+                <tr class="account-type-divider">
+                  <td colspan="4" style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+                    <strong style="color: #64748b; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                      <%= current_section %>
+                    </strong>
+                  </td>
+                </tr>
+              <% end %>
+              <tr>
+                <td>
+                  <strong><%= account.name %></strong>
+                  <br>
+                  <small class="text-muted"><%= account.account_type&.humanize %></small>
+                </td>
+                <td>
+                  <span class="<%= account.balance_2_months_ago < 0 ? 'text-danger' : '' %>">
+                    $<%= number_with_delimiter(account.balance_2_months_ago.round(0)) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="<%= account.balance_1_month_ago < 0 ? 'text-danger' : '' %>">
+                    $<%= number_with_delimiter(account.balance_1_month_ago.round(0)) %>
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="<%= account.balance_current < 0 ? 'text-danger' : '' %>">
+                      $<%= number_with_delimiter(account.balance_current.round(0)) %>
+                    </strong>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBalanceModal<%= account.id %>">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <% previous_section = current_section %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="text-muted text-center py-5">No accounts added yet. Click "New Account" to get started.</p>
+    <% end %>
+  </div>
+</div>
+
+<!-- New Account Modal -->
+<div class="modal fade" id="newAccountModal" tabindex="-1" aria-labelledby="newAccountModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newAccountModalLabel">New Account</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with model: @account, url: savings_accounts_path, local: true do |f| %>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :name, "Account Name", class: "form-label" %>
+                <%= f.text_field :name, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :account_type, "Account Type", class: "form-label" %>
+                <%= f.select :account_type, options_for_select([
+                  ['Savings', 'savings'],
+                  ['Checking', 'checking'],
+                  ['Credit Card', 'credit_card']
+                ]), {}, { class: "form-select", required: true } %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <%= f.label :notes, "Notes (optional)", class: "form-label" %>
+                <%= f.text_area :notes, class: "form-control", rows: 2 %>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= f.submit "Add Account", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% @accounts.each do |account| %>
+  <!-- Edit Balance Modal for <%= account.name %> -->
+  <div class="modal fade" id="editBalanceModal<%= account.id %>" tabindex="-1" aria-labelledby="editBalanceModalLabel<%= account.id %>" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editBalanceModalLabel<%= account.id %>">Edit Balance - <%= account.name %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <% if account.current_snapshot_id %>
+            <%= form_with url: savings_account_monthly_snapshot_path(account, account.current_snapshot_id), method: :patch, local: true do |f| %>
+              <div class="mb-3">
+                <%= f.label :recorded_at, "Date", class: "form-label" %>
+                <%= f.date_field :recorded_at, value: Date.today.beginning_of_month, class: "form-control", required: true %>
+              </div>
+              <div class="mb-3">
+                <%= f.label :balance, "Balance", class: "form-label" %>
+                <%= f.number_field :balance, value: account.balance_current, step: 0.01, class: "form-control", required: true %>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <%= f.submit "Update Balance", class: "btn btn-primary" %>
+              </div>
+            <% end %>
+          <% else %>
+            <%= form_with url: savings_account_monthly_snapshots_path(account), local: true do |f| %>
+              <div class="mb-3">
+                <%= f.label :recorded_at, "Date", class: "form-label" %>
+                <%= f.date_field :recorded_at, value: Date.today.beginning_of_month, class: "form-control", required: true %>
+              </div>
+              <div class="mb-3">
+                <%= f.label :balance, "Balance", class: "form-label" %>
+                <%= f.number_field :balance, value: account.balance_current, step: 0.01, class: "form-control", required: true %>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <%= f.submit "Save Balance", class: "btn btn-primary" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<script>
+(function() {
+  let chartInstance = null;
+  let allSeries = {};
+  let allData = {};
+  let currentSettings = {
+    visibleSeries: {
+      savings: true,
+      spending: true,
+      net_savings: true
+    },
+    chartType: 'area'
+  };
+
+  // Wait for Lightweight Charts to load
+  function initChart() {
+    const container = document.getElementById('savingsChart');
+    if (!container) {
+      setTimeout(initChart, 100);
+      return;
+    }
+
+    const containerParent = container.parentElement;
+    if (!containerParent) {
+      setTimeout(initChart, 100);
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const containerRect = container.getBoundingClientRect();
+      if (containerRect.width === 0 || containerRect.height === 0) {
+        setTimeout(initChart, 100);
+        return;
+      }
+
+      if (!window.LightweightCharts) {
+        setTimeout(initChart, 100);
+        return;
+      }
+
+      const { createChart } = window.LightweightCharts;
+      const AreaSeries = window.LightweightCharts.AreaSeries;
+      const LineSeries = window.LightweightCharts.LineSeries;
+      
+      if (!createChart || typeof createChart !== 'function') {
+        setTimeout(initChart, 100);
+        return;
+      }
+
+      try {
+        const chart = createChart(container, {
+          width: containerRect.width,
+          height: containerRect.height,
+          layout: {
+            background: { color: '#ffffff' },
+            textColor: '#1e293b'
+          },
+          grid: {
+            vertLines: { color: '#e2e8f0' },
+            horzLines: { color: '#e2e8f0' }
+          }
+        });
+
+        // Fetch data from server
+        fetch('/savings_accounts/chart_data')
+          .then(response => response.json())
+          .then(data => {
+            allData = {
+              savings: data.savings || [],
+              spending: data.spending || [],
+              net_savings: data.net_savings || []
+            };
+
+            // Create series configuration
+            const seriesConfig = {
+              savings: {
+                title: 'Savings',
+                lineColor: '#3b82f6',
+                topColor: 'rgba(59,130,246,0.2)',
+                bottomColor: 'rgba(59,130,246,0)',
+                color: '#3b82f6'
+              },
+              spending: {
+                title: 'Spending',
+                lineColor: '#dc2626',
+                topColor: 'rgba(220,38,38,0.2)',
+                bottomColor: 'rgba(220,38,38,0)',
+                color: '#dc2626'
+              },
+              net_savings: {
+                title: 'Net Savings',
+                lineColor: '#8b5cf6',
+                topColor: 'rgba(139,92,246,0.2)',
+                bottomColor: 'rgba(139,92,246,0)',
+                color: '#8b5cf6'
+              }
+            };
+
+            // Helper function to create series
+            function createSeries(type, name, config) {
+              if (type === 'area') {
+                if (typeof chart.addAreaSeries === 'function') {
+                  return chart.addAreaSeries({
+                    lineColor: config.lineColor,
+                    topColor: config.topColor,
+                    bottomColor: config.bottomColor,
+                    lineWidth: 2
+                  });
+                } else if (AreaSeries && typeof chart.addSeries === 'function') {
+                  return chart.addSeries(AreaSeries, {
+                    lineColor: config.lineColor,
+                    topColor: config.topColor,
+                    bottomColor: config.bottomColor,
+                    lineWidth: 2
+                  });
+                }
+              } else {
+                if (typeof chart.addLineSeries === 'function') {
+                  return chart.addLineSeries({
+                    color: config.color,
+                    lineWidth: 2
+                  });
+                } else if (LineSeries && typeof chart.addSeries === 'function') {
+                  return chart.addSeries(LineSeries, {
+                    color: config.color,
+                    lineWidth: 2
+                  });
+                }
+              }
+              return null;
+            }
+
+            // Create all series
+            Object.keys(seriesConfig).forEach(name => {
+              const series = createSeries(currentSettings.chartType, name, seriesConfig[name]);
+              if (series) {
+                allSeries[name] = series;
+              }
+            });
+
+            // Set data and visibility
+            const seriesNames = ['savings', 'spending', 'net_savings'];
+            
+            seriesNames.forEach((name) => {
+              const series = allSeries[name];
+              if (!series) return;
+
+              const isVisible = currentSettings.visibleSeries[name];
+              
+              if (isVisible && allData[name] && allData[name].length > 0) {
+                const formattedData = allData[name].map(point => ({
+                  time: point.time,
+                  value: Number(point.value)
+                }));
+                series.setData(formattedData);
+                series.applyOptions({ visible: true });
+              } else {
+                series.applyOptions({ visible: false });
+              }
+            });
+
+            chart.timeScale().fitContent();
+
+            // Handle resize
+            const resizeObserver = new ResizeObserver((entries) => {
+              for (const entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (width > 0 && height > 0) {
+                  chart.resize(width, height);
+                }
+              }
+            });
+            resizeObserver.observe(container);
+
+            chartInstance = chart;
+            window._savingsChart = chart;
+            window._savingsResizeObserver = resizeObserver;
+            
+            setupControls(chart);
+          })
+          .catch(error => {
+            console.error('Error loading chart data:', error);
+            
+            // Fallback: generate sample data
+            function generateSampleData(baseValue) {
+              const res = [];
+              const date = new Date(Date.UTC(2018, 0, 1, 0, 0, 0, 0));
+              const numberOfPoints = 500;
+              
+              for (let i = 0; i < numberOfPoints; ++i) {
+                const time = date.getTime() / 1000;
+                const value = baseValue * (1 + i * 0.001 + Math.sin(i / 10) * 0.2);
+                res.push({ time, value: Math.round(value) });
+                date.setUTCDate(date.getUTCDate() + 1);
+              }
+              return res;
+            }
+
+            allData = {
+              savings: generateSampleData(55000),
+              spending: generateSampleData(3000),
+              net_savings: generateSampleData(52000)
+            };
+          });
+        
+      } catch (error) {
+        console.error('Error initializing chart:', error);
+      }
+    });
+  }
+
+  // Update chart based on current settings
+  function updateChart() {
+    if (!chartInstance) return;
+
+    const seriesNames = ['savings', 'spending', 'net_savings'];
+    
+    seriesNames.forEach((name) => {
+      const series = allSeries[name];
+      if (!series) return;
+
+      const isVisible = currentSettings.visibleSeries[name];
+      series.applyOptions({ visible: isVisible });
+      
+      if (isVisible && allData[name] && allData[name].length > 0) {
+        const formattedData = allData[name].map(point => ({
+          time: point.time,
+          value: Number(point.value)
+        }));
+        series.setData(formattedData);
+      }
+    });
+
+    chartInstance.timeScale().fitContent();
+  }
+
+  // Setup control event listeners
+  function setupControls(chart) {
+    // Series toggle buttons
+    document.querySelectorAll('.chart-button-toggle[data-series]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const seriesName = e.target.dataset.series;
+        const isActive = e.target.classList.contains('active');
+        
+        e.target.classList.toggle('active');
+        currentSettings.visibleSeries[seriesName] = !isActive;
+        updateChart();
+      });
+    });
+
+    // Chart type buttons
+    document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const chartType = e.target.dataset.chartType;
+        
+        document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(b => {
+          b.classList.remove('active');
+        });
+        
+        e.target.classList.add('active');
+        
+        currentSettings.chartType = chartType;
+        recreateSeries(chart);
+      });
+    });
+  }
+
+  // Recreate series when chart type changes
+  function recreateSeries(chart) {
+    const seriesConfig = {
+      savings: {
+        title: 'Savings',
+        lineColor: '#3b82f6',
+        topColor: 'rgba(59,130,246,0.2)',
+        bottomColor: 'rgba(59,130,246,0)',
+        color: '#3b82f6'
+      },
+      spending: {
+        title: 'Spending',
+        lineColor: '#dc2626',
+        topColor: 'rgba(220,38,38,0.2)',
+        bottomColor: 'rgba(220,38,38,0)',
+        color: '#dc2626'
+      },
+      net_savings: {
+        title: 'Net Savings',
+        lineColor: '#8b5cf6',
+        topColor: 'rgba(139,92,246,0.2)',
+        bottomColor: 'rgba(139,92,246,0)',
+        color: '#8b5cf6'
+      }
+    };
+
+    const AreaSeries = window.LightweightCharts.AreaSeries;
+    const LineSeries = window.LightweightCharts.LineSeries;
+
+    // Remove existing series
+    Object.values(allSeries).forEach(series => {
+      try {
+        chart.removeSeries(series);
+      } catch (e) {
+        console.error('Error removing series:', e);
+      }
+    });
+
+    allSeries = {};
+
+    // Create new series with correct type
+    Object.keys(seriesConfig).forEach(name => {
+      let series;
+      if (currentSettings.chartType === 'area') {
+        if (typeof chart.addAreaSeries === 'function') {
+          series = chart.addAreaSeries({
+            lineColor: seriesConfig[name].lineColor,
+            topColor: seriesConfig[name].topColor,
+            bottomColor: seriesConfig[name].bottomColor,
+            lineWidth: 2
+          });
+        } else if (AreaSeries && typeof chart.addSeries === 'function') {
+          series = chart.addSeries(AreaSeries, {
+            lineColor: seriesConfig[name].lineColor,
+            topColor: seriesConfig[name].topColor,
+            bottomColor: seriesConfig[name].bottomColor,
+            lineWidth: 2
+          });
+        }
+      } else {
+        if (typeof chart.addLineSeries === 'function') {
+          series = chart.addLineSeries({
+            color: seriesConfig[name].color,
+            lineWidth: 2
+          });
+        } else if (LineSeries && typeof chart.addSeries === 'function') {
+          series = chart.addSeries(LineSeries, {
+            color: seriesConfig[name].color,
+            lineWidth: 2
+          });
+        }
+      }
+      
+      if (series) {
+        allSeries[name] = series;
+      }
+    });
+
+    updateChart();
+  }
+
+  // Cleanup function
+  function cleanup() {
+    if (window._savingsChart) {
+      try {
+        window._savingsChart.remove();
+      } catch (e) {
+        console.error('Error removing chart:', e);
+      }
+      window._savingsChart = null;
+      chartInstance = null;
+      allSeries = {};
+    }
+    if (window._savingsResizeObserver) {
+      window._savingsResizeObserver.disconnect();
+      window._savingsResizeObserver = null;
+    }
+  }
+
+  // Start initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChart);
+  } else {
+    initChart();
+  }
+
+  // Handle Turbo events
+  document.addEventListener('turbo:load', function() {
+    cleanup();
+    setTimeout(initChart, 50);
+  });
+  document.addEventListener('turbo:before-cache', cleanup);
+})();
+</script>
+
+<style>
+  #savingsChartContainer {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+    background: white;
+  }
+  
+  #savingsChart {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  }
+  
+  /* Modern Chart Controls - Matching Portfolio Design */
+  .chart-controls-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  @media (min-width: 768px) {
+    .chart-controls-container {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  .chart-control-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chart-control-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .chart-button-group {
+    display: flex;
+    gap: 0.25rem;
+    background: #f3f4f6;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+  
+  .chart-button-toggle {
+    flex: 1;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .chart-button-toggle:hover {
+    color: #111827;
+  }
+  
+  .chart-button-toggle.active {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+  
+  .chart-button-toggle.active:hover {
+    background: #ffffff;
+    color: #111827;
+  }
+</style>

@@ -1,0 +1,143 @@
+<div class="page-header d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1>Taxes</h1>
+    <p class="text-muted mb-0">Record your tax information by year</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTaxYearModal">
+    <i class="bi bi-plus-circle"></i> New Tax Year
+  </button>
+</div>
+
+<div class="mb-3">
+  <h2 style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Your Tax Years</h2>
+</div>
+
+<div class="row">
+  <% if @scenarios.any? %>
+    <% @scenarios.each do |scenario| %>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body position-relative">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="mb-0">Tax Year <%= scenario.year %></h5>
+              <div class="d-flex align-items-center gap-2">
+                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                    class: "btn btn-sm btn-outline-danger" do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
+              </div>
+            </div>
+            
+            <% if scenario.notes.present? %>
+              <p class="text-muted small mb-3"><%= scenario.notes %></p>
+            <% end %>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Annual Income:</span>
+                <strong>$<%= number_with_delimiter((scenario.income rescue 0).round(0)) %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Deductions:</span>
+                <strong>$<%= number_with_delimiter((scenario.deductions rescue 0).round(0)) %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Taxable Income:</span>
+                <strong>$<%= number_with_delimiter((scenario.taxable_income rescue 0).round(0)) %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Tax Paid:</span>
+                <strong class="text-danger">$<%= number_with_delimiter((scenario.estimated_tax rescue 0).round(0)) %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">Refund:</span>
+                <strong class="text-success">$<%= number_with_delimiter((scenario.refund rescue 0).round(0)) %></strong>
+              </div>
+              
+              <div class="mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between">
+                  <span>After-Tax Income:</span>
+                  <strong class="text-success">$<%= number_with_delimiter(((scenario.income rescue 0) - (scenario.estimated_tax rescue 0) + (scenario.refund rescue 0)).round(0)) %></strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="col-12">
+      <p class="text-muted text-center py-5">No tax years saved yet. Click "New Tax Year" to get started.</p>
+    </div>
+  <% end %>
+</div>
+
+<!-- New Tax Year Modal -->
+<div class="modal fade" id="newTaxYearModal" tabindex="-1" aria-labelledby="newTaxYearModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newTaxYearModalLabel">New Tax Year</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with model: @scenario, local: true do |f| %>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :year, "Year", class: "form-label" %>
+                <%= f.number_field :year, value: Date.today.year, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :income, "Annual Income", class: "form-label" %>
+                <%= f.number_field :income, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :deductions, "Deductions", class: "form-label" %>
+                <%= f.number_field :deductions, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :taxable_income, "Taxable Income", class: "form-label" %>
+                <%= f.number_field :taxable_income, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :estimated_tax, "Tax Paid", class: "form-label" %>
+                <%= f.number_field :estimated_tax, step: 0.01, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :refund, "Refund", class: "form-label" %>
+                <%= f.number_field :refund, step: 0.01, value: 0, class: "form-control" %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <%= f.label :notes, "Notes (optional)", class: "form-label" %>
+                <%= f.text_area :notes, class: "form-control", rows: 2 %>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= f.submit "Save Year", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

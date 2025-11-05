@@ -1,0 +1,221 @@
+<div class="page-header d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1>Retirement Planning</h1>
+    <p class="text-muted mb-0">Plan and model your retirement scenarios</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newScenarioModal">
+    <i class="bi bi-plus-circle"></i> New Scenario
+  </button>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card summary-card">
+      <div class="card-body">
+        <div class="summary-title">Current Progress</div>
+        <div class="summary-value"><%= @current_progress.round(0) %>%</div>
+        <div class="summary-subtext">Goal: $<%= number_with_delimiter(@goal_amount.round(0)) %> by age <%= @target_age %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card summary-card">
+      <div class="card-body">
+        <div class="summary-title">Saved Amount</div>
+        <div class="summary-value">$<%= number_with_delimiter(@saved_amount.round(0)) %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card summary-card">
+      <div class="card-body">
+        <div class="summary-title">Years to Goal</div>
+        <div class="summary-value"><%= @years_to_goal %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mb-3">
+  <h2 style="font-size: 1.25rem; font-weight: 600; color: #1e293b;">Your Scenarios (up to 5)</h2>
+</div>
+
+<div class="row">
+  <% if @scenarios.any? %>
+    <% @scenarios.each do |scenario| %>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body position-relative d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="mb-0"><%= scenario.name %></h5>
+              <div class="d-flex align-items-center gap-2">
+                <% if scenario.active == true %>
+                  <span class="badge bg-primary">Active</span>
+                <% end %>
+                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                    class: "btn btn-sm btn-outline-danger" do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="mb-3 flex-grow-1">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Target Retirement:</span>
+                <strong><%= (scenario.target_date rescue Date.today).year %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Yearly Withdrawal:</span>
+                <strong>$<%= number_with_delimiter((scenario.yearly_withdrawal rescue 0).round(0)) %></strong>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted">Total Goal:</span>
+                <strong>$<%= number_with_delimiter((scenario.target_amount rescue 0).round(0)) %></strong>
+              </div>
+              
+              <div class="mb-2">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>Progress</span>
+                  <span><%= (scenario.progress_percentage rescue 0).round(0) %>% complete</span>
+                </div>
+                <div class="progress" style="height: 25px;">
+                  <div class="progress-bar bg-primary" role="progressbar" style="width: <%= [(scenario.progress_percentage rescue 0), 100].min %>%">
+                    <%= (scenario.progress_percentage rescue 0).round(0) %>%
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-auto pt-3 border-top">
+              <% if scenario.active != true %>
+                <%= form_with url: set_active_retirement_scenario_path(scenario), method: :post, local: true do |f| %>
+                  <%= f.submit "Set as Active", class: "btn btn-primary w-100" %>
+                <% end %>
+              <% else %>
+                <button class="btn btn-primary w-100" disabled>Currently Active</button>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="col-12">
+      <p class="text-muted text-center py-5">No scenarios saved yet. Click "New Scenario" to get started.</p>
+    </div>
+  <% end %>
+</div>
+
+<!-- Guide Section -->
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Guide</h5>
+  </div>
+  <div class="card-body">
+    <h6 class="mb-3">Understanding Retirement Planning Terms</h6>
+    <div class="mb-3">
+      <strong>Dollar Values:</strong>
+      <ul class="mb-0 mt-2">
+        <li><strong>Today's Dollars:</strong> Values adjusted for inflation, representing purchasing power in today's terms. Examples include:
+          <ul>
+            <li><strong>Yearly Withdrawal:</strong> Enter the amount you want to withdraw annually in today's purchasing power (e.g., $50,000 today)</li>
+            <li><strong>Current Savings:</strong> Your current retirement savings balance</li>
+            <li><strong>Monthly Contribution:</strong> How much you're saving each month</li>
+          </ul>
+        </li>
+        <li><strong>Future Dollars:</strong> Values that account for inflation over time. Examples include:
+          <ul>
+            <li><strong>Target Retirement Amount:</strong> The total amount needed at retirement, accounting for inflation (e.g., $2,000,000 in future dollars)</li>
+            <li><strong>Target Retirement Date:</strong> The year you plan to retire</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="mb-3">
+      <strong>Key Concepts:</strong>
+      <ul class="mb-0 mt-2">
+        <li><strong>Expected Return Rate:</strong> The annual percentage return you expect on your investments (typically 5-8% for balanced portfolios)</li>
+        <li><strong>Progress:</strong> Percentage of your retirement goal you've already saved</li>
+        <li><strong>Active Scenario:</strong> The scenario that determines what's shown in the summary cards above</li>
+      </ul>
+    </div>
+    <div class="alert mb-0" style="background-color: var(--active-bg); border-color: var(--primary-color); color: var(--primary-color);">
+      <small><strong>Tip:</strong> When entering your yearly withdrawal amount, think about what you'd need today. The calculator will automatically adjust for inflation to show you how much you'll need in future dollars.</small>
+    </div>
+  </div>
+</div>
+
+<!-- New Scenario Modal -->
+<div class="modal fade" id="newScenarioModal" tabindex="-1" aria-labelledby="newScenarioModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newScenarioModalLabel">New Retirement Scenario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with model: @scenario, local: true do |f| %>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :name, "Scenario Name", class: "form-label" %>
+                <%= f.text_field :name, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :target_date, "Target Retirement Date", class: "form-label" %>
+                <%= f.date_field :target_date, class: "form-control", required: true %>
+                <small class="form-text text-muted">Future dollars</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :target_amount, "Total Goal", class: "form-label" %>
+                <%= f.number_field :target_amount, step: 0.01, class: "form-control", required: true %>
+                <small class="form-text text-muted">Future dollars</small>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :current_savings, "Current Savings", class: "form-label" %>
+                <%= f.number_field :current_savings, step: 0.01, class: "form-control", required: true %>
+                <small class="form-text text-muted">Today's dollars</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :monthly_contribution, "Monthly Contribution", class: "form-label" %>
+                <%= f.number_field :monthly_contribution, step: 0.01, class: "form-control", required: true %>
+                <small class="form-text text-muted">Today's dollars</small>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :expected_return_rate, "Expected Return Rate (%)", class: "form-label" %>
+                <%= f.number_field :expected_return_rate, step: 0.01, value: 7, class: "form-control", required: true %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :yearly_withdrawal, "Yearly Withdrawal", class: "form-label" %>
+                <%= f.number_field :yearly_withdrawal, step: 0.01, class: "form-control" %>
+                <small class="form-text text-muted">Today's dollars</small>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= f.submit "Save Scenario", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

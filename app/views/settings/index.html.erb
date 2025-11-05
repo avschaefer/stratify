@@ -1,0 +1,163 @@
+<div class="page-header mb-4">
+  <h1>Settings</h1>
+  <p class="text-muted mb-0">Manage your personal and account information</p>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header">Personal Information</div>
+      <div class="card-body">
+        <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">First Name</label>
+                <input type="text" name="first_name" class="form-control" value="<%= @user_settings.first_name %>" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="last_name" class="form-control" value="<%= @user_settings.last_name %>" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" value="<%= @user_settings.email %>" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Phone</label>
+                <input type="tel" name="phone" class="form-control" value="<%= @user_settings.phone %>">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Date of Birth</label>
+                <input type="date" name="date_of_birth" class="form-control" value="<%= @user_settings.date_of_birth %>">
+              </div>
+            </div>
+          </div>
+          <hr>
+          <h6 class="mb-3">Address</h6>
+          <div class="mb-3">
+            <label class="form-label">Street Address</label>
+            <input type="text" name="address" class="form-control" value="<%= @user_settings.address %>">
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-control" value="<%= @user_settings.city %>">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">State</label>
+                <input type="text" name="state" class="form-control" value="<%= @user_settings.state %>">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">ZIP Code</label>
+                <input type="text" name="zip_code" class="form-control" value="<%= @user_settings.zip_code %>">
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Country</label>
+            <input type="text" name="country" class="form-control" value="<%= @user_settings.country %>">
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Save Personal Information</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header">Account Information</div>
+      <div class="card-body">
+        <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" value="<%= @account_settings.username %>" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Current Password</label>
+            <input type="password" name="current_password" class="form-control" placeholder="Enter current password">
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <input type="password" name="new_password" class="form-control" placeholder="Enter new password">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm new password">
+              </div>
+            </div>
+          </div>
+          <hr>
+          <h6 class="mb-3">Preferences</h6>
+          <div class="mb-3">
+            <label class="form-label">Currency</label>
+            <select name="currency" class="form-select">
+              <option value="USD" <%= 'selected' if @account_settings.currency == 'USD' %>>USD ($)</option>
+              <option value="EUR" <%= 'selected' if @account_settings.currency == 'EUR' %>>EUR (€)</option>
+              <option value="GBP" <%= 'selected' if @account_settings.currency == 'GBP' %>>GBP (£)</option>
+              <option value="CAD" <%= 'selected' if @account_settings.currency == 'CAD' %>>CAD ($)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Timezone</label>
+            <select name="timezone" class="form-select">
+              <option value="America/New_York" <%= 'selected' if @account_settings.timezone == 'America/New_York' %>>Eastern Time (ET)</option>
+              <option value="America/Chicago" <%= 'selected' if @account_settings.timezone == 'America/Chicago' %>>Central Time (CT)</option>
+              <option value="America/Denver" <%= 'selected' if @account_settings.timezone == 'America/Denver' %>>Mountain Time (MT)</option>
+              <option value="America/Los_Angeles" <%= 'selected' if @account_settings.timezone == 'America/Los_Angeles' %>>Pacific Time (PT)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date Format</label>
+            <select name="date_format" class="form-select">
+              <option value="MM/DD/YYYY" <%= 'selected' if @account_settings.date_format == 'MM/DD/YYYY' %>>MM/DD/YYYY</option>
+              <option value="DD/MM/YYYY" <%= 'selected' if @account_settings.date_format == 'DD/MM/YYYY' %>>DD/MM/YYYY</option>
+              <option value="YYYY-MM-DD" <%= 'selected' if @account_settings.date_format == 'YYYY-MM-DD' %>>YYYY-MM-DD</option>
+            </select>
+          </div>
+          <hr>
+          <h6 class="mb-3">Notifications</h6>
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="email_notifications" id="emailNotifications" <%= 'checked' if @account_settings.email_notifications %>>
+              <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="sms_notifications" id="smsNotifications" <%= 'checked' if @account_settings.sms_notifications %>>
+              <label class="form-check-label" for="smsNotifications">SMS Notifications</label>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Save Account Settings</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
