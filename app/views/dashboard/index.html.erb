@@ -4,12 +4,12 @@
     <p>Overview of your financial health</p>
   </div>
   <div class="d-flex gap-2 flex-wrap">
-    <button class="btn btn-primary">
+    <%= link_to export_excel_dashboard_index_path, class: "btn btn-primary" do %>
       <i class="bi bi-download"></i> Export to Excel
-    </button>
-    <button class="btn btn-primary">
+    <% end %>
+    <%= link_to export_pdf_dashboard_index_path, class: "btn btn-primary" do %>
       <i class="bi bi-file-pdf"></i> Export to PDF
-    </button>
+    <% end %>
   </div>
 </div>
 
@@ -65,7 +65,27 @@
     <div class="card">
       <div class="card-header">Asset Allocation</div>
       <div class="card-body">
-        <p class="text-muted text-center py-5">No portfolio data yet. Add investments to see allocation.</p>
+        <% if @asset_allocation.any? %>
+          <div class="mb-3">
+            <% total_assets = @asset_allocation.values.sum %>
+            <% @asset_allocation.sort_by { |_, v| -v }.each do |asset_type, value| %>
+              <% percentage = total_assets > 0 ? (value / total_assets * 100) : 0 %>
+              <div class="mb-2">
+                <div class="d-flex justify-content-between mb-1">
+                  <span><%= asset_type.humanize %></span>
+                  <span><%= number_with_precision(percentage, precision: 1) %>%</span>
+                </div>
+                <div class="progress" style="height: 20px;">
+                  <div class="progress-bar" role="progressbar" style="width: <%= percentage %>%">
+                    $<%= number_with_delimiter(value.round(0)) %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted text-center py-5">No portfolio data yet. Add investments to see allocation.</p>
+        <% end %>
       </div>
     </div>
   </div>
@@ -74,7 +94,25 @@
     <div class="card">
       <div class="card-header">Monthly Trends</div>
       <div class="card-body">
-        <p class="text-muted text-center py-5">No monthly snapshot data yet. Add monthly updates to see trends.</p>
+        <% if @monthly_trends.any? %>
+          <div class="mb-3">
+            <% sorted_trends = @monthly_trends.sort_by { |date, _| date } %>
+            <% sorted_trends.last(6).each do |date, data| %>
+              <div class="mb-2">
+                <div class="d-flex justify-content-between mb-1">
+                  <span><%= date.strftime('%b %Y') %></span>
+                  <span><strong>$<%= number_with_delimiter(data[:net_worth].round(0)) %></strong></span>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                  <span>Assets: $<%= number_with_delimiter(data[:assets].round(0)) %></span>
+                  <span>Liabilities: $<%= number_with_delimiter(data[:liabilities].round(0)) %></span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted text-center py-5">No monthly snapshot data yet. Add monthly updates to see trends.</p>
+        <% end %>
       </div>
     </div>
   </div>

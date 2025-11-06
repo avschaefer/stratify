@@ -10,5 +10,21 @@ class SavingsAccount < ApplicationRecord
   def current_balance
     monthly_snapshots.order(recorded_at: :desc).first&.balance || 0
   end
+  
+  def balance_2_months_ago
+    monthly_snapshots.find_by(recorded_at: 2.months.ago.beginning_of_month)&.balance || 0
+  end
+  
+  def balance_1_month_ago
+    monthly_snapshots.find_by(recorded_at: 1.month.ago.beginning_of_month)&.balance || 0
+  end
+  
+  def balance_current
+    monthly_snapshots.find_by(recorded_at: Date.today.beginning_of_month)&.balance || 0
+  end
+  
+  def current_snapshot_id
+    monthly_snapshots.find_by(recorded_at: Date.today.beginning_of_month)&.id
+  end
 end
 

@@ -107,6 +107,42 @@
   </div>
 </div>
 
+<!-- Export History -->
+<% if @data_files.any? %>
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Export History</h5>
+    </div>
+    <div class="card-body">
+      <p class="text-muted mb-3 small">Previously exported data files</p>
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Exported</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @data_files.each do |file| %>
+              <tr>
+                <td><%= file.filename %></td>
+                <td><%= file.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+                <td>
+                  <%= link_to download_data_file_settings_path(id: file.id), class: "btn btn-sm btn-outline-primary" do %>
+                    <i class="bi bi-download"></i> Download
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% end %>
+
 <!-- Danger Zone - Full Width at Bottom -->
 <div class="card border-danger">
   <div class="card-header bg-danger text-white">

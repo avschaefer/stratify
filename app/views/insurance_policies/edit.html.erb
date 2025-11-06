@@ -1,0 +1,74 @@
+<div class="page-header mb-4">
+  <h1>Edit Insurance Policy</h1>
+  <p class="text-muted mb-0">Modify your insurance policy details</p>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <%= form_with model: @policy, local: true do |f| %>
+      <% if @policy.errors.any? %>
+        <div class="alert alert-danger">
+          <h5><%= pluralize(@policy.errors.count, "error") %> prohibited this policy from being saved:</h5>
+          <ul>
+            <% @policy.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :policy_type, "Policy Type", class: "form-label" %>
+            <%= f.select :policy_type, options_for_select([
+              ['Life', 'life'],
+              ['Health', 'health'],
+              ['Auto', 'auto'],
+              ['Home', 'home']
+            ], @policy.policy_type), {}, { class: "form-select", required: true } %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :provider, "Provider", class: "form-label" %>
+            <%= f.text_field :provider, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :coverage_amount, "Coverage Amount", class: "form-label" %>
+            <%= f.number_field :coverage_amount, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :premium, "Monthly Premium", class: "form-label" %>
+            <%= f.number_field :premium, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :term_years, "Term (years)", class: "form-label" %>
+            <%= f.number_field :term_years, step: 0.25, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="mb-3">
+            <%= f.label :notes, "Notes", class: "form-label" %>
+            <%= f.text_field :notes, class: "form-control" %>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", insurance_policies_path, class: "btn btn-secondary" %>
+        <%= f.submit "Update Policy", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+

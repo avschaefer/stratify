@@ -24,7 +24,10 @@
                 <span class="badge bg-secondary">
                   <%= (loan.rate_type rescue 'apr')&.upcase %>
                 </span>
-                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                <%= link_to edit_loan_path(loan), class: "btn btn-sm btn-outline-primary" do %>
+                  <i class="bi bi-pencil"></i>
+                <% end %>
+                <%= link_to loan_path(loan), method: :delete, data: { confirm: 'Are you sure?' },
                     class: "btn btn-sm btn-outline-danger" do %>
                   <i class="bi bi-trash"></i>
                 <% end %>

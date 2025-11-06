@@ -15,11 +15,10 @@ Rails.application.routes.draw do
   patch '/password/reset/:id', to: 'passwords#update'
   
   # Protected routes (require authentication)
-  resources :dashboard, only: [:index] do
-    collection do
-      get :export
-    end
-  end
+  get '/dashboard', to: 'dashboard#index', as: 'dashboard_index'
+  get '/dashboard/export', to: 'dashboard#export', as: 'export_dashboard_index'
+  get '/dashboard/export_excel', to: 'dashboard#export_excel', as: 'export_excel_dashboard_index'
+  get '/dashboard/export_pdf', to: 'dashboard#export_pdf', as: 'export_pdf_dashboard_index'
   
   resources :portfolios do
     collection do
@@ -44,7 +43,7 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :retirement_scenarios, only: [:index, :create, :update, :destroy] do
+  resources :retirement_scenarios, only: [:index, :create, :edit, :update, :destroy] do
     collection do
       post :calculate
       get :chart_data
@@ -70,6 +69,7 @@ Rails.application.routes.draw do
   resources :settings, only: [:index, :update] do
     collection do
       post :export_data
+      get :download_data_file
       post :update_password
       delete :destroy_account
     end

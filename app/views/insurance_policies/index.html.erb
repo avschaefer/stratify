@@ -24,7 +24,10 @@
                 <small class="text-muted"><%= policy.provider rescue 'N/A' %></small>
               </div>
               <div class="d-flex align-items-center gap-2">
-                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                <%= link_to edit_insurance_policy_path(policy), class: "btn btn-sm btn-outline-primary" do %>
+                  <i class="bi bi-pencil"></i>
+                <% end %>
+                <%= link_to insurance_policy_path(policy), method: :delete, data: { confirm: 'Are you sure?' },
                     class: "btn btn-sm btn-outline-danger" do %>
                   <i class="bi bi-trash"></i>
                 <% end %>

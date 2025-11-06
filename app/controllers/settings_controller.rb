@@ -1,6 +1,7 @@
 class SettingsController < ApplicationController
   def index
     @user_settings = current_user
+    @data_files = current_user.data_files.order(created_at: :desc).limit(10)
   end
   
   def update
@@ -25,12 +26,53 @@ class SettingsController < ApplicationController
   end
   
   def export_data
-    attachment = UserDataService.export_user_data(current_user)
-    if attachment
-      redirect_to settings_path, notice: 'Data exported successfully.'
-    else
-      redirect_to settings_path, alert: 'Error exporting data.'
-    end
+    data = {
+      user: {
+        email: current_user.email,
+        created_at: current_user.created_at,
+        updated_at: current_user.updated_at
+      },
+      portfolios: current_user.portfolios.map(&:attributes),
+      savings_accounts: current_user.savings_accounts.map(&:attributes),
+      expenses: current_user.expenses.map(&:attributes),
+      loans: current_user.loans.map(&:attributes),
+      retirement_scenarios: current_user.retirement_scenarios.map(&:attributes),
+      insurance_policies: current_user.insurance_policies.map(&:attributes),
+      tax_scenarios: current_user.tax_scenarios.map(&:attributes),
+      monthly_snapshots: current_user.savings_accounts.map(&:monthly_snapshots).flatten.map(&:attributes) +
+                         current_user.expenses.map(&:monthly_snapshots).flatten.map(&:attributes),
+      exported_at: Time.current.iso8601
+    }
+    
+    json_data = JSON.pretty_generate(data)
+    filename = "user_data_#{current_user.id}_#{Time.current.strftime('%Y%m%d_%H%M%S')}.json"
+    
+    # Also attach to user's data_files for historical record
+    temp_file = Tempfile.new(['user_data', '.json'])
+    temp_file.write(json_data)
+    temp_file.rewind
+    
+    current_user.data_files.attach(
+      io: temp_file,
+      filename: filename,
+      content_type: 'application/json'
+    )
+    
+    temp_file.close
+    temp_file.unlink
+    
+    # Send file for download
+    send_data json_data,
+      filename: filename,
+      type: 'application/json',
+      disposition: 'attachment'
+  end
+  
+  def download_data_file
+    attachment = current_user.data_files.find(params[:id])
+    redirect_to rails_blob_path(attachment, disposition: 'attachment')
+  rescue ActiveRecord::RecordNotFound
+    redirect_to settings_path, alert: 'File not found.'
   end
   
   def destroy_account

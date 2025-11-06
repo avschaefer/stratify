@@ -21,7 +21,10 @@
             <div class="d-flex justify-content-between align-items-start mb-3">
               <h5 class="mb-0">Tax Year <%= scenario.year %></h5>
               <div class="d-flex align-items-center gap-2">
-                <%= link_to "#", data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                <%= link_to edit_tax_scenario_path(scenario), class: "btn btn-sm btn-outline-primary" do %>
+                  <i class="bi bi-pencil"></i>
+                <% end %>
+                <%= link_to tax_scenario_path(scenario), method: :delete, data: { confirm: 'Are you sure?' },
                     class: "btn btn-sm btn-outline-danger" do %>
                   <i class="bi bi-trash"></i>
                 <% end %>

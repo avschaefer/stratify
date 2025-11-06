@@ -140,9 +140,16 @@
               <% end %>
               <tr>
                 <td>
-                  <strong><%= account.name %></strong>
-                  <br>
-                  <small class="text-muted"><%= account.account_type&.humanize %></small>
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong><%= account.name %></strong>
+                      <br>
+                      <small class="text-muted"><%= account.account_type&.humanize %></small>
+                    </div>
+                    <%= link_to edit_savings_account_path(account), class: "btn btn-sm btn-outline-primary" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
+                  </div>
                 </td>
                 <td>
                   <span class="<%= account.balance_2_months_ago < 0 ? 'text-danger' : '' %>">

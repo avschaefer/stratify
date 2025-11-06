@@ -18,10 +18,8 @@ class PortfoliosController < ApplicationController
     @sharpe_ratio = 0
     @std_deviation = 0
     
-    # Initialize empty transactions array
-    @transactions = []
-    
-    # Chart data for the page is now fetched client-side via /portfolios/chart_data
+    # Use actual portfolios as transactions for display
+    @transactions = @portfolios
   end
   
   def create
@@ -38,6 +36,20 @@ class PortfoliosController < ApplicationController
     @portfolio = current_user.portfolios.find(params[:id])
     @portfolio.destroy
     redirect_to portfolios_path, notice: 'Investment removed.'
+  end
+  
+  def edit
+    @portfolio = current_user.portfolios.find(params[:id])
+  end
+  
+  def update
+    @portfolio = current_user.portfolios.find(params[:id])
+    if @portfolio.update(portfolio_params)
+      redirect_to portfolios_path, notice: 'Investment updated successfully.'
+    else
+      flash.now[:alert] = 'Error updating investment.'
+      render :edit
+    end
   end
 
   def chart_data

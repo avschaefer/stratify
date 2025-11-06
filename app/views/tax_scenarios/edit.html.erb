@@ -1,0 +1,65 @@
+<div class="page-header mb-4">
+  <h1>Edit Tax Scenario</h1>
+  <p class="text-muted mb-0">Update your tax information</p>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <%= form_with model: @scenario, local: true do |f| %>
+      <% if @scenario.errors.any? %>
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            <% @scenario.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :name, "Name", class: "form-label" %>
+            <%= f.text_field :name, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :year, "Year", class: "form-label" %>
+            <%= f.number_field :year, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :income, "Annual Income", class: "form-label" %>
+            <%= f.number_field :income, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :deductions, "Deductions", class: "form-label" %>
+            <%= f.number_field :deductions, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-12">
+          <div class="mb-3">
+            <%= f.label :notes, "Notes (optional)", class: "form-label" %>
+            <%= f.text_area :notes, class: "form-control", rows: 3 %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", tax_scenarios_path, class: "btn btn-secondary" %>
+        <%= f.submit "Update Tax Scenario", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+

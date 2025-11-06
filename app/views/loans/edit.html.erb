@@ -1,0 +1,96 @@
+<div class="page-header mb-4">
+  <h1>Edit Loan</h1>
+  <p class="text-muted mb-0">Modify your loan details</p>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <%= form_with model: @loan, local: true do |f| %>
+      <% if @loan.errors.any? %>
+        <div class="alert alert-danger">
+          <h5><%= pluralize(@loan.errors.count, "error") %> prohibited this loan from being saved:</h5>
+          <ul>
+            <% @loan.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :name, "Loan Name", class: "form-label" %>
+            <%= f.text_field :name, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :principal, "Loan Amount", class: "form-label" %>
+            <%= f.number_field :principal, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :interest_rate, "Interest Rate (%)", class: "form-label" %>
+            <%= f.number_field :interest_rate, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :rate_type, "Rate Type", class: "form-label" %>
+            <%= f.select :rate_type, options_for_select([
+              ['APR', 'apr'],
+              ['APY', 'apy']
+            ], @loan.rate_type), {}, { class: "form-select" } %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :term_years, "Term (years)", class: "form-label" %>
+            <%= f.number_field :term_years, step: 0.25, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :payment_frequency, "Payment Frequency", class: "form-label" %>
+            <%= f.select :payment_frequency, options_for_select([
+              ['Monthly', 'monthly'],
+              ['Bi-weekly', 'biweekly'],
+              ['Weekly', 'weekly'],
+              ['Quarterly', 'quarterly']
+            ], @loan.payment_frequency), {}, { class: "form-select", required: true } %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= f.label :compounding_period, "Compounding Period", class: "form-label" %>
+            <%= f.select :compounding_period, options_for_select([
+              ['Daily', 'daily'],
+              ['Monthly', 'monthly'],
+              ['Quarterly', 'quarterly'],
+              ['Annually', 'annually']
+            ], @loan.compounding_period), {}, { class: "form-select" } %>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="mb-3">
+            <%= f.label :notes, "Notes", class: "form-label" %>
+            <%= f.text_field :notes, class: "form-control" %>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end gap-2">
+        <%= link_to "Cancel", loans_path, class: "btn btn-secondary" %>
+        <%= f.submit "Update Loan", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
