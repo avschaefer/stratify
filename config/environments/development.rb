@@ -27,4 +27,7 @@ Rails.application.configure do
   
   # Set secret key base for development
   config.secret_key_base = 'development_secret_key_base_' + ('x' * 30)
+  
+  # Active Storage: Use local for development, can be overridden with env var
+  config.active_storage.service = ENV['ACTIVE_STORAGE_SERVICE']&.to_sym || :local
 end

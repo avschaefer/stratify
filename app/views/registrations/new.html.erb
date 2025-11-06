@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up - <%= company_name %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      min-height: 100vh;
+      background-color: #0a0a0a;
+      color: #fafafa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    /* Backdrop gradients */
+    .backdrop-gradients {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+    }
+    
+    .gradient-1 {
+      position: absolute;
+      inset-x: 0;
+      top: -20%;
+      margin: 0 auto;
+      height: 500px;
+      width: 900px;
+      border-radius: 9999px;
+      background: linear-gradient(to bottom, rgba(99, 102, 241, 0.2), transparent);
+      filter: blur(64px);
+    }
+    
+    .gradient-2 {
+      position: absolute;
+      right: -10%;
+      top: 30%;
+      height: 400px;
+      width: 600px;
+      border-radius: 9999px;
+      background: linear-gradient(to top right, rgba(168, 85, 247, 0.2), transparent);
+      filter: blur(64px);
+    }
+    
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      background-color: rgba(10, 10, 10, 0.4);
+    }
+    
+    nav {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+    }
+    
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    .logo-icon {
+      height: 24px;
+      width: 24px;
+      border-radius: 0.5rem;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: transform 0.2s;
+    }
+    
+    .logo:hover .logo-icon {
+      transform: scale(1.05);
+    }
+    
+    .logo-text {
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+    
+    .nav-links {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    @media (min-width: 640px) {
+      .nav-links {
+        display: flex;
+      }
+    }
+    
+    .nav-link {
+      border-radius: 0.75rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      color: #e5e5e5;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: background-color 0.2s;
+    }
+    
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .nav-link-primary {
+      background-color: white;
+      color: #171717;
+      font-weight: 600;
+    }
+    
+    .nav-link-primary:hover {
+      background-color: #e5e5e5;
+    }
+    
+    .mobile-menu-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e5e5e5;
+      background: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .mobile-menu-btn:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    @media (min-width: 640px) {
+      .mobile-menu-btn {
+        display: none;
+      }
+    }
+    
+    .mobile-menu {
+      display: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(10, 10, 10, 0.7);
+      backdrop-filter: blur(8px);
+    }
+    
+    .mobile-menu.open {
+      display: block;
+    }
+    
+    .mobile-menu-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    .mobile-menu-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    /* Auth Section */
+    .auth-section {
+      position: relative;
+      min-height: calc(100vh - 80px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 1rem;
+    }
+    
+    .grid-pattern {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    
+    .auth-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.02);
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      transition: background-color 0.2s;
+    }
+    
+    .auth-card-glow {
+      position: absolute;
+      right: -2.5rem;
+      top: -2.5rem;
+      height: 8rem;
+      width: 8rem;
+      border-radius: 9999px;
+      background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), transparent);
+      filter: blur(32px);
+      opacity: 0.6;
+    }
+    
+    .auth-card h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #e5e5e5;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.05);
+      color: #fafafa;
+      font-size: 0.875rem;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    .form-input::placeholder {
+      color: #a3a3a3;
+    }
+    
+    .form-input.is-invalid {
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+    
+    .invalid-feedback {
+      display: block;
+      color: #fca5a5;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    
+    .btn-submit {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background-color: white;
+      color: #171717;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn-submit:hover {
+      background-color: #e5e5e5;
+    }
+    
+    .alert {
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.875rem;
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+    
+    .alert ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    
+    .auth-links {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      font-size: 0.875rem;
+      color: #a3a3a3;
+    }
+    
+    .auth-links a {
+      color: #e5e5e5;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    .auth-links a:hover {
+      color: #fafafa;
+    }
+    
+    .auth-links p {
+      margin-bottom: 0.5rem;
+    }
+    
+    .auth-links p:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Backdrop gradients -->
+  <div class="backdrop-gradients" aria-hidden="true">
+    <div class="gradient-1"></div>
+    <div class="gradient-2"></div>
+  </div>
+
+  <!-- NAV -->
+  <header>
+    <nav>
+      <%= link_to root_path, class: "logo" do %>
+        <div class="logo-icon"></div>
+        <span class="logo-text"><%= company_name %></span>
+      <% end %>
+      <div class="nav-links">
+        <%= link_to "Login", login_path, class: "nav-link" %>
+        <%= link_to "Get started", signup_path, class: "nav-link nav-link-primary" %>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" style="height: 20px; width: 20px;" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path id="menu-icon" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </nav>
+    <!-- Mobile sheet -->
+    <div class="mobile-menu" id="mobile-menu">
+      <div class="mobile-menu-content">
+        <div class="mobile-menu-links">
+          <%= link_to "Login", login_path, class: "nav-link" %>
+          <%= link_to "Get started", signup_path, class: "nav-link nav-link-primary" %>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- AUTH FORM -->
+  <section class="auth-section">
+    <div class="grid-pattern" aria-hidden="true"></div>
+    <div class="auth-card">
+      <div class="auth-card-glow"></div>
+      <h2>Create Account</h2>
+      
+      <% if @user && @user.errors.any? %>
+        <div class="alert">
+          <ul>
+            <% @user.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+      
+      <%= form_with model: @user || User.new, url: signup_path, local: true do |f| %>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <%= f.email_field :email, class: "form-input #{'is-invalid' if @user && @user.errors[:email].any?}", required: true, autofocus: true, placeholder: "you@example.com" %>
+          <% if @user && @user.errors[:email].any? %>
+            <div class="invalid-feedback">
+              <%= @user.errors[:email].join(', ') %>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <%= f.password_field :password, class: "form-input #{'is-invalid' if @user && @user.errors[:password].any?}", required: true, placeholder: "Minimum 6 characters" %>
+          <% if @user && @user.errors[:password].any? %>
+            <div class="invalid-feedback">
+              <%= @user.errors[:password].join(', ') %>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <%= f.password_field :password_confirmation, class: "form-input #{'is-invalid' if @user && @user.errors[:password_confirmation].any?}", required: true, placeholder: "Re-enter your password" %>
+          <% if @user && @user.errors[:password_confirmation].any? %>
+            <div class="invalid-feedback">
+              <%= @user.errors[:password_confirmation].join(', ') %>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="form-group">
+          <%= f.submit "Create Account", class: "btn-submit" %>
+        </div>
+      <% end %>
+      
+      <div class="auth-links">
+        <p>
+          Already have an account? <%= link_to "Sign in", login_path %>
+        </p>
+        <p>
+          <%= link_to "Back to home", root_path %>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const icon = document.getElementById('menu-icon');
+      const isOpen = menu.classList.contains('open');
+      
+      if (isOpen) {
+        menu.classList.remove('open');
+        document.body.style.overflow = 'auto';
+        icon.setAttribute('d', 'M4 7h16M4 12h16M4 17h16');
+      } else {
+        menu.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        icon.setAttribute('d', 'M6 6l12 12M18 6L6 18');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,20 +1,20 @@
 Rails.application.routes.draw do
-  # Devise routes are commented out for UI testing - authentication is disabled
-  # devise_for :users
+  root 'landing#index'
   
-  # Catch-all routes for Devise paths (redirect to dashboard since auth is disabled)
-  get '/users/sign_in', to: redirect('/')
-  get '/users/sign_up', to: redirect('/')
-  get '/users/sign_out', to: redirect('/')
-  get '/users/password/new', to: redirect('/')
-  get '/users/password/edit', to: redirect('/')
-  get '/users/confirmation/new', to: redirect('/')
-  delete '/users/sign_out', to: redirect('/')
-  post '/users/sign_in', to: redirect('/')
-  post '/users/sign_up', to: redirect('/')
+  # Authentication routes
+  get '/login', to: 'sessions#new', as: 'login'
+  post '/login', to: 'sessions#create'
+  delete '/logout', to: 'sessions#destroy', as: 'logout'
   
-  root 'dashboard#index'
+  get '/signup', to: 'registrations#new', as: 'signup'
+  post '/signup', to: 'registrations#create'
   
+  get '/password/reset', to: 'passwords#new', as: 'new_password'
+  post '/password/reset', to: 'passwords#create'
+  get '/password/reset/:id/edit', to: 'passwords#edit', as: 'edit_password'
+  patch '/password/reset/:id', to: 'passwords#update'
+  
+  # Protected routes (require authentication)
   resources :dashboard, only: [:index] do
     collection do
       get :export
@@ -67,5 +67,11 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :settings, only: [:index, :update]
+  resources :settings, only: [:index, :update] do
+    collection do
+      post :export_data
+      post :update_password
+      delete :destroy_account
+    end
+  end
 end

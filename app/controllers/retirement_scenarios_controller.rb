@@ -1,63 +1,27 @@
 class RetirementScenariosController < ApplicationController
   def index
-    # Mock scenarios for UI display
-    @scenarios = [
-      OpenStruct.new(
-        id: 1,
-        name: 'Conservative',
-        risk_level: 'conservative',
-        target_date: Date.new(2036, 1, 1),
-        target_amount: 1500000.00,
-        yearly_withdrawal: 45000.00,
-        progress_percentage: 68.0,
-        current_savings: 975000.00,
-        active: true
-      ),
-      OpenStruct.new(
-        id: 2,
-        name: 'Moderate',
-        risk_level: 'moderate',
-        target_date: Date.new(2035, 1, 1),
-        target_amount: 1800000.00,
-        yearly_withdrawal: 52000.00,
-        progress_percentage: 54.0,
-        current_savings: 975000.00,
-        active: false
-      ),
-      OpenStruct.new(
-        id: 3,
-        name: 'Aggressive',
-        risk_level: 'aggressive',
-        target_date: Date.new(2034, 1, 1),
-        target_amount: 2100000.00,
-        yearly_withdrawal: 60000.00,
-        progress_percentage: 46.0,
-        current_savings: 975000.00,
-        active: false
-      )
-    ]
-    
+    @scenarios = current_user.retirement_scenarios.order(created_at: :desc)
     @scenario = RetirementScenario.new(user: current_user)
     
     # Get active scenario for summary cards
-    active_scenario = @scenarios.find { |s| s.active == true } || @scenarios.first
+    active_scenario = @scenarios.find { |s| s.status == 'active' } || @scenarios.first
     
     if active_scenario
-      @current_progress = active_scenario.progress_percentage
+      @current_progress = (active_scenario.current_savings / active_scenario.target_amount * 100).round(2)
       @saved_amount = active_scenario.current_savings
       @goal_amount = active_scenario.target_amount
       @target_age = 65 # Would calculate from birth date and target_date
-      @annual_withdrawal = active_scenario.yearly_withdrawal || 0
+      @annual_withdrawal = 0 # Would be calculated from scenario
       
       # Calculate years to goal
       years_to_goal = active_scenario.target_date.year - Date.today.year
       @years_to_goal = [years_to_goal, 0].max
       
       # Calculate additional metrics for 8 tiles
-      @expected_return_rate = 7.0 # Default expected return rate
+      @expected_return_rate = active_scenario.expected_return_rate || 7.0
       
-      # Monthly contribution actual (mock data - would come from user's actual contributions)
-      @monthly_contribution_actual = 2000.0
+      # Monthly contribution actual
+      @monthly_contribution_actual = active_scenario.monthly_contribution || 0
       
       # Calculate projected value at retirement
       monthly_rate = @expected_return_rate / 100.0 / 12.0
@@ -103,23 +67,26 @@ class RetirementScenariosController < ApplicationController
   end
   
   def set_active
-    # In a real app, this would update the active scenario in the database
+    @scenario = current_user.retirement_scenarios.find(params[:id])
+    # Deactivate all other scenarios
+    current_user.retirement_scenarios.update_all(status: 0)
+    @scenario.update(status: 1) # Assuming 1 is active
     redirect_to retirement_scenarios_path, notice: 'Scenario set as active.'
   end
   
   def create
-    redirect_to retirement_scenarios_path, notice: 'Scenario saved.'
-  end
-  
-  def calculate
-    render json: {
-      projected_value: 0,
-      progress_percentage: 0,
-      years_to_target: 0
-    }
+    @scenario = current_user.retirement_scenarios.build(scenario_params)
+    if @scenario.save
+      redirect_to retirement_scenarios_path, notice: 'Scenario saved.'
+    else
+      flash.now[:alert] = 'Error saving scenario.'
+      render :index
+    end
   end
   
   def destroy
+    @scenario = current_user.retirement_scenarios.find(params[:id])
+    @scenario.destroy
     redirect_to retirement_scenarios_path, notice: 'Scenario removed.'
   end
   
@@ -420,5 +387,11 @@ class RetirementScenariosController < ApplicationController
     }
     
     render json: withdrawal_data
+  end
+  
+  private
+  
+  def scenario_params
+    params.require(:retirement_scenario).permit(:name, :target_date, :current_savings, :monthly_contribution, :target_amount, :expected_return_rate, :risk_level)
   end
 end

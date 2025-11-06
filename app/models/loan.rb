@@ -6,7 +6,7 @@ class Loan < ApplicationRecord
   validates :interest_rate, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :term_years, presence: true, numericality: { greater_than: 0 }
   
-  enum status: { draft: 0, active: 1 }
+  enum :status, { draft: 0, active: 1 }
   
   def monthly_payment
     return 0 if principal.nil? || interest_rate.nil? || term_years.nil?

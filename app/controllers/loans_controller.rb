@@ -1,11 +1,23 @@
 class LoansController < ApplicationController
   def index
-    @loans = []
+    @loans = current_user.loans.order(created_at: :desc)
     @loan = Loan.new(user: current_user)
   end
   
   def create
-    redirect_to loans_path, notice: 'Loan saved successfully.'
+    @loan = current_user.loans.build(loan_params)
+    if @loan.save
+      redirect_to loans_path, notice: 'Loan saved successfully.'
+    else
+      flash.now[:alert] = 'Error saving loan.'
+      render :index
+    end
+  end
+  
+  def destroy
+    @loan = current_user.loans.find(params[:id])
+    @loan.destroy
+    redirect_to loans_path, notice: 'Loan removed.'
   end
   
   def calculate
@@ -114,7 +126,9 @@ class LoansController < ApplicationController
     }
   end
   
-  def destroy
-    redirect_to loans_path, notice: 'Loan removed.'
+  private
+  
+  def loan_params
+    params.require(:loan).permit(:name, :principal, :interest_rate, :term_years, :status)
   end
 end

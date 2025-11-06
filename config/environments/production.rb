@@ -5,6 +5,7 @@ Rails.application.configure do
   config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present?
   config.assets.compile = false
   config.active_storage.variant_processor = :mini_magick
+  config.active_storage.service = :amazon
   config.log_level = :info
   config.log_tags = [ :request_id ]
   config.action_mailer.perform_caching = false

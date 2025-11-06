@@ -1,96 +1,34 @@
 class SavingsAccountsController < ApplicationController
   def index
-    # Mock account data with monthly snapshots
-    accounts_data = [
-      {
-        id: 1,
-        name: 'Chase Checking',
-        account_type: 'checking',
-        snapshots: [
-          { month: 2.months.ago.beginning_of_month, balance: 11800.00 },
-          { month: 1.month.ago.beginning_of_month, balance: 12100.00 },
-          { month: Date.today.beginning_of_month, balance: 12500.00 }
-        ]
-      },
-      {
-        id: 2,
-        name: 'High Yield Savings',
-        account_type: 'savings',
-        snapshots: [
-          { month: 2.months.ago.beginning_of_month, balance: 43500.00 },
-          { month: 1.month.ago.beginning_of_month, balance: 44300.00 },
-          { month: Date.today.beginning_of_month, balance: 45200.00 }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Chase Sapphire',
-        account_type: 'credit_card',
-        snapshots: [
-          { month: 2.months.ago.beginning_of_month, balance: -1850.00 },
-          { month: 1.month.ago.beginning_of_month, balance: -1500.00 },
-          { month: Date.today.beginning_of_month, balance: -1250.00 }
-        ]
-      }
-    ]
-    
-    @accounts = accounts_data.map do |data|
-      account = OpenStruct.new(
-        id: data[:id],
-        name: data[:name],
-        account_type: data[:account_type],
-        current_balance: data[:snapshots].last[:balance],
-        monthly_snapshots: data[:snapshots].map { |s| OpenStruct.new(id: nil, recorded_at: s[:month], balance: s[:balance]) }
-      )
-      
-      # Add balance attributes for each month
-      account.balance_2_months_ago = data[:snapshots].find { |s| s[:month] == 2.months.ago.beginning_of_month }&.dig(:balance) || 0.00
-      account.balance_1_month_ago = data[:snapshots].find { |s| s[:month] == 1.month.ago.beginning_of_month }&.dig(:balance) || 0.00
-      
-      # Find current month snapshot
-      current_snapshot = data[:snapshots].find { |s| s[:month] == Date.today.beginning_of_month }
-      account.balance_current = current_snapshot&.dig(:balance) || 0.00
-      account.current_snapshot_id = current_snapshot ? 1 : nil # Mock ID for existing snapshot
-      
-      account
-    end
-    
-    # Sort accounts: savings/checking together first, then credit cards
-    # Within each group, sort by type then name
-    # Group 1: savings/checking (order: savings first, then checking)
-    # Group 2: credit_card
-    @accounts = @accounts.sort_by do |a|
-      section = (a.account_type == 'credit_card') ? 2 : 1
-      type_order_within_section = { 'savings' => 1, 'checking' => 2 }
-      [section, type_order_within_section[a.account_type.to_s] || 99, a.name]
-    end
+    @accounts = current_user.savings_accounts.includes(:monthly_snapshots).order(:account_type, :name)
+    @account = SavingsAccount.new(user: current_user)
     
     # Calculate net savings for past 3 months
-    # Net savings = change in total balance from previous month
-    total_2_months_ago = @accounts.sum { |a| a.balance_2_months_ago || 0 }
-    total_1_month_ago = @accounts.sum { |a| a.balance_1_month_ago || 0 }
-    total_current = @accounts.sum { |a| a.balance_current || 0 }
+    total_2_months_ago = @accounts.sum { |a| a.monthly_snapshots.find_by(recorded_at: 2.months.ago.beginning_of_month)&.balance || 0 }
+    total_1_month_ago = @accounts.sum { |a| a.monthly_snapshots.find_by(recorded_at: 1.month.ago.beginning_of_month)&.balance || 0 }
+    total_current = @accounts.sum { |a| a.monthly_snapshots.find_by(recorded_at: Date.today.beginning_of_month)&.balance || 0 }
     
-    # Net savings = balance change from previous month
-    # For 2 months ago: we don't have 3 months ago data, so we'll set to 0 or calculate from a baseline
-    # We'll calculate net savings as the change from the previous month
-    @net_savings_2_months_ago = total_2_months_ago - total_2_months_ago # Will be 0 since we don't have 3 months ago data
     @net_savings_1_month_ago = total_1_month_ago - total_2_months_ago
     @net_savings_current = total_current - total_1_month_ago
     
-    # Store total balances for display
     @total_balance_2_months_ago = total_2_months_ago
     @total_balance_1_month_ago = total_1_month_ago
     @total_balance_current = total_current
-    
-    @account = SavingsAccount.new(user: current_user)
   end
   
   def create
-    redirect_to savings_accounts_path, notice: 'Account added successfully.'
+    @account = current_user.savings_accounts.build(account_params)
+    if @account.save
+      redirect_to savings_accounts_path, notice: 'Account added successfully.'
+    else
+      flash.now[:alert] = 'Error adding account.'
+      render :index
+    end
   end
   
   def destroy
+    @account = current_user.savings_accounts.find(params[:id])
+    @account.destroy
     redirect_to savings_accounts_path, notice: 'Account removed.'
   end
 
@@ -142,5 +80,11 @@ class SavingsAccountsController < ApplicationController
     }
     
     render json: chart_data
+  end
+  
+  private
+  
+  def account_params
+    params.require(:savings_account).permit(:name, :account_type, :notes)
   end
 end

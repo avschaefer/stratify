@@ -59,4 +59,4 @@ A simple financial planning web application built with Ruby on Rails for low-fre
 - Monthly snapshots track historical balances
 - Maximum 5 retirement scenarios per user
 
-# stratify
+# Ryzon

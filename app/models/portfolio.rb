@@ -7,7 +7,7 @@ class Portfolio < ApplicationRecord
   validates :purchase_price, presence: true, numericality: { greater_than: 0 }
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   
-  enum status: { draft: 0, active: 1 }
+  enum :status, { draft: 0, active: 1 }
   
   def total_value
     purchase_price * quantity
