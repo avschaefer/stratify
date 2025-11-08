@@ -10,15 +10,11 @@ export default class extends Controller {
   }
 
   connect() {
-    this.originalForm = null
-    this.isCommitting = false
-    this.previouslyFocusedElement = null
+    this.resetState()
   }
 
   disconnect() {
-    this.originalForm = null
-    this.isCommitting = false
-    this.previouslyFocusedElement = null
+    this.resetState()
   }
 
   handleSubmit(event) {
@@ -32,9 +28,24 @@ export default class extends Controller {
     event.preventDefault()
     event.stopPropagation()
 
-    this.originalForm = event.target
-    this.updateMessage(event.submitter)
-    this.openModal()
+    this.beginConfirmation(event.target, event.submitter)
+  }
+
+  handleButtonClick(event) {
+    if (!event?.currentTarget) return
+
+    if (this.isCommitting) {
+      event.preventDefault()
+      return
+    }
+
+    const form = event.currentTarget.closest("form")
+    if (!form) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    this.beginConfirmation(form, event.currentTarget)
   }
 
   cancel(event) {
@@ -44,8 +55,7 @@ export default class extends Controller {
     }
 
     this.closeModal()
-    this.originalForm = null
-    this.isCommitting = false
+    this.resetState()
   }
 
   commit(event) {
@@ -59,17 +69,23 @@ export default class extends Controller {
       return
     }
 
+    const form = this.originalForm
+    const submitter = this.originalSubmitter
+    const turboConfirmValue = form?.dataset?.turboConfirm ?? null
+
     this.closeModal()
     this.isCommitting = true
 
     try {
-      if (typeof this.originalForm.requestSubmit === "function") {
-        this.originalForm.requestSubmit()
+      this.disableTurboConfirm(form)
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit(submitter || undefined)
       } else {
-        this.originalForm.submit()
+        form.submit()
       }
     } finally {
-      this.originalForm = null
+      this.restoreTurboConfirm(form, turboConfirmValue)
+      this.resetState()
     }
   }
 
@@ -135,5 +151,45 @@ export default class extends Controller {
     const message = sourceMessage || controllerMessage || DEFAULT_MESSAGE
 
     this.messageTarget.textContent = message
+  }
+
+  disableTurboConfirm(form) {
+    if (!form) return
+
+    if (form.hasAttribute("data-turbo-confirm")) {
+      form.setAttribute("data-confirm-original-turbo-confirm", form.dataset.turboConfirm || "")
+      form.removeAttribute("data-turbo-confirm")
+    }
+  }
+
+  restoreTurboConfirm(form, value) {
+    if (!form) return
+
+    if (value) {
+      form.setAttribute("data-turbo-confirm", value)
+    } else {
+      form.removeAttribute("data-turbo-confirm")
+    }
+
+    form.removeAttribute("data-confirm-original-turbo-confirm")
+  }
+
+  beginConfirmation(form, submitter = null) {
+    if (!form) {
+      console.error("confirm controller: Missing form for confirmation.")
+      return
+    }
+
+    this.originalForm = form
+    this.originalSubmitter = submitter
+    this.updateMessage(submitter)
+    this.openModal()
+  }
+
+  resetState() {
+    this.originalForm = null
+    this.originalSubmitter = null
+    this.isCommitting = false
+    this.previouslyFocusedElement = null
   }
 }

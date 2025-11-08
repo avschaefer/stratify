@@ -144,6 +144,7 @@
 <% end %>
 
 <!-- Danger Zone - Full Width at Bottom -->
+<% confirm_message = "Are you sure? This will permanently delete your account and all data. This action cannot be undone." %>
 <div class="card border-danger">
   <div class="card-header bg-danger text-white">
     <h5 class="mb-0">Danger Zone</h5>
@@ -156,7 +157,8 @@
                   data: {
                     controller: "confirm",
                     action: "submit->confirm#handleSubmit",
-                    confirm_message_value: "Are you sure? This will permanently delete your account and all data. This action cannot be undone."
+                    confirm_message_value: confirm_message,
+                    turbo_confirm: confirm_message
                   } do |f| %>
       <div class="row align-items-end">
         <div class="col-md-8">
@@ -166,12 +168,14 @@
           </div>
         </div>
         <div class="col-md-4">
-          <button type="submit" class="btn btn-danger w-100">Delete Account</button>
+          <button type="submit"
+                  class="btn btn-danger w-100"
+                  data-action="click->confirm#handleButtonClick">Delete Account</button>
         </div>
       </div>
       <%= render "shared/confirm_dialog",
           title: "Confirm Account Deletion",
-          message: "Are you sure? This will permanently delete your account and all data. This action cannot be undone.",
+          message: confirm_message,
           confirm_label: "Delete Account",
           confirm_icon: "bi bi-trash" %>
     <% end %>
