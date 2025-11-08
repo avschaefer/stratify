@@ -6,4 +6,35 @@
 
 *= require_tree .
 *= require_self
+ 
+.turbo-confirm-dialog {
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0;
+  width: min(420px, 90vw);
+  font-family: inherit;
+}
+
+.turbo-confirm-dialog__panel {
+  padding: 1.5rem;
+}
+
+.turbo-confirm-dialog__header {
+  margin-bottom: 0.75rem;
+}
+
+.turbo-confirm-dialog__body {
+  margin-bottom: 1.25rem;
+  color: #475569;
+}
+
+.turbo-confirm-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.turbo-confirm-dialog::backdrop {
+  background-color: rgba(15, 23, 42, 0.45);
+}
 

@@ -155,9 +155,6 @@
                   method: :delete,
                   local: true,
                   data: {
-                    controller: "confirm",
-                    action: "submit->confirm#handleSubmit",
-                    confirm_message_value: confirm_message,
                     turbo_confirm: confirm_message
                   } do |f| %>
       <div class="row align-items-end">
@@ -170,14 +167,9 @@
         <div class="col-md-4">
           <button type="submit"
                   class="btn btn-danger w-100"
-                  data-action="click->confirm#handleButtonClick">Delete Account</button>
+                  data-turbo-confirm="<%= confirm_message %>">Delete Account</button>
         </div>
       </div>
-      <%= render "shared/confirm_dialog",
-          title: "Confirm Account Deletion",
-          message: confirm_message,
-          confirm_label: "Delete Account",
-          confirm_icon: "bi bi-trash" %>
     <% end %>
   </div>
 </div>

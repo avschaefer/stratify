@@ -28,30 +28,14 @@
                   <i class="bi bi-pencil"></i>
                 <% end %>
                 <% confirm_message = "Are you sure you want to delete this insurance policy?" %>
-                <%# This div wraps both button and dialog for proper Stimulus scoping %>
-                <div data-controller="confirm"
-                     data-confirm-message-value="<%= confirm_message %>">
-                  <%= button_to insurance_policy_path(policy),
-                      method: :delete,
-                      class: "btn btn-sm btn-outline-danger",
-                      aria: { label: "Delete insurance policy" },
-                      title: "Delete insurance policy",
-                      data: { action: "click->confirm#handleButtonClick" },
-                      form: {
-                        data: {
-                          action: "submit->confirm#handleSubmit",
-                          turbo_confirm: confirm_message
-                        },
-                        class: "d-inline"
-                      } do %>
-                    <i class="bi bi-trash"></i>
-                  <% end %>
-                  <%= render "shared/confirm_dialog",
-                      title: "Confirm Delete",
-                      message: confirm_message,
-                      confirm_label: "Delete",
-                      confirm_icon: "bi bi-trash" %>
-                </div>
+                <%= button_to insurance_policy_path(policy),
+                    method: :delete,
+                    class: "btn btn-sm btn-outline-danger",
+                    aria: { label: "Delete insurance policy" },
+                    title: "Delete insurance policy",
+                    data: { turbo_confirm: confirm_message } do %>
+                  <i class="bi bi-trash"></i>
+                <% end %>
               </div>
             </div>
             
