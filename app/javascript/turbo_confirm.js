@@ -57,7 +57,7 @@ function closeDialog(dialog) {
   }
 }
 
-Turbo.setConfirmMethod((message, element) => {
+Turbo.config.forms.confirm = (message, element) => {
   return new Promise((resolve, reject) => {
     const description =
       element?.getAttribute("data-turbo-confirm-description") ||
@@ -80,5 +80,5 @@ Turbo.setConfirmMethod((message, element) => {
 
     dialog.addEventListener("close", handleClose, { once: true })
   })
-})
+}
 
