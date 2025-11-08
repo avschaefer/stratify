@@ -224,32 +224,25 @@
                   <i class="bi bi-pencil"></i>
                 <% end %>
                 <%# This div wraps both button and dialog for proper Stimulus scoping %>
-                <div data-controller="confirm" data-confirm-message-value="Are you sure you want to delete this retirement scenario?" class="d-inline-block">
-                  <%= button_to '', retirement_scenario_path(scenario),
+                <div data-controller="confirm"
+                     data-confirm-message-value="Are you sure you want to delete this retirement scenario?"
+                     class="d-inline-block">
+                  <%= button_to retirement_scenario_path(scenario),
                       method: :delete,
                       class: "btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center",
-                      button_html: { aria: { label: "Delete retirement scenario" }, title: "Delete retirement scenario" } do %>
+                      aria: { label: "Delete retirement scenario" },
+                      title: "Delete retirement scenario",
+                      form: {
+                        data: { action: "submit->confirm#handleSubmit" },
+                        class: "d-inline"
+                      } do %>
                     <i class="bi bi-trash"></i>
                   <% end %>
-                  <dialog data-confirm-target="modal" class="modal">
-                    <div class="modal-content">
-                      <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title">
-                          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Confirm Delete
-                        </h5>
-                        <button type="button" class="btn-close" data-action="click->confirm#cancel" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body pt-0">
-                        <p data-confirm-target="message" class="mb-0">Are you sure you want to delete this retirement scenario?</p>
-                      </div>
-                      <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary" data-action="click->confirm#cancel">Cancel</button>
-                        <button type="button" class="btn btn-danger" data-action="click->confirm#commit">
-                          <i class="bi bi-trash me-1"></i>Delete
-                        </button>
-                      </div>
-                    </div>
-                  </dialog>
+                  <%= render "shared/confirm_dialog",
+                      title: "Confirm Delete",
+                      message: "Are you sure you want to delete this retirement scenario?",
+                      confirm_label: "Delete",
+                      confirm_icon: "bi bi-trash" %>
                 </div>
               </div>
             </div>

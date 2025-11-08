@@ -155,6 +155,7 @@
                   local: true,
                   data: {
                     controller: "confirm",
+                    action: "submit->confirm#handleSubmit",
                     confirm_message_value: "Are you sure? This will permanently delete your account and all data. This action cannot be undone."
                   } do |f| %>
       <div class="row align-items-end">
@@ -168,27 +169,11 @@
           <button type="submit" class="btn btn-danger w-100">Delete Account</button>
         </div>
       </div>
-      <dialog data-confirm-target="modal" class="modal" aria-modal="true" role="alertdialog">
-        <div class="modal-content">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title">
-              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Confirm Account Deletion
-            </h5>
-            <button type="button" class="btn-close" data-action="click->confirm#cancel" aria-label="Close"></button>
-          </div>
-          <div class="modal-body pt-0">
-            <p data-confirm-target="message" class="mb-0">
-              Are you sure? This will permanently delete your account and all data. This action cannot be undone.
-            </p>
-          </div>
-          <div class="modal-footer border-0">
-            <button type="button" class="btn btn-secondary" data-action="click->confirm#cancel">Cancel</button>
-            <button type="button" class="btn btn-danger" data-action="click->confirm#commit">
-              <i class="bi bi-trash me-1"></i>Delete
-            </button>
-          </div>
-        </div>
-      </dialog>
+      <%= render "shared/confirm_dialog",
+          title: "Confirm Account Deletion",
+          message: "Are you sure? This will permanently delete your account and all data. This action cannot be undone.",
+          confirm_label: "Delete Account",
+          confirm_icon: "bi bi-trash" %>
     <% end %>
   </div>
 </div>
