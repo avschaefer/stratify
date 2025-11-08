@@ -55,14 +55,14 @@ class LoanCalculationService
     effective_annual_rate = apr_rate.effective_annual_rate(payments_per_year: payments_per_year)
     
     {
-      periodic_payment: periodic_payment.round(2),
+      periodic_payment: periodic_payment.round(2).to_f,
       total_payments: total_payments,
-      total_principal: principal.round(2),
-      total_interest: total_interest.round(2),
-      total_amount: total_amount.round(2),
-      principal_per_payment: avg_principal_per_payment.round(2),
-      interest_per_payment: avg_interest_per_payment.round(2),
-      effective_rate: effective_annual_rate.round(2),
+      total_principal: principal.round(2).to_f,
+      total_interest: total_interest.round(2).to_f,
+      total_amount: total_amount.round(2).to_f,
+      principal_per_payment: avg_principal_per_payment.round(2).to_f,
+      interest_per_payment: avg_interest_per_payment.round(2).to_f,
+      effective_rate: effective_annual_rate.round(2).to_f,
       amortization_schedule: amortization_schedule
     }
   end

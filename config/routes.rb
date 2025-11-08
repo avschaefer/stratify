@@ -54,17 +54,9 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :insurance_policies do
-    collection do
-      post :calculate
-    end
-  end
+  resources :insurance_policies
   
-  resources :tax_scenarios, only: [:index, :create, :update, :destroy] do
-    collection do
-      post :calculate
-    end
-  end
+  resources :tax_scenarios, only: [:index, :create, :edit, :update, :destroy]
   
   resources :settings, only: [:index, :update] do
     collection do

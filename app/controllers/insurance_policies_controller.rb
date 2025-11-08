@@ -1,5 +1,4 @@
 class InsurancePoliciesController < ApplicationController
-  include Calculatable
   include ErrorHandler
   
   def index
@@ -12,7 +11,8 @@ class InsurancePoliciesController < ApplicationController
     if @policy.save
       redirect_to insurance_policies_path, notice: 'Policy saved.'
     else
-      flash.now[:alert] = 'Error saving policy.'
+      @policies = current_user.insurance_policies.order(created_at: :desc)
+      flash.now[:alert] = 'Error saving policy. Please fill out all required fields.'
       render :index
     end
   end
@@ -32,24 +32,9 @@ class InsurancePoliciesController < ApplicationController
     if @policy.update(policy_params)
       redirect_to insurance_policies_path, notice: 'Policy updated successfully.'
     else
-      flash.now[:alert] = 'Error updating policy.'
+      flash.now[:alert] = 'Error updating policy. Please fill out all required fields.'
       render :edit
     end
-  end
-  
-  def calculate
-    policy_id = params[:policy_id]
-    policy = current_user.insurance_policies.find_by(id: policy_id) if policy_id.present?
-    
-    if policy
-      service = InsuranceAnalysisService.new(policy: policy, user: current_user)
-      result = service.analyze
-      render json: result
-    else
-      render json: { error: 'Policy not found' }, status: :not_found
-    end
-  rescue => e
-    handle_calculation_error(e)
   end
   
   private

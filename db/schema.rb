@@ -71,6 +71,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "rate_type", default: "apr"
+    t.string "payment_frequency", default: "monthly"
+    t.string "compounding_period", default: "monthly"
+    t.text "notes"
     t.index ["user_id"], name: "index_loans_on_user_id"
   end
 
@@ -144,6 +148,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "taxable_income", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "tax_paid", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "refund", precision: 12, scale: 2, default: "0.0", null: false
     t.index ["user_id"], name: "index_tax_scenarios_on_user_id"
   end
 

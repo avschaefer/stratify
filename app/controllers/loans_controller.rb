@@ -1,3 +1,6 @@
+# Explicitly load the service class to ensure it's available
+require Rails.root.join('app', 'services', 'calculations', 'loan_calculation_service').to_s
+
 class LoansController < ApplicationController
   include Calculatable
   include ErrorHandler
@@ -38,19 +41,45 @@ class LoansController < ApplicationController
   end
   
   def calculate
+    # Handle JSON request body
+    if request.content_type&.include?('application/json')
+      json_body = request.body.read
+      request.body.rewind # Reset body for potential future reads
+      json_params = JSON.parse(json_body)
+      
+      principal = json_params['principal']&.to_f || 0
+      interest_rate = json_params['interest_rate']&.to_f || 0
+      term_years = json_params['term_years']&.to_f || 0
+      rate_type = json_params['rate_type'] || 'apr'
+      payment_frequency = json_params['payment_frequency'] || 'monthly'
+      compounding_period = json_params['compounding_period'] || 'monthly'
+    else
+      principal = params[:principal]&.to_f || 0
+      interest_rate = params[:interest_rate]&.to_f || 0
+      term_years = params[:term_years]&.to_f || 0
+      rate_type = params[:rate_type] || 'apr'
+      payment_frequency = params[:payment_frequency] || 'monthly'
+      compounding_period = params[:compounding_period] || 'monthly'
+    end
+    
     service = LoanCalculationService.new(
-      principal: params[:principal].to_f,
-      interest_rate: params[:interest_rate].to_f,
-      term_years: params[:term_years].to_f,
-      rate_type: params[:rate_type] || 'apr',
-      payment_frequency: params[:payment_frequency] || 'monthly',
-      compounding_period: params[:compounding_period] || 'monthly'
+      principal: principal,
+      interest_rate: interest_rate,
+      term_years: term_years,
+      rate_type: rate_type,
+      payment_frequency: payment_frequency,
+      compounding_period: compounding_period
     )
     
     result = service.calculate
     render json: result
+  rescue JSON::ParserError => e
+    Rails.logger.error "JSON parse error: #{e.message}"
+    render json: { error: 'Invalid JSON format' }, status: :bad_request
   rescue => e
-    handle_calculation_error(e)
+    Rails.logger.error "Loan calculation error: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n") if e.backtrace
+    render json: { error: e.message }, status: :unprocessable_entity
   end
   
   private

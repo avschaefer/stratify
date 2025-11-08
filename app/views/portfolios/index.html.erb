@@ -244,9 +244,34 @@
                       <%= link_to edit_portfolio_path(transaction), class: "btn btn-sm btn-outline-primary" do %>
                         <i class="bi bi-pencil"></i>
                       <% end %>
-                      <%= link_to portfolio_path(transaction), method: :delete, data: { confirm: 'Are you sure?' }, class: "btn btn-sm btn-outline-danger" do %>
-                        <i class="bi bi-trash"></i>
-                      <% end %>
+                      <%# This div wraps both button and dialog for proper Stimulus scoping %>
+                      <div data-controller="confirm" data-confirm-message-value="Are you sure you want to delete this portfolio transaction?" class="d-inline-block">
+                        <%= button_to '', portfolio_path(transaction),
+                            method: :delete,
+                            class: "btn btn-sm btn-outline-danger",
+                            button_html: { aria: { label: "Delete portfolio transaction" }, title: "Delete portfolio transaction" } do %>
+                          <i class="bi bi-trash"></i>
+                        <% end %>
+                        <dialog data-confirm-target="modal" class="modal">
+                          <div class="modal-content">
+                            <div class="modal-header border-0 pb-0">
+                              <h5 class="modal-title">
+                                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Confirm Delete
+                              </h5>
+                              <button type="button" class="btn-close" data-action="click->confirm#cancel" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body pt-0">
+                              <p data-confirm-target="message" class="mb-0">Are you sure you want to delete this portfolio transaction?</p>
+                            </div>
+                            <div class="modal-footer border-0">
+                              <button type="button" class="btn btn-secondary" data-action="click->confirm#cancel">Cancel</button>
+                              <button type="button" class="btn btn-danger" data-action="click->confirm#commit">
+                                <i class="bi bi-trash me-1"></i>Delete
+                              </button>
+                            </div>
+                          </div>
+                        </dialog>
+                      </div>
                     </td>
                   </tr>
                 <% end %>

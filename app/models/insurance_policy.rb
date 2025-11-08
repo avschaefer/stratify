@@ -9,9 +9,5 @@ class InsurancePolicy < ApplicationRecord
   
   enum :status, { draft: 0, active: 1 }
   enum :policy_type, { life: 0, health: 1, auto: 2, home: 3 }
-  
-  def total_cost
-    premium * term_years * 12
-  end
 end
 

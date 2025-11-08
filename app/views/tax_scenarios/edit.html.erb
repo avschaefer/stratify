@@ -47,6 +47,27 @@
       </div>
       
       <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :taxable_income, "Taxable Income", class: "form-label" %>
+            <%= f.number_field :taxable_income, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :tax_paid, "Tax Paid", class: "form-label" %>
+            <%= f.number_field :tax_paid, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= f.label :refund, "Refund", class: "form-label" %>
+            <%= f.number_field :refund, step: 0.01, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
         <div class="col-md-12">
           <div class="mb-3">
             <%= f.label :notes, "Notes (optional)", class: "form-label" %>
