@@ -29,6 +29,7 @@ Rails.application.routes.draw do
   resources :savings_accounts do
     collection do
       get :chart_data
+      post :reorder
     end
     member do
       post :bulk_update_snapshots

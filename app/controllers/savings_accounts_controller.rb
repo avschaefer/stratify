@@ -3,7 +3,10 @@ class SavingsAccountsController < ApplicationController
   include ErrorHandler
   
   def index
-    @accounts = current_user.savings_accounts.includes(:monthly_snapshots).order(:account_type, :name)
+    # Order accounts: savings/checking together by position, then credit_card by position
+    # Use a custom SQL order to group savings and checking together
+    @accounts = current_user.savings_accounts.includes(:monthly_snapshots)
+      .order(Arel.sql("CASE WHEN account_type = 2 THEN 1 ELSE 0 END, position, name"))
     @account = SavingsAccount.new(user: current_user)
     
     begin
@@ -37,6 +40,9 @@ class SavingsAccountsController < ApplicationController
   
   def create
     @account = current_user.savings_accounts.build(account_params)
+    # Set position to be last in the account type group
+    max_position = current_user.savings_accounts.where(account_type: @account.account_type).maximum(:position) || -1
+    @account.position = max_position + 1
     if @account.save
       redirect_to savings_accounts_path, notice: 'Account added successfully.'
     else
@@ -123,6 +129,89 @@ class SavingsAccountsController < ApplicationController
     end
   rescue => e
     Rails.logger.error "Bulk update snapshots error: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    render json: { success: false, errors: [e.message] }, status: :internal_server_error
+  end
+  
+  def reorder
+    account_ids = params[:account_ids] || []
+    account_type = params[:account_type]
+    
+    Rails.logger.info "Reorder request: account_ids=#{account_ids.inspect}, account_type=#{account_type.inspect}"
+    
+    if account_ids.empty?
+      render json: { success: false, errors: ['No account IDs provided'] }, status: :unprocessable_entity
+      return
+    end
+    
+    if account_type.blank?
+      render json: { success: false, errors: ['Account type is required'] }, status: :unprocessable_entity
+      return
+    end
+    
+    # Handle savings_group which includes both savings and checking account types
+    if account_type == 'savings_group'
+      # Verify all accounts belong to current user and are either savings or checking
+      accounts = current_user.savings_accounts.where(id: account_ids).where(account_type: ['savings', 'checking'])
+      
+      Rails.logger.info "Found #{accounts.count} accounts out of #{account_ids.count} requested for savings_group"
+      
+      if accounts.count != account_ids.count
+        # Get the actual account types of the provided IDs to help debug
+        actual_accounts = current_user.savings_accounts.where(id: account_ids)
+        actual_types = actual_accounts.pluck(:id, :account_type).to_h
+        Rails.logger.error "Account type mismatch. Expected savings or checking, Actual types: #{actual_types.inspect}"
+        render json: { success: false, errors: ["Invalid account IDs or account types. Expected savings or checking accounts."] }, status: :unprocessable_entity
+        return
+      end
+    else
+      # For credit_card, verify all accounts belong to current user and have the correct account_type
+      accounts = current_user.savings_accounts.where(id: account_ids, account_type: account_type)
+      
+      Rails.logger.info "Found #{accounts.count} accounts out of #{account_ids.count} requested for account_type #{account_type}"
+      
+      if accounts.count != account_ids.count
+        # Get the actual account types of the provided IDs to help debug
+        actual_accounts = current_user.savings_accounts.where(id: account_ids)
+        actual_types = actual_accounts.pluck(:id, :account_type).to_h
+        Rails.logger.error "Account type mismatch. Requested type: #{account_type}, Actual types: #{actual_types.inspect}"
+        render json: { success: false, errors: ["Invalid account IDs or account types. Expected #{account_type}, but found different types."] }, status: :unprocessable_entity
+        return
+      end
+    end
+    
+    # Check if position column exists
+    unless SavingsAccount.column_names.include?('position')
+      render json: { success: false, errors: ['Position column does not exist. Please run migrations.'] }, status: :internal_server_error
+      return
+    end
+    
+    # Update positions - use a transaction to ensure atomicity
+    updated_count = 0
+    ActiveRecord::Base.transaction do
+      account_ids.each_with_index do |account_id, index|
+        if account_type == 'savings_group'
+          # For savings_group, find account that is either savings or checking
+          account = current_user.savings_accounts.where(id: account_id, account_type: ['savings', 'checking']).first
+        else
+          # For specific account types, find by exact type
+          account = current_user.savings_accounts.find_by(id: account_id, account_type: account_type)
+        end
+        
+        if account
+          account.update_column(:position, index)
+          updated_count += 1
+          Rails.logger.info "Updated account #{account_id} (#{account.account_type}) position to #{index}"
+        else
+          raise ActiveRecord::RecordNotFound, "Account #{account_id} not found or wrong type"
+        end
+      end
+    end
+    
+    Rails.logger.info "Successfully updated #{updated_count} account positions"
+    render json: { success: true, message: 'Accounts reordered successfully', updated_count: updated_count }
+  rescue => e
+    Rails.logger.error "Reorder accounts error: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
     render json: { success: false, errors: [e.message] }, status: :internal_server_error
   end

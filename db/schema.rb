@@ -124,6 +124,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "position"
     t.index ["user_id"], name: "index_savings_accounts_on_user_id"
   end
 

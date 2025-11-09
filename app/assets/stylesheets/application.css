@@ -442,3 +442,27 @@ input[type="week"]:focus {
   pointer-events: auto !important;
 }
 
+/* Sortable drag-and-drop styles */
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.sortable-chosen {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.sortable-drag {
+  opacity: 0.8;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+tbody.sortable-accounts tr[data-account-id] {
+  transition: background-color 0.2s ease;
+}
+
+tbody.sortable-accounts tr[data-account-id]:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+

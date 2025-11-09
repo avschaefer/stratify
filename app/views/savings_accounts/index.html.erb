@@ -135,8 +135,14 @@
               <% 
                 # Determine section: savings/checking = "Savings", credit_card = "Credit Cards"
                 current_section = account.account_type == 'credit_card' ? 'Credit Cards' : 'Savings'
+                # For drag-and-drop, group savings and checking together
+                sortable_group = account.account_type == 'credit_card' ? 'credit_card' : 'savings_group'
               %>
               <% if previous_section.nil? || previous_section != current_section %>
+                <% if previous_section.present? %>
+                  </tbody>
+                <% end %>
+                <tbody class="sortable-accounts" data-account-type="<%= sortable_group %>" data-section="<%= current_section %>">
                 <tr class="account-type-divider">
                   <td colspan="4" style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
                     <strong style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
@@ -145,9 +151,10 @@
                   </td>
                 </tr>
               <% end %>
-              <tr>
+              <tr data-account-id="<%= account.id %>" data-account-type="<%= account.account_type %>" style="cursor: move;">
                 <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
                   <div class="d-flex align-items-start" style="gap: 0.5rem;">
+                    <i class="bi bi-grip-vertical" style="color: rgba(255, 255, 255, 0.4); cursor: move; flex-shrink: 0; margin-top: 0.25rem;"></i>
                     <%= link_to edit_savings_account_path(account), class: "btn btn-sm btn-outline-primary", style: "flex-shrink: 0;" do %>
                       <i class="bi bi-pencil"></i>
                     <% end %>
@@ -169,11 +176,11 @@
                   </span>
                 </td>
                 <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
-                  <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                  <div class="d-flex align-items-center justify-content-between">
                     <strong class="<%= account.balance_current < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_current < 0 ? '#fca5a5' : '#fafafa' %>;">
                       $<%= number_with_delimiter(account.balance_current.round(0)) %>
                     </strong>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBalancesModal<%= account.id %>" style="flex-shrink: 0;">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBalancesModal<%= account.id %>" style="flex-shrink: 0; margin-left: 0.5rem;">
                       <i class="bi bi-pencil"></i>
                     </button>
                   </div>
@@ -385,6 +392,93 @@
   
   // Make function globally available
   window.saveBalances = saveBalances;
+})();
+</script>
+
+<script>
+(function() {
+  // Initialize drag-and-drop for account rows
+  function initSortableAccounts() {
+    if (typeof Sortable === 'undefined') {
+      setTimeout(initSortableAccounts, 100);
+      return;
+    }
+    
+    // Find all tbody elements with sortable-accounts class
+    const sortableContainers = document.querySelectorAll('tbody.sortable-accounts');
+    
+    sortableContainers.forEach(container => {
+      const accountType = container.getAttribute('data-account-type');
+      
+      new Sortable(container, {
+        handle: '.bi-grip-vertical, tr[data-account-id]', // Allow dragging by grip icon or row
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        filter: '.account-type-divider', // Don't allow dragging section headers
+        preventOnFilter: false,
+        onEnd: function(evt) {
+          // Get all account IDs in the new order (excluding section headers)
+          const accountRows = Array.from(container.querySelectorAll('tr[data-account-id]'));
+          const accountIds = accountRows.map(row => parseInt(row.getAttribute('data-account-id')));
+          
+          console.log('Reordering accounts:', { accountIds, accountType });
+          
+          // Send reorder request to server
+          fetch('/savings_accounts/reorder', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              account_ids: accountIds,
+              account_type: accountType
+            })
+          })
+          .then(response => {
+            return response.json().then(data => {
+              if (!response.ok) {
+                throw { data: data, status: response.status };
+              }
+              return data;
+            });
+          })
+          .then(data => {
+            console.log('Reorder response:', data);
+            if (data.success) {
+              // Success - no need to reload, the order is already updated in the DOM
+              // The next page load will show the correct order from the database
+            } else {
+              console.error('Reorder failed:', data.errors);
+              alert('Failed to save order: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+              // Reload page to restore original order
+              window.location.reload();
+            }
+          })
+          .catch(error => {
+            console.error('Error reordering accounts:', error);
+            if (error.data && error.data.errors) {
+              alert('Error saving order: ' + error.data.errors.join(', '));
+            } else {
+              alert('Error saving order. Please try again.');
+            }
+            // Reload page to restore original order
+            window.location.reload();
+          });
+        }
+      });
+    });
+  }
+  
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSortableAccounts);
+  } else {
+    initSortableAccounts();
+  }
 })();
 </script>
 
