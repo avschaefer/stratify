@@ -188,7 +188,7 @@
 </div>
 
 <!-- New Account Modal -->
-<div class="modal fade" id="newAccountModal" tabindex="-1" aria-labelledby="newAccountModalLabel" aria-hidden="true">
+<div class="modal" id="newAccountModal" tabindex="-1" aria-labelledby="newAccountModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -235,7 +235,7 @@
 
 <% @accounts.each do |account| %>
   <!-- Edit Balance Modal for <%= account.name %> -->
-  <div class="modal fade" id="editBalanceModal<%= account.id %>" tabindex="-1" aria-labelledby="editBalanceModalLabel<%= account.id %>" aria-hidden="true">
+  <div class="modal" id="editBalanceModal<%= account.id %>" tabindex="-1" aria-labelledby="editBalanceModalLabel<%= account.id %>" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">

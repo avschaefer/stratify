@@ -129,72 +129,79 @@
     
       <hr class="mb-4" style="border-color: rgba(255, 255, 255, 0.1);">
     
-    <form id="loanCalculator">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Loan Amount</label>
-            <input type="number" id="principal" class="form-control" step="0.01" required>
+    <div class="row">
+      <!-- Input Column (Left) -->
+      <div class="col-md-6">
+        <form id="loanCalculator">
+          <!-- Row 1: Loan Amount & Term -->
+          <div class="row">
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">Loan Amount</label>
+                <input type="number" id="principal" class="form-control" step="0.01" required>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">Term (years)</label>
+                <input type="number" id="term_years" class="form-control" step="0.25" required>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label">Interest Rate (%)</label>
-            <input type="number" id="interest_rate" class="form-control" step="0.01" required>
+          
+          <!-- Row 2: Interest Rate & Rate Type -->
+          <div class="row">
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">Interest Rate (%)</label>
+                <input type="number" id="interest_rate" class="form-control" step="0.01" required>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">Rate Type</label>
+                <select id="rate_type" class="form-select" required>
+                  <option value="apr">APR</option>
+                  <option value="apy">APY</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
+          
+          <!-- Row 3: Payment Frequency & Compounding Period -->
+          <div class="row">
+            <div class="col-6">
+              <div class="mb-3">
+                <label class="form-label">Payment Frequency</label>
+                <select id="payment_frequency" class="form-select" required>
+                  <option value="monthly">Monthly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="quarterly">Quarterly</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="mb-4">
+                <label class="form-label">Compounding Period</label>
+                <select id="compounding_period" class="form-select" required>
+                  <option value="daily">Daily</option>
+                  <option value="monthly" selected>Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="annually">Annually</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary w-100">Calculate</button>
+        </form>
       </div>
-      <div class="row">
-        <div class="col-md-3">
-          <div class="mb-3">
-            <label class="form-label">Rate Type</label>
-            <select id="rate_type" class="form-select" required>
-              <option value="apr">APR</option>
-              <option value="apy">APY</option>
-            </select>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="mb-3">
-            <label class="form-label">Term (years)</label>
-            <input type="number" id="term_years" class="form-control" step="0.25" required>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="mb-3">
-            <label class="form-label">Payment Frequency</label>
-            <select id="payment_frequency" class="form-select" required>
-              <option value="monthly">Monthly</option>
-              <option value="biweekly">Bi-weekly</option>
-              <option value="weekly">Weekly</option>
-              <option value="quarterly">Quarterly</option>
-            </select>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="mb-3">
-            <label class="form-label">Compounding Period</label>
-            <select id="compounding_period" class="form-select" required>
-              <option value="daily">Daily</option>
-              <option value="monthly" selected>Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="annually">Annually</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <button type="submit" class="btn btn-primary">Calculate</button>
-        </div>
-      </div>
-    </form>
-    
-    <div id="loanResults" class="mt-4" style="display: none;">
-      <hr>
-      <div class="row">
-        <div class="col-md-6">
-          <h6>Loan Summary:</h6>
+
+      <!-- Results Column (Right) -->
+      <div class="col-md-6">
+        <div id="loanResults" style="display: none;">
+          <h6 class="mb-3">Loan Summary:</h6>
           <div class="d-flex justify-content-between mb-2">
             <span>Total Principal:</span>
             <strong id="totalPrincipal">$0.00</strong>
@@ -203,16 +210,15 @@
             <span>Total Interest:</span>
             <strong class="text-danger" id="totalInterest">$0.00</strong>
           </div>
-          <div class="d-flex justify-content-between mb-3">
+          <div class="d-flex justify-content-between mb-4">
             <span>Total Paid:</span>
             <strong id="totalAmount">$0.00</strong>
           </div>
-        </div>
-        <div class="col-md-6">
-          <h6>Payment Breakdown:</h6>
-          <div class="d-flex justify-content-between mb-2">
-            <span>Periodic Payment:</span>
-            <strong id="periodicPaymentRight">$0.00</strong>
+          
+          <h6 class="mb-3">Payment Breakdown:</h6>
+          <div class="d-flex justify-content-between mb-2 p-3 rounded" style="background-color: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3);">
+            <span style="color: #93c5fd;">Periodic Payment:</span>
+            <strong id="periodicPaymentRight" style="color: #60a5fa;">$0.00</strong>
           </div>
           <div class="d-flex justify-content-between mb-2">
             <span>Principal per Payment:</span>
@@ -226,34 +232,34 @@
             <span># Periods:</span>
             <strong id="totalPayments">0</strong>
           </div>
-          <div class="d-flex justify-content-between mb-3">
+          <div class="d-flex justify-content-between mb-4">
             <span>Effective Rate:</span>
             <strong id="effectiveRate">0.00%</strong>
           </div>
-        </div>
-      </div>
-      
-      <div class="mt-3 d-flex justify-content-between align-items-center">
-        <button class="btn btn-sm btn-outline-secondary" id="toggleAmortization">Show Amortization Schedule</button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveLoanModal" id="saveLoanBtn">
-          <i class="bi bi-save"></i> Save Loan
-        </button>
-      </div>
-      <div id="amortizationSchedule" class="mt-3" style="display: none;">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <th>Payment #</th>
-                  <th>Payment Amount</th>
-                  <th>Principal</th>
-                  <th>Interest</th>
-                  <th>Remaining Balance</th>
-                </tr>
-              </thead>
-              <tbody id="amortizationTableBody">
-              </tbody>
-            </table>
+          
+          <div class="mt-3 d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <button class="btn btn-sm btn-outline-secondary" id="toggleAmortization">Show Amortization Schedule</button>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#saveLoanModal" id="saveLoanBtn">
+              <i class="bi bi-save"></i> Save Loan
+            </button>
+          </div>
+          
+          <div id="amortizationSchedule" class="mt-3" style="display: none;">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>Payment #</th>
+                    <th>Payment Amount</th>
+                    <th>Principal</th>
+                    <th>Interest</th>
+                    <th>Remaining Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="amortizationTableBody">
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -262,7 +268,7 @@
 </div>
 
 <!-- New Loan Modal -->
-<div class="modal fade" id="newLoanModal" tabindex="-1" aria-labelledby="newLoanModalLabel" aria-hidden="true">
+<div class="modal" id="newLoanModal" tabindex="-1" aria-labelledby="newLoanModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -351,7 +357,7 @@
 </div>
 
 <!-- Save Calculated Loan Modal -->
-<div class="modal fade" id="saveLoanModal" tabindex="-1" aria-labelledby="saveLoanModalLabel" aria-hidden="true">
+<div class="modal" id="saveLoanModal" tabindex="-1" aria-labelledby="saveLoanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
