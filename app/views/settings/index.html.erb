@@ -110,8 +110,8 @@
       <!-- Card: Bottom Section (Content) -->
       <div class="card-body">
         <p class="text-muted mb-4 text-sm">Export your financial data for backup or analysis</p>
-        <%= button_to export_data_settings_path, method: :post, class: "btn btn-primary btn-sm w-100" do %>
-          <i class="bi bi-download"></i> Export Data
+        <%= button_to export_data_settings_path, method: :post, class: "btn btn-primary btn-sm d-inline-flex align-items-center gap-2" do %>
+          <i class="bi bi-download"></i><span>Export Data</span>
         <% end %>
       </div>
     </div>
@@ -130,7 +130,7 @@
     <div class="card-body">
       <p class="text-muted mb-4 text-sm">Previously exported data files</p>
       <div class="table-responsive">
-        <table class="table table-sm">
+        <table class="table table-sm export-history-table">
           <thead>
             <tr>
               <th>Filename</th>
@@ -156,6 +156,39 @@
     </div>
   </div>
 <% end %>
+
+<style>
+  /* Export History table - enforce dark theme contrasts */
+  .export-history-table {
+    margin-bottom: 0;
+  }
+  .export-history-table thead th {
+    color: #fafafa;
+    background: transparent !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  }
+  .export-history-table tbody tr {
+    background: transparent !important;
+  }
+  .export-history-table tbody td {
+    color: #e5e5e5;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .export-history-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.05) !important;
+  }
+  /* Buttons inside the export history table */
+  .export-history-table .btn-outline-primary {
+    color: #e5e5e5;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .export-history-table .btn-outline-primary:hover {
+    background: white;
+    color: #171717;
+    border-color: white;
+  }
+</style>
 
 <!-- Delete Account - Full Width at Bottom -->
 <% confirm_message = "Are you sure? This will permanently delete your account and all data. This action cannot be undone." %>

@@ -36,16 +36,12 @@
                 <% confirm_message = "Are you sure you want to delete this tax year?" %>
                 <%= button_to tax_scenario_path(scenario),
                     method: :delete,
-                    class: "p-2 rounded",
-                    style: "background: none; border: none; color: #a3a3a3; transition: all 0.2s; cursor: pointer;",
-                    onmouseover: "this.style.backgroundColor='rgba(239,68,68,0.1)'; this.style.color='#fca5a5';",
-                    onmouseout: "this.style.backgroundColor='transparent'; this.style.color='#a3a3a3';",
+                    form_class: "card-delete-form",
+                    class: "card-delete-btn",
                     aria: { label: "Delete tax year" },
                     title: "Delete tax year",
                     data: { turbo_confirm: confirm_message } do %>
-                  <svg style="width: 20px; height: 20px; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                  </svg>
+                  <i class="bi bi-trash" style="pointer-events: none;"></i>
                 <% end %>
               </div>
             </div>
@@ -83,7 +79,7 @@
               <!-- Highlighted After-Tax Income -->
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <span style="font-size: 1.125rem; font-weight: 600; color: #e5e5e5;">After-Tax Income</span>
-                <span style="font-size: 1.25rem; font-weight: 700; color: #fafafa;">$<%= number_with_delimiter((scenario.after_tax_income rescue 0).round(0)) %></span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: #93c5fd;">$<%= number_with_delimiter((scenario.after_tax_income rescue 0).round(0)) %></span>
               </div>
               <% if scenario.notes.present? %>
                 <div style="padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
@@ -105,7 +101,7 @@
 
 <!-- New Tax Year Modal -->
 <div class="modal fade" id="newTaxYearModal" tabindex="-1" aria-labelledby="newTaxYearModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="newTaxYearModalLabel">New Tax Year</h5>

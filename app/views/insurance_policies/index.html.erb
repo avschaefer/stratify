@@ -37,16 +37,12 @@
                 <% confirm_message = "Are you sure you want to delete this insurance policy?" %>
                 <%= button_to insurance_policy_path(policy),
                     method: :delete,
-                    class: "p-2 rounded",
-                    style: "background: none; border: none; color: #a3a3a3; transition: all 0.2s; cursor: pointer;",
-                    onmouseover: "this.style.backgroundColor='rgba(239,68,68,0.1)'; this.style.color='#fca5a5';",
-                    onmouseout: "this.style.backgroundColor='transparent'; this.style.color='#a3a3a3';",
+                    form_class: "card-delete-form",
+                    class: "card-delete-btn",
                     aria: { label: "Delete insurance policy" },
                     title: "Delete insurance policy",
                     data: { turbo_confirm: confirm_message } do %>
-                  <svg style="width: 20px; height: 20px; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                  </svg>
+                  <i class="bi bi-trash" style="pointer-events: none;"></i>
                 <% end %>
               </div>
             </div>
@@ -92,7 +88,7 @@
 
 <!-- New Policy Modal -->
 <div class="modal fade" id="newPolicyModal" tabindex="-1" aria-labelledby="newPolicyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="newPolicyModalLabel">New Insurance Policy</h5>
