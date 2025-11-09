@@ -9,13 +9,14 @@
 </div>
 
 <!-- Summary Metrics Tile -->
-<div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-4">
+<div class="card mb-4">
+  <div class="card-glow"></div>
   <!-- Card: Top Section (Title) -->
-  <div class="bg-gray-50 p-6">
-    <h2 class="text-xl font-bold text-gray-900">Retirement Overview</h2>
+  <div class="card-header">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Retirement Overview</h2>
   </div>
   <!-- Card: Bottom Section (Metrics) -->
-  <div class="p-6">
+  <div class="card-body">
     <div class="metrics-grid">
       <!-- Row 1: Target Amount -->
       <div class="metric-tile">
@@ -84,15 +85,16 @@
 <div class="row mb-4">
   <!-- Accumulation Phase Chart -->
   <div class="col-md-6">
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 h-100">
+    <div class="card h-100">
+      <div class="card-glow"></div>
       <!-- Card: Top Section (Title) -->
-      <div class="bg-gray-50 p-6 border-b border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900">Retirement Savings Over Time</h2>
+      <div class="card-header">
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Retirement Savings Over Time</h2>
         <p class="text-muted mb-0 text-sm mt-1">Track your retirement savings projections</p>
       </div>
       <!-- Card: Bottom Section (Chart) -->
-      <div class="p-6">
-        <div id="retirementChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
+      <div class="card-body">
+        <div id="retirementChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: #0a0a0a; margin-bottom: 1rem;">
           <div id="retirementChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
         </div>
         
@@ -130,15 +132,16 @@
   
   <!-- Withdrawal Phase Chart -->
   <div class="col-md-6">
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 h-100">
+    <div class="card h-100">
+      <div class="card-glow"></div>
       <!-- Card: Top Section (Title) -->
-      <div class="bg-gray-50 p-6 border-b border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900">Retirement Withdrawal Phase</h2>
+      <div class="card-header">
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Retirement Withdrawal Phase</h2>
         <p class="text-muted mb-0 text-sm mt-1">Track your retirement savings during withdrawal</p>
       </div>
       <!-- Card: Bottom Section (Chart) -->
-      <div class="p-6">
-        <div id="withdrawalChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: white; margin-bottom: 1rem;">
+      <div class="card-body">
+        <div id="withdrawalChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: #0a0a0a; margin-bottom: 1rem;">
           <div id="withdrawalChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
         </div>
         
@@ -176,36 +179,37 @@
 </div>
 
 <div class="mb-4">
-  <h2 class="text-2xl font-semibold text-gray-800">Your Scenarios</h2>
+  <h2 style="font-size: 1.5rem; font-weight: 600; color: #fafafa;">Your Scenarios</h2>
 </div>
 
 <div class="row">
   <% if @scenarios.any? %>
     <% @scenarios.each do |scenario| %>
       <div class="col-md-4 mb-4">
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="card">
+          <div class="card-glow"></div>
           <!-- Card: Top Section (Details) -->
-          <div class="p-6">
+          <div class="card-body">
             <!-- Card Header: Title & Actions -->
-            <div class="flex justify-between items-start mb-6">
+            <div class="d-flex justify-content-between align-items-start mb-4">
               <div>
-                <h2 class="text-xl font-bold text-gray-900"><%= scenario.name %></h2>
+                <h2 style="font-size: 1.25rem; font-weight: 600; color: #fafafa; margin: 0;"><%= scenario.name %></h2>
                 <!-- Wrapped pills in a flex container -->
-                <div class="flex items-center space-x-2 mt-2">
+                <div class="d-flex align-items-center gap-2 mt-2">
                   <% if scenario == @scenarios.first %>
-                    <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">Active</span>
+                    <span class="badge" style="background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 9999px;">Active</span>
                   <% end %>
                   <% if scenario.risk_level.present? %>
-                    <span class="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                    <span class="badge" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 9999px;">
                       <%= scenario.risk_level&.humanize %>
                     </span>
                   <% end %>
                 </div>
               </div>
               <!-- Action Buttons -->
-              <div class="flex space-x-1">
-                <%= link_to edit_retirement_scenario_path(scenario), class: "p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors" do %>
-                  <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <div class="d-flex gap-1">
+                <%= link_to edit_retirement_scenario_path(scenario), class: "p-2 rounded", style: "color: #a3a3a3; text-decoration: none; transition: all 0.2s; cursor: pointer;", onmouseover: "this.style.backgroundColor='rgba(255,255,255,0.05)'; this.style.color='#e5e5e5';", onmouseout: "this.style.backgroundColor='transparent'; this.style.color='#a3a3a3';" do %>
+                  <svg style="width: 20px; height: 20px; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                     <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
                   </svg>
@@ -213,11 +217,14 @@
                 <% confirm_message = "Are you sure you want to delete this retirement scenario?" %>
                 <%= button_to retirement_scenario_path(scenario),
                     method: :delete,
-                    class: "p-2 rounded-lg text-gray-400 hover:bg-red-100 hover:text-red-600 transition-colors",
+                    class: "p-2 rounded",
+                    style: "background: none; border: none; color: #a3a3a3; transition: all 0.2s; cursor: pointer;",
+                    onmouseover: "this.style.backgroundColor='rgba(239,68,68,0.1)'; this.style.color='#fca5a5';",
+                    onmouseout: "this.style.backgroundColor='transparent'; this.style.color='#a3a3a3';",
                     aria: { label: "Delete retirement scenario" },
                     title: "Delete retirement scenario",
                     data: { turbo_confirm: confirm_message } do %>
-                  <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg style="width: 20px; height: 20px; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                   </svg>
                 <% end %>
@@ -225,56 +232,56 @@
             </div>
 
             <!-- Details List -->
-            <div class="space-y-3">
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-500">Target Retirement</span>
-                <span class="text-sm font-medium text-gray-900"><%= (scenario.target_date rescue Date.today).year %></span>
+            <div>
+              <div class="d-flex justify-content-between mb-3">
+                <span style="font-size: 0.875rem; color: #a3a3a3;">Target Retirement</span>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= (scenario.target_date rescue Date.today).year %></span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-500">Current Savings</span>
-                <span class="text-sm font-medium text-gray-900">$<%= number_with_delimiter((scenario.current_savings rescue 0).round(0)) %></span>
+              <div class="d-flex justify-content-between mb-3">
+                <span style="font-size: 0.875rem; color: #a3a3a3;">Current Savings</span>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.current_savings rescue 0).round(0)) %></span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-500">Monthly Contribution</span>
-                <span class="text-sm font-medium text-gray-900">$<%= number_with_delimiter((scenario.monthly_contribution rescue 0).round(0)) %></span>
+              <div class="d-flex justify-content-between mb-3">
+                <span style="font-size: 0.875rem; color: #a3a3a3;">Monthly Contribution</span>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.monthly_contribution rescue 0).round(0)) %></span>
               </div>
               <!-- Progress Bar -->
-              <div class="pt-2">
-                <div class="flex justify-between mb-1">
-                  <span class="text-sm text-gray-500">Progress</span>
-                  <span class="text-sm font-medium text-gray-900"><%= (scenario.progress_percentage rescue 0).round(0) %>%</span>
+              <div style="padding-top: 0.5rem;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span style="font-size: 0.875rem; color: #a3a3a3;">Progress</span>
+                  <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= (scenario.progress_percentage rescue 0).round(0) %>%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div class="bg-blue-600 h-2.5 rounded-full" style="width: <%= [(scenario.progress_percentage rescue 0), 100].min %>%"></div>
+                <div class="progress" style="height: 10px;">
+                  <div class="progress-bar" role="progressbar" style="width: <%= [(scenario.progress_percentage rescue 0), 100].min %>%; background-color: rgba(59, 130, 246, 0.3);"></div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Card: Bottom Section (Summary) -->
-          <div class="bg-gray-50 p-6">
-            <div class="space-y-4">
-              <div class="flex justify-between">
-                <span class="text-sm text-gray-500">Expected Return</span>
-                <span class="text-sm font-medium text-gray-900"><%= (scenario.expected_return_rate rescue 0) %>%</span>
+          <div class="card-header" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div>
+              <div class="d-flex justify-content-between mb-3">
+                <span style="font-size: 0.875rem; color: #a3a3a3;">Expected Return</span>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= (scenario.expected_return_rate rescue 0) %>%</span>
               </div>
               <!-- Highlighted Total Goal -->
-              <div class="flex justify-between items-center">
-                <span class="text-lg font-semibold text-gray-800">Total Goal</span>
-                <span class="text-xl font-bold text-gray-900">$<%= number_with_delimiter((scenario.target_amount rescue 0).round(0)) %></span>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span style="font-size: 1.125rem; font-weight: 600; color: #e5e5e5;">Total Goal</span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: #fafafa;">$<%= number_with_delimiter((scenario.target_amount rescue 0).round(0)) %></span>
               </div>
             </div>
             
             <!-- Set Active Button -->
             <% unless scenario == @scenarios.first %>
-              <div class="mt-4 pt-4 border-t border-gray-200">
-                <%= form_with url: set_active_retirement_scenario_path(scenario), method: :post, local: true, class: "w-full" do |f| %>
-                  <%= f.submit "Set as Active", class: "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
+              <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <%= form_with url: set_active_retirement_scenario_path(scenario), method: :post, local: true, style: "width: 100%;" do |f| %>
+                  <%= f.submit "Set as Active", class: "btn btn-primary", style: "width: 100%;" %>
                 <% end %>
               </div>
             <% else %>
-              <div class="mt-4 pt-4 border-t border-gray-200">
-                <button class="w-full bg-gray-200 text-gray-600 font-medium py-2 px-4 rounded-lg cursor-not-allowed" disabled>Currently Active</button>
+              <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <button class="btn btn-secondary" style="width: 100%;" disabled>Currently Active</button>
               </div>
             <% end %>
           </div>
@@ -289,13 +296,14 @@
 </div>
 
 <!-- Guide Section -->
-<div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-4">
+<div class="card mb-4">
+  <div class="card-glow"></div>
   <!-- Card: Top Section (Title) -->
-  <div class="bg-gray-50 p-6 border-b border-gray-200">
-    <h2 class="text-xl font-bold text-gray-900">Guide</h2>
+  <div class="card-header">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Guide</h2>
   </div>
   <!-- Card: Bottom Section (Content) -->
-  <div class="p-6">
+  <div class="card-body">
     <h6 class="mb-3">Understanding Retirement Planning Terms</h6>
     <div class="mb-3">
       <strong>Dollar Values:</strong>
@@ -323,8 +331,8 @@
         <li><strong>Active Scenario:</strong> The scenario that determines what's shown in the summary cards above</li>
       </ul>
     </div>
-    <div class="alert mb-0" style="background-color: var(--active-bg); border-color: var(--primary-color); color: var(--primary-color);">
-      <small><strong>Tip:</strong> When entering your yearly withdrawal amount, think about what you'd need today. The calculator will automatically adjust for inflation to show you how much you'll need in future dollars.</small>
+    <div class="alert alert-info mb-0">
+      <small style="color: #93c5fd;"><strong>Tip:</strong> When entering your yearly withdrawal amount, think about what you'd need today. The calculator will automatically adjust for inflation to show you how much you'll need in future dollars.</small>
     </div>
   </div>
 </div>
@@ -441,22 +449,22 @@
     }
   };
 
-  // Series configuration shared by both charts
+  // Series configuration shared by both charts - matching image style
   const seriesConfig = {
     projected_savings: {
       title: 'Projected Savings',
-      lineColor: '#3b82f6',
-      topColor: 'rgba(59,130,246,0.2)',
-      bottomColor: 'rgba(59,130,246,0)',
-      color: '#3b82f6',
-      lineStyle: 2 // Dashed line
+      lineColor: '#4285F4',
+      topColor: 'rgba(66, 133, 244, 0.3)',
+      bottomColor: 'rgba(66, 133, 244, 0.05)',
+      color: '#4285F4',
+      lineStyle: 0 // Solid line
     },
     target_savings: {
       title: 'Target Savings',
-      lineColor: '#8b5cf6',
-      topColor: 'rgba(139,92,246,0.2)',
-      bottomColor: 'rgba(139,92,246,0)',
-      color: '#8b5cf6'
+      lineColor: '#4285F4',
+      topColor: 'rgba(66, 133, 244, 0.3)',
+      bottomColor: 'rgba(66, 133, 244, 0.05)',
+      color: '#4285F4'
     }
   };
 
@@ -471,7 +479,9 @@
           lineColor: config.lineColor,
           topColor: config.topColor,
           bottomColor: config.bottomColor,
-          lineWidth: 2
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: true
         };
         if (config.lineStyle !== undefined) {
           options.lineStyle = config.lineStyle;
@@ -482,7 +492,9 @@
           lineColor: config.lineColor,
           topColor: config.topColor,
           bottomColor: config.bottomColor,
-          lineWidth: 2
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: true
         };
         if (config.lineStyle !== undefined) {
           options.lineStyle = config.lineStyle;
@@ -493,7 +505,9 @@
       if (typeof chart.addLineSeries === 'function') {
         const options = {
           color: config.color,
-          lineWidth: 2
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: true
         };
         if (config.lineStyle !== undefined) {
           options.lineStyle = config.lineStyle;
@@ -502,7 +516,9 @@
       } else if (LineSeries && typeof chart.addSeries === 'function') {
         const options = {
           color: config.color,
-          lineWidth: 2
+          lineWidth: 2,
+          priceLineVisible: false,
+          lastValueVisible: true
         };
         if (config.lineStyle !== undefined) {
           options.lineStyle = config.lineStyle;
@@ -533,12 +549,36 @@
         width: containerRect.clientWidth,
         height: containerRect.clientHeight,
         layout: {
-          background: { color: '#ffffff' },
-          textColor: '#1e293b'
+          background: { color: '#000000' },
+          textColor: '#ffffff',
+          fontSize: 12
         },
         grid: {
-          vertLines: { color: '#e2e8f0' },
-          horzLines: { color: '#e2e8f0' }
+          vertLines: { visible: false },
+          horzLines: { visible: false }
+        },
+        crosshair: {
+          mode: 1,
+          vertLine: {
+            color: '#4285F4',
+            width: 1,
+            style: 2,
+            labelBackgroundColor: '#4285F4'
+          },
+          horzLine: {
+            color: '#4285F4',
+            width: 1,
+            style: 2,
+            labelBackgroundColor: '#4285F4'
+          }
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          textColor: '#ffffff'
+        },
+        timeScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          textColor: '#ffffff'
         }
       });
 
@@ -609,12 +649,36 @@
         width: containerRect.clientWidth,
         height: containerRect.clientHeight,
         layout: {
-          background: { color: '#ffffff' },
-          textColor: '#1e293b'
+          background: { color: '#000000' },
+          textColor: '#ffffff',
+          fontSize: 12
         },
         grid: {
-          vertLines: { color: '#e2e8f0' },
-          horzLines: { color: '#e2e8f0' }
+          vertLines: { visible: false },
+          horzLines: { visible: false }
+        },
+        crosshair: {
+          mode: 1,
+          vertLine: {
+            color: '#4285F4',
+            width: 1,
+            style: 2,
+            labelBackgroundColor: '#4285F4'
+          },
+          horzLine: {
+            color: '#4285F4',
+            width: 1,
+            style: 2,
+            labelBackgroundColor: '#4285F4'
+          }
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          textColor: '#ffffff'
+        },
+        timeScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          textColor: '#ffffff'
         }
       });
 
@@ -854,7 +918,7 @@
     width: 100%;
     height: 400px;
     overflow: hidden;
-    background: white;
+    background: #000000;
   }
   
   #retirementChart,
@@ -867,14 +931,14 @@
     z-index: 1;
   }
   
-  /* Modern Chart Controls - Matching Reference Design */
+  /* Modern Chart Controls - Dark Theme */
   .chart-controls-container {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5rem;
     margin-top: 1.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   @media (min-width: 768px) {
@@ -891,7 +955,7 @@
   .chart-control-label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #9ca3af;
+    color: #a3a3a3;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.5rem;
@@ -901,9 +965,10 @@
   .chart-button-group {
     display: flex;
     gap: 0.25rem;
-    background: #f3f4f6;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 0.5rem;
     padding: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   .chart-button-toggle {
@@ -911,7 +976,7 @@
     padding: 0.375rem 0.75rem;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #4b5563;
+    color: #a3a3a3;
     background: transparent;
     border: none;
     border-radius: 0.375rem;
@@ -922,17 +987,17 @@
   }
   
   .chart-button-toggle:hover {
-    color: #111827;
+    color: #e5e5e5;
   }
   
   .chart-button-toggle.active {
-    background: #ffffff;
-    color: #111827;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.15);
+    color: #fafafa;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
   }
   
   .chart-button-toggle.active:hover {
-    background: #ffffff;
-    color: #111827;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fafafa;
   }
 </style>
