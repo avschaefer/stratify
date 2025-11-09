@@ -14,8 +14,13 @@
 </div>
 
 <!-- Dashboard Metrics -->
-<div class="card mb-4">
-  <div class="card-body">
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-4">
+  <!-- Card: Top Section (Title) -->
+  <div class="bg-gray-50 p-6">
+    <h2 class="text-xl font-bold text-gray-900">Financial Overview</h2>
+  </div>
+  <!-- Card: Bottom Section (Metrics) -->
+  <div class="p-6">
     <div class="metrics-grid">
       <!-- Net Worth -->
       <div class="metric-tile">
@@ -62,9 +67,13 @@
 
 <div class="row">
   <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">Asset Allocation</div>
-      <div class="card-body">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-4">
+      <!-- Card: Top Section (Title) -->
+      <div class="bg-gray-50 p-6 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-900">Asset Allocation</h2>
+      </div>
+      <!-- Card: Bottom Section (Content) -->
+      <div class="p-6">
         <% if @asset_allocation.any? %>
           <div class="mb-3">
             <% total_assets = @asset_allocation.values.sum %>
@@ -72,8 +81,8 @@
               <% percentage = total_assets > 0 ? (value / total_assets * 100) : 0 %>
               <div class="mb-2">
                 <div class="d-flex justify-content-between mb-1">
-                  <span><%= asset_type.humanize %></span>
-                  <span><%= number_with_precision(percentage, precision: 1) %>%</span>
+                  <span class="text-sm text-gray-700"><%= asset_type.humanize %></span>
+                  <span class="text-sm font-medium text-gray-900"><%= number_with_precision(percentage, precision: 1) %>%</span>
                 </div>
                 <div class="progress" style="height: 20px;">
                   <div class="progress-bar" role="progressbar" style="width: <%= percentage %>%">
@@ -91,17 +100,21 @@
   </div>
   
   <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">Monthly Trends</div>
-      <div class="card-body">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-4">
+      <!-- Card: Top Section (Title) -->
+      <div class="bg-gray-50 p-6 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-900">Monthly Trends</h2>
+      </div>
+      <!-- Card: Bottom Section (Content) -->
+      <div class="p-6">
         <% if @monthly_trends.any? %>
           <div class="mb-3">
             <% sorted_trends = @monthly_trends.sort_by { |date, _| date } %>
             <% sorted_trends.last(6).each do |date, data| %>
               <div class="mb-2">
                 <div class="d-flex justify-content-between mb-1">
-                  <span><%= date.strftime('%b %Y') %></span>
-                  <span><strong>$<%= number_with_delimiter(data[:net_worth].round(0)) %></strong></span>
+                  <span class="text-sm text-gray-700"><%= date.strftime('%b %Y') %></span>
+                  <span class="text-sm font-medium text-gray-900"><strong>$<%= number_with_delimiter(data[:net_worth].round(0)) %></strong></span>
                 </div>
                 <div class="d-flex justify-content-between small text-muted">
                   <span>Assets: $<%= number_with_delimiter(data[:assets].round(0)) %></span>
@@ -119,12 +132,14 @@
 </div>
 
 <!-- Quick Actions Section -->
-<div class="card mt-4 quick-actions">
-  <div class="card-body">
-    <div class="mb-3">
-      <h5 class="mb-1">Quick Actions</h5>
-      <p class="text-muted mb-0" style="font-size: 0.875rem;">Common tasks you may want to perform</p>
-    </div>
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden mt-4 quick-actions">
+  <!-- Card: Top Section (Title) -->
+  <div class="bg-gray-50 p-6 border-b border-gray-200">
+    <h2 class="text-xl font-bold text-gray-900">Quick Actions</h2>
+    <p class="text-muted mb-0 text-sm mt-1">Common tasks you may want to perform</p>
+  </div>
+  <!-- Card: Bottom Section (Content) -->
+  <div class="p-6">
     <div class="row g-3">
       <div class="col-md-3">
         <%= link_to portfolios_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
@@ -165,6 +180,3 @@
     </div>
   </div>
 </div>
-
-
-

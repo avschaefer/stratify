@@ -13,6 +13,36 @@ class SettingsController < ApplicationController
     end
   end
   
+  def update_account
+    # Update email if provided
+    if params[:user] && params[:user][:email].present?
+      unless current_user.update(email: params[:user][:email])
+        redirect_to settings_path, alert: 'Error updating email. ' + current_user.errors.full_messages.join(', ')
+        return
+      end
+    end
+    
+    # Update password if provided
+    if params[:new_password].present?
+      if params[:current_password].blank?
+        redirect_to settings_path, alert: 'Current password is required to change password.'
+        return
+      end
+      
+      unless current_user.authenticate(params[:current_password])
+        redirect_to settings_path, alert: 'Current password is incorrect.'
+        return
+      end
+      
+      unless current_user.update(password: params[:new_password], password_confirmation: params[:password_confirmation])
+        redirect_to settings_path, alert: 'Error updating password. ' + current_user.errors.full_messages.join(', ')
+        return
+      end
+    end
+    
+    redirect_to settings_path, notice: 'Account updated successfully.'
+  end
+  
   def update_password
     if current_user.authenticate(params[:current_password])
       if current_user.update(password: params[:new_password], password_confirmation: params[:password_confirmation])

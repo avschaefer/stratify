@@ -5,20 +5,54 @@
 
 <!-- Settings Cards Grid -->
 <div class="row g-3 mb-4">
-  <!-- Account Information -->
+  <!-- Account (Email & Password) -->
   <div class="col-md-6 col-lg-4">
-    <div class="card h-100">
-      <div class="card-header">
-        <h5 class="mb-0">Account Information</h5>
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card: Top Section (Title) -->
+      <div class="bg-gray-50 p-6">
+        <h2 class="text-xl font-bold text-gray-900">Account</h2>
       </div>
-      <div class="card-body">
-        <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+      <!-- Card: Bottom Section (Form) -->
+      <div class="p-6">
+        <%= form_with url: update_account_settings_path, method: :post, local: true do |f| %>
           <div class="mb-3">
-            <label class="form-label">Email Address</label>
+            <label class="form-label text-sm text-gray-700">Email Address</label>
             <input type="email" name="user[email]" class="form-control form-control-sm" value="<%= @user_settings.email %>" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Currency</label>
+            <label class="form-label text-sm text-gray-700">Current Password</label>
+            <input type="password" name="current_password" class="form-control form-control-sm" placeholder="Enter current password">
+            <small class="text-muted text-xs">Required only if changing password</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-sm text-gray-700">New Password</label>
+            <input type="password" name="new_password" class="form-control form-control-sm" placeholder="Enter new password">
+            <small class="text-muted text-xs">Leave blank to keep current password</small>
+          </div>
+          <div class="mb-4">
+            <label class="form-label text-sm text-gray-700">Confirm New Password</label>
+            <input type="password" name="password_confirmation" class="form-control form-control-sm" placeholder="Confirm new password">
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm">Update Account</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <div class="col-md-6 col-lg-4">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card: Top Section (Title) -->
+      <div class="bg-gray-50 p-6">
+        <h2 class="text-xl font-bold text-gray-900">Preferences</h2>
+      </div>
+      <!-- Card: Bottom Section (Form) -->
+      <div class="p-6">
+        <%= form_with url: settings_path, method: :patch, local: true do |f| %>
+          <div class="mb-3">
+            <label class="form-label text-sm text-gray-700">Currency</label>
             <select name="user[currency]" class="form-select form-select-sm">
               <option value="USD" <%= 'selected' if @user_settings.currency == 'USD' || @user_settings.currency.nil? %>>USD ($)</option>
               <option value="EUR" <%= 'selected' if @user_settings.currency == 'EUR' %>>EUR (€)</option>
@@ -30,7 +64,7 @@
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Timezone</label>
+            <label class="form-label text-sm text-gray-700">Timezone</label>
             <select name="user[timezone]" class="form-select form-select-sm">
               <option value="America/New_York" <%= 'selected' if @user_settings.timezone == 'America/New_York' || @user_settings.timezone.nil? %>>Eastern Time (ET)</option>
               <option value="America/Chicago" <%= 'selected' if @user_settings.timezone == 'America/Chicago' %>>Central Time (CT)</option>
@@ -46,8 +80,8 @@
               <option value="Australia/Sydney" <%= 'selected' if @user_settings.timezone == 'Australia/Sydney' %>>Sydney (AEDT)</option>
             </select>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Date Format</label>
+          <div class="mb-4">
+            <label class="form-label text-sm text-gray-700">Date Format</label>
             <select name="user[date_format]" class="form-select form-select-sm">
               <option value="MM/DD/YYYY" <%= 'selected' if @user_settings.date_format == 'MM/DD/YYYY' || @user_settings.date_format.nil? %>>MM/DD/YYYY</option>
               <option value="DD/MM/YYYY" <%= 'selected' if @user_settings.date_format == 'DD/MM/YYYY' %>>DD/MM/YYYY</option>
@@ -63,43 +97,17 @@
     </div>
   </div>
 
-  <!-- Password Change -->
-  <div class="col-md-6 col-lg-4">
-    <div class="card h-100">
-      <div class="card-header">
-        <h5 class="mb-0">Change Password</h5>
-      </div>
-      <div class="card-body">
-        <%= form_with url: update_password_settings_path, method: :post, local: true do |f| %>
-          <div class="mb-3">
-            <label class="form-label">Current Password</label>
-            <input type="password" name="current_password" class="form-control form-control-sm" placeholder="Enter current password" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">New Password</label>
-            <input type="password" name="new_password" class="form-control form-control-sm" placeholder="Enter new password" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Confirm New Password</label>
-            <input type="password" name="password_confirmation" class="form-control form-control-sm" placeholder="Confirm new password" required>
-          </div>
-          <div class="d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-
   <!-- Data Export -->
   <div class="col-md-6 col-lg-4">
-    <div class="card h-100">
-      <div class="card-header">
-        <h5 class="mb-0">Data Export</h5>
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <!-- Card: Top Section (Title) -->
+      <div class="bg-gray-50 p-6">
+        <h2 class="text-xl font-bold text-gray-900">Data Export</h2>
       </div>
-      <div class="card-body">
-        <p class="text-muted mb-3 small">Export your financial data for backup or analysis</p>
-        <%= button_to export_data_settings_path, method: :post, class: "btn btn-outline-primary btn-sm w-100" do %>
+      <!-- Card: Bottom Section (Content) -->
+      <div class="p-6">
+        <p class="text-muted mb-4 text-sm">Export your financial data for backup or analysis</p>
+        <%= button_to export_data_settings_path, method: :post, class: "btn btn-primary btn-sm w-100" do %>
           <i class="bi bi-download"></i> Export Data
         <% end %>
       </div>
@@ -109,12 +117,14 @@
 
 <!-- Export History -->
 <% if @data_files.any? %>
-  <div class="card mb-4">
-    <div class="card-header">
-      <h5 class="mb-0">Export History</h5>
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-4">
+    <!-- Card: Top Section (Title) -->
+    <div class="bg-gray-50 p-6">
+      <h2 class="text-xl font-bold text-gray-900">Export History</h2>
     </div>
-    <div class="card-body">
-      <p class="text-muted mb-3 small">Previously exported data files</p>
+    <!-- Card: Bottom Section (Content) -->
+    <div class="p-6">
+      <p class="text-muted mb-4 text-sm">Previously exported data files</p>
       <div class="table-responsive">
         <table class="table table-sm">
           <thead>
@@ -143,14 +153,16 @@
   </div>
 <% end %>
 
-<!-- Danger Zone - Full Width at Bottom -->
+<!-- Delete Account - Full Width at Bottom -->
 <% confirm_message = "Are you sure? This will permanently delete your account and all data. This action cannot be undone." %>
-<div class="card border-danger">
-  <div class="card-header bg-danger text-white">
-    <h5 class="mb-0">Danger Zone</h5>
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-red-200">
+  <!-- Card: Top Section (Title) -->
+  <div class="bg-red-50 p-6 border-b border-red-200">
+    <h2 class="text-xl font-bold text-red-900">Delete Account</h2>
   </div>
-  <div class="card-body">
-    <p class="text-muted mb-3"><strong>Warning:</strong> Deleting your account will permanently remove all your data including portfolios, loans, savings accounts, and all other financial information. This action cannot be undone.</p>
+  <!-- Card: Bottom Section (Content) -->
+  <div class="p-6">
+    <p class="text-gray-700 mb-4"><strong class="text-red-600">Warning:</strong> Deleting your account will permanently remove all your data including portfolios, loans, savings accounts, and all other financial information. This action cannot be undone.</p>
     <%= form_with url: destroy_account_settings_path,
                   method: :delete,
                   local: true,
@@ -160,7 +172,7 @@
       <div class="row align-items-end">
         <div class="col-md-8">
           <div class="mb-3 mb-md-0">
-            <label class="form-label">Enter your password to confirm</label>
+            <label class="form-label text-sm text-gray-700">Enter your password to confirm</label>
             <input type="password" name="password" class="form-control" placeholder="Enter password to confirm deletion" required>
           </div>
         </div>

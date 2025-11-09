@@ -63,6 +63,7 @@ Rails.application.routes.draw do
       post :export_data
       get :download_data_file
       post :update_password
+      post :update_account
       delete :destroy_account
     end
   end
