@@ -405,10 +405,14 @@
 </div>
 
 <script>
-  // Store calculator values globally
+  (function() {
+    // Scoped state for this page instance only (prevents global re-declare errors with Turbo)
   let calculatorValues = {};
   
-  document.getElementById('loanCalculator').addEventListener('submit', function(e) {
+    function init() {
+      const calcForm = document.getElementById('loanCalculator');
+      if (calcForm) {
+        calcForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
     const formData = {
@@ -420,7 +424,7 @@
       compounding_period: document.getElementById('compounding_period').value
     };
     
-    // Store values for saving
+          // Store values for saving (scoped to this page instance)
     calculatorValues = formData;
     
     fetch('<%= calculate_loans_path %>', {
@@ -478,8 +482,11 @@
       alert('Error calculating loan: ' + (error.error || error.message || 'Unknown error'));
     });
   });
+      }
   
-  document.getElementById('toggleAmortization').addEventListener('click', function() {
+      const toggleBtn = document.getElementById('toggleAmortization');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
     const schedule = document.getElementById('amortizationSchedule');
     if (schedule.style.display === 'none') {
       schedule.style.display = 'block';
@@ -489,9 +496,11 @@
       this.textContent = 'Show Amortization Schedule';
     }
   });
+      }
   
-  // Populate save loan form when modal is opened
-  document.getElementById('saveLoanBtn').addEventListener('click', function() {
+      const saveBtn = document.getElementById('saveLoanBtn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
     if (calculatorValues.principal) {
       document.getElementById('saveLoanPrincipal').value = calculatorValues.principal;
       document.getElementById('saveLoanInterestRate').value = calculatorValues.interest_rate;
@@ -501,4 +510,13 @@
       document.getElementById('saveLoanCompoundingPeriod').value = calculatorValues.compounding_period;
     }
   });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
 </script>

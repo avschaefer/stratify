@@ -64,12 +64,20 @@
                 <span style="font-size: 0.875rem; color: #a3a3a3;">Tax Paid</span>
                 <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.tax_paid rescue 0).round(0)) %></span>
               </div>
-              <% if scenario.refund.to_f > 0 %>
+              <div class="d-flex justify-content-between mb-3">
+                <span style="font-size: 0.875rem; color: #a3a3a3;">Effective Tax Rate</span>
+                <% effective_rate = (scenario.taxable_income.to_f > 0 ? (scenario.tax_paid.to_f / scenario.taxable_income.to_f * 100.0) : 0.0) %>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= number_with_precision(effective_rate, precision: 2) %>%</span>
+              </div>
                 <div class="d-flex justify-content-between">
                   <span style="font-size: 0.875rem; color: #a3a3a3;">Refund</span>
-                  <span style="font-size: 0.875rem; font-weight: 500; color: #6ee7b7;">$<%= number_with_delimiter((scenario.refund rescue 0).round(0)) %></span>
+                <% refund_amount = scenario.refund.to_f %>
+                <% if refund_amount > 0 %>
+                  <span style="font-size: 0.875rem; font-weight: 500; color: #6ee7b7;">$<%= number_with_delimiter(refund_amount.round(0)) %></span>
+                <% else %>
+                  <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$0</span>
+                <% end %>
                 </div>
-              <% end %>
             </div>
           </div>
 
@@ -137,13 +145,13 @@
             <div class="col-md-6">
               <div class="mb-3">
                 <%= f.label :income, "Annual Income", class: "form-label" %>
-                <%= f.number_field :income, step: 0.01, class: "form-control", required: true %>
+                <%= f.number_field :income, step: 0.01, class: "form-control", required: true, id: "newTaxIncome" %>
               </div>
             </div>
             <div class="col-md-6">
               <div class="mb-3">
                 <%= f.label :deductions, "Deductions", class: "form-label" %>
-                <%= f.number_field :deductions, step: 0.01, class: "form-control", required: true %>
+                <%= f.number_field :deductions, step: 0.01, class: "form-control", required: true, id: "newTaxDeductions" %>
               </div>
             </div>
           </div>
@@ -151,7 +159,7 @@
             <div class="col-md-4">
               <div class="mb-3">
                 <%= f.label :taxable_income, "Taxable Income", class: "form-label" %>
-                <%= f.number_field :taxable_income, step: 0.01, class: "form-control", required: true %>
+                <%= f.number_field :taxable_income, step: 0.01, class: "form-control", required: true, id: "newTaxTaxableIncome" %>
               </div>
             </div>
             <div class="col-md-4">
@@ -184,3 +192,38 @@
     </div>
   </div>
 </div>
+
+<script>
+(function() {
+  function initAutoCalc() {
+    var incomeEl = document.getElementById('newTaxIncome');
+    var deductionsEl = document.getElementById('newTaxDeductions');
+    var taxableEl = document.getElementById('newTaxTaxableIncome');
+    if (!incomeEl || !deductionsEl || !taxableEl) return;
+
+    var manualOverride = false;
+    taxableEl.addEventListener('input', function() { manualOverride = true; });
+
+    function num(el) {
+      var v = parseFloat(el.value);
+      return isNaN(v) ? 0 : v;
+    }
+
+    function update() {
+      if (manualOverride) return;
+      var value = Math.max(0, num(incomeEl) - num(deductionsEl));
+      taxableEl.value = value;
+    }
+
+    incomeEl.addEventListener('input', update);
+    deductionsEl.addEventListener('input', update);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAutoCalc);
+  } else {
+    initAutoCalc();
+  }
+  document.addEventListener('turbo:load', initAutoCalc);
+})();
+</script>

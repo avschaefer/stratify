@@ -13,7 +13,7 @@ class TaxScenariosController < ApplicationController
     else
       @scenarios = current_user.tax_scenarios.order(created_at: :desc)
       flash.now[:alert] = 'Error saving tax scenario. Please fill out all required fields.'
-      render :index
+      render :index, status: :unprocessable_entity
     end
   end
   
@@ -33,7 +33,7 @@ class TaxScenariosController < ApplicationController
       redirect_to tax_scenarios_path, notice: 'Tax scenario updated successfully.'
     else
       flash.now[:alert] = 'Error updating tax scenario. Please fill out all required fields.'
-      render :edit
+      render :edit, status: :unprocessable_entity
     end
   end
   

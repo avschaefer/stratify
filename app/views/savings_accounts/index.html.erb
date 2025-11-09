@@ -87,8 +87,9 @@
               </td>
               <td style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
                 <div style="display: flex; flex-direction: column;">
-                  <span class="<%= @net_savings_2_months_ago >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
-                    <%= @net_savings_2_months_ago >= 0 ? '+' : '' %>$<%= number_with_delimiter(@net_savings_2_months_ago.round(0)) %>
+                  <% val2 = @net_savings_2_months_ago.to_f %>
+                  <span class="<%= val2 >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                    <%= val2 >= 0 ? '+' : '' %>$<%= number_with_delimiter(val2.round(0)) %>
                   </span>
                   <% if @net_savings_1_month_ago && @net_savings_2_months_ago %>
                     <% change = @net_savings_1_month_ago - @net_savings_2_months_ago %>
@@ -101,10 +102,11 @@
                   <% end %>
                 </div>
               </td>
-              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
                 <div style="display: flex; flex-direction: column;">
-                  <span class="<%= @net_savings_1_month_ago >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
-                    <%= @net_savings_1_month_ago >= 0 ? '+' : '' %>$<%= number_with_delimiter(@net_savings_1_month_ago.round(0)) %>
+                  <% val1 = @net_savings_1_month_ago.to_f %>
+                  <span class="<%= val1 >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                    <%= val1 >= 0 ? '+' : '' %>$<%= number_with_delimiter(val1.round(0)) %>
                   </span>
                   <% if @net_savings_current && @net_savings_1_month_ago %>
                     <% change = @net_savings_current - @net_savings_1_month_ago %>
@@ -117,10 +119,11 @@
                   <% end %>
                 </div>
               </td>
-              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;">
+              <td style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
                 <div style="display: flex; flex-direction: column;">
-                  <span class="<%= @net_savings_current >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
-                    <%= @net_savings_current >= 0 ? '+' : '' %>$<%= number_with_delimiter(@net_savings_current.round(0)) %>
+                  <% valc = @net_savings_current.to_f %>
+                  <span class="<%= valc >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                    <%= valc >= 0 ? '+' : '' %>$<%= number_with_delimiter(valc.round(0)) %>
                   </span>
                   <small class="text-muted" style="font-size: 0.75rem;">Current month</small>
                 </div>
@@ -143,34 +146,34 @@
                 </tr>
               <% end %>
               <tr>
-                <td>
-                  <div class="d-flex justify-content-between align-items-start">
+                <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
+                  <div class="d-flex align-items-start" style="gap: 0.5rem;">
+                    <%= link_to edit_savings_account_path(account), class: "btn btn-sm btn-outline-primary", style: "flex-shrink: 0;" do %>
+                      <i class="bi bi-pencil"></i>
+                    <% end %>
                     <div>
-                      <strong><%= account.name %></strong>
+                      <strong style="color: #fafafa;"><%= account.name %></strong>
                       <br>
                       <small class="text-muted"><%= account.account_type&.humanize %></small>
                     </div>
-                    <%= link_to edit_savings_account_path(account), class: "btn btn-sm btn-outline-primary" do %>
-                      <i class="bi bi-pencil"></i>
-                    <% end %>
                   </div>
                 </td>
-                <td>
-                  <span class="<%= account.balance_2_months_ago < 0 ? 'text-danger' : '' %>">
+                <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
+                  <span class="<%= account.balance_2_months_ago < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_2_months_ago < 0 ? '#fca5a5' : '#e5e5e5' %>;">
                     $<%= number_with_delimiter(account.balance_2_months_ago.round(0)) %>
                   </span>
                 </td>
-                <td>
-                  <span class="<%= account.balance_1_month_ago < 0 ? 'text-danger' : '' %>">
+                <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
+                  <span class="<%= account.balance_1_month_ago < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_1_month_ago < 0 ? '#fca5a5' : '#e5e5e5' %>;">
                     $<%= number_with_delimiter(account.balance_1_month_ago.round(0)) %>
                   </span>
                 </td>
-                <td>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <strong class="<%= account.balance_current < 0 ? 'text-danger' : '' %>">
+                <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
+                  <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                    <strong class="<%= account.balance_current < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_current < 0 ? '#fca5a5' : '#fafafa' %>;">
                       $<%= number_with_delimiter(account.balance_current.round(0)) %>
                     </strong>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBalanceModal<%= account.id %>">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBalancesModal<%= account.id %>" style="flex-shrink: 0;">
                       <i class="bi bi-pencil"></i>
                     </button>
                   </div>
@@ -234,51 +237,156 @@
 </div>
 
 <% @accounts.each do |account| %>
-  <!-- Edit Balance Modal for <%= account.name %> -->
-  <div class="modal" id="editBalanceModal<%= account.id %>" tabindex="-1" aria-labelledby="editBalanceModalLabel<%= account.id %>" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+  <!-- Edit Balances Modal for <%= account.name %> -->
+  <div class="modal" id="editBalancesModal<%= account.id %>" tabindex="-1" aria-labelledby="editBalancesModalLabel<%= account.id %>" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editBalanceModalLabel<%= account.id %>">Edit Balance - <%= account.name %></h5>
+          <h5 class="modal-title" id="editBalancesModalLabel<%= account.id %>">Edit Monthly Balances - <%= account.name %></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
-          <% if account.current_snapshot_id %>
-            <%= form_with url: savings_account_monthly_snapshot_path(account, account.current_snapshot_id), method: :patch, local: true do |f| %>
-              <div class="mb-3">
-                <%= f.label :recorded_at, "Date", class: "form-label" %>
-                <%= f.date_field :recorded_at, value: Date.today.beginning_of_month, class: "form-control", required: true %>
-              </div>
-              <div class="mb-3">
-                <%= f.label :balance, "Balance", class: "form-label" %>
-                <%= f.number_field :balance, value: account.balance_current, step: 0.01, class: "form-control", required: true %>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <%= f.submit "Update Balance", class: "btn btn-primary" %>
-              </div>
-            <% end %>
-          <% else %>
-            <%= form_with url: savings_account_monthly_snapshots_path(account), local: true do |f| %>
-              <div class="mb-3">
-                <%= f.label :recorded_at, "Date", class: "form-label" %>
-                <%= f.date_field :recorded_at, value: Date.today.beginning_of_month, class: "form-control", required: true %>
-              </div>
-              <div class="mb-3">
-                <%= f.label :balance, "Balance", class: "form-label" %>
-                <%= f.number_field :balance, value: account.balance_current, step: 0.01, class: "form-control", required: true %>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <%= f.submit "Save Balance", class: "btn btn-primary" %>
-              </div>
-            <% end %>
-          <% end %>
+        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+          <% 
+            # Generate list of months from 2 years ago to current month
+            start_date = 24.months.ago.beginning_of_month
+            end_date = Date.today.beginning_of_month
+            months_list = []
+            current = start_date
+            while current <= end_date
+              months_list << current
+              current = current.next_month
+            end
+            
+            # Get existing snapshots indexed by month
+            existing_snapshots = account.monthly_snapshots.index_by { |s| s.recorded_at.beginning_of_month }
+          %>
+          <form id="bulkBalancesForm<%= account.id %>" data-account-id="<%= account.id %>">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th style="width: 40%; color: #e5e5e5; background-color: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Month</th>
+                  <th style="width: 60%; color: #e5e5e5; background-color: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% months_list.reverse.each do |month_date| %>
+                  <% snapshot = existing_snapshots[month_date] %>
+                  <tr style="background-color: rgba(255, 255, 255, 0.02);">
+                    <td style="color: #e5e5e5; padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                      <strong><%= month_date.strftime('%B %Y') %></strong>
+                    </td>
+                    <td style="padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                      <input 
+                        type="hidden" 
+                        name="snapshots[][recorded_at]" 
+                        value="<%= month_date.strftime('%Y-%m-%d') %>"
+                      >
+                      <% if snapshot %>
+                        <input 
+                          type="hidden" 
+                          name="snapshots[][id]" 
+                          value="<%= snapshot.id %>"
+                        >
+                      <% end %>
+                      <input 
+                        type="number" 
+                        name="snapshots[][balance]" 
+                        value="<%= snapshot ? snapshot.balance : '' %>"
+                        step="0.01" 
+                        class="form-control form-control-sm"
+                        placeholder="Enter balance"
+                        style="background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); color: #e5e5e5;"
+                      >
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="saveBalances(<%= account.id %>)">Save All Changes</button>
         </div>
       </div>
     </div>
   </div>
 <% end %>
+
+<script>
+(function() {
+  function saveBalances(accountId) {
+    const form = document.getElementById('bulkBalancesForm' + accountId);
+    const formData = new FormData(form);
+    
+    // Collect all snapshot data
+    const snapshots = [];
+    const snapshotInputs = form.querySelectorAll('input[name^="snapshots["]');
+    const rows = form.querySelectorAll('tbody tr');
+    
+    rows.forEach((row, index) => {
+      const dateInput = row.querySelector('input[name*="[recorded_at]"]');
+      const idInput = row.querySelector('input[name*="[id]"]');
+      const balanceInput = row.querySelector('input[name*="[balance]"]');
+      
+      if (dateInput && balanceInput && balanceInput.value.trim() !== '') {
+        const snapshotData = {
+          recorded_at: dateInput.value,
+          balance: balanceInput.value
+        };
+        
+        if (idInput && idInput.value) {
+          snapshotData.id = idInput.value;
+        }
+        
+        snapshots.push(snapshotData);
+      }
+    });
+    
+    // Send to server
+    fetch(`/savings_accounts/${accountId}/bulk_update_snapshots`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ snapshots: snapshots })
+    })
+    .then(response => {
+      return response.json().then(data => {
+        if (!response.ok) {
+          throw { data: data, status: response.status };
+        }
+        return data;
+      });
+    })
+    .then(data => {
+      // Close modal and reload page
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editBalancesModal' + accountId));
+      if (modal) {
+        modal.hide();
+      }
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert('Error saving balances: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      if (error.data && error.data.errors) {
+        alert('Error saving balances: ' + error.data.errors.join(', '));
+      } else {
+        alert('Error saving balances. Please try again.');
+      }
+    });
+  }
+  
+  // Make function globally available
+  window.saveBalances = saveBalances;
+})();
+</script>
 
 <script>
 (function() {

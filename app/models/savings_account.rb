@@ -1,6 +1,6 @@
 class SavingsAccount < ApplicationRecord
   belongs_to :user
-  has_many :monthly_snapshots, dependent: :destroy
+  include Snapshotable
   
   validates :name, presence: true
   validates :account_type, presence: true

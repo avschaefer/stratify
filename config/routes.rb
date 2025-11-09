@@ -30,6 +30,9 @@ Rails.application.routes.draw do
     collection do
       get :chart_data
     end
+    member do
+      post :bulk_update_snapshots
+    end
     resources :monthly_snapshots, only: [:create, :update, :destroy], controller: 'monthly_snapshots'
   end
   
