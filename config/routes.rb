@@ -29,6 +29,8 @@ Rails.application.routes.draw do
   resources :savings_accounts do
     collection do
       get :chart_data
+      get :cash_flow_chart_data
+      get :expenses_chart_data
       post :reorder
     end
     member do

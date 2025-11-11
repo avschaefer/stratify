@@ -78,6 +78,44 @@ class SavingsAccountsController < ApplicationController
   rescue => e
     handle_calculation_error(e)
   end
+
+  def cash_flow_chart_data
+    Rails.logger.info "Cash flow chart data requested"
+    if current_user.nil?
+      Rails.logger.error "No current user found"
+      render json: { error: "Authentication required", cash_flow: [] }, status: :unauthorized
+      return
+    end
+
+    Rails.logger.info "Cash flow chart data requested for user #{current_user.id}"
+    chart_service = CashFlowChartDataService.new(user: current_user)
+    chart_data = chart_service.generate
+    Rails.logger.info "Cash flow chart data generated successfully: #{chart_data.inspect}"
+    render json: chart_data
+  rescue => e
+    Rails.logger.error "Cash flow chart data error: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    render json: { error: e.message, cash_flow: [] }, status: :internal_server_error
+  end
+
+  def expenses_chart_data
+    Rails.logger.info "Expenses chart data requested"
+    if current_user.nil?
+      Rails.logger.error "No current user found"
+      render json: { error: "Authentication required", expenses: [] }, status: :unauthorized
+      return
+    end
+
+    Rails.logger.info "Expenses chart data requested for user #{current_user.id}"
+    chart_service = ExpensesChartDataService.new(user: current_user)
+    chart_data = chart_service.generate
+    Rails.logger.info "Expenses chart data generated successfully: #{chart_data.inspect}"
+    render json: chart_data
+  rescue => e
+    Rails.logger.error "Expenses chart data error: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    render json: { error: e.message, expenses: [] }, status: :internal_server_error
+  end
   
   def bulk_update_snapshots
     @account = current_user.savings_accounts.find(params[:id])
@@ -149,12 +187,12 @@ class SavingsAccountsController < ApplicationController
       return
     end
     
-    # Handle savings_group which includes both savings and checking account types
-    if account_type == 'savings_group'
+    # Handle cash_group which includes both savings and checking account types
+    if account_type == 'cash_group'
       # Verify all accounts belong to current user and are either savings or checking
       accounts = current_user.savings_accounts.where(id: account_ids).where(account_type: ['savings', 'checking'])
       
-      Rails.logger.info "Found #{accounts.count} accounts out of #{account_ids.count} requested for savings_group"
+      Rails.logger.info "Found #{accounts.count} accounts out of #{account_ids.count} requested for cash_group"
       
       if accounts.count != account_ids.count
         # Get the actual account types of the provided IDs to help debug
@@ -190,8 +228,8 @@ class SavingsAccountsController < ApplicationController
     updated_count = 0
     ActiveRecord::Base.transaction do
       account_ids.each_with_index do |account_id, index|
-        if account_type == 'savings_group'
-          # For savings_group, find account that is either savings or checking
+        if account_type == 'cash_group'
+          # For cash_group, find account that is either savings or checking
           account = current_user.savings_accounts.where(id: account_id, account_type: ['savings', 'checking']).first
         else
           # For specific account types, find by exact type
