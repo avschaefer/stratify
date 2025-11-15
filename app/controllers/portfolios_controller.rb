@@ -1,13 +1,17 @@
 class PortfoliosController < ApplicationController
   def index
-    @portfolios = current_user.portfolios.order(created_at: :desc)
-    @portfolio = Portfolio.new(user: current_user)
+    @portfolio = current_user.portfolio || current_user.build_portfolio
+    @holdings = @portfolio.holdings.order(created_at: :desc) if @portfolio.persisted?
+    @holdings ||= []
+    @holding = Holding.new(portfolio: @portfolio)
     
     # Calculate summary statistics for metrics tiles based on actual data
-    @portfolio_value = @portfolios.map { |p| (p.purchase_price || 0) * (p.quantity || 0) }.sum
-    @total_return_amount = 0 # Will be calculated when we have current prices
-    @total_return_percent = 0
-    @annual_return_amount = 0
+    portfolio_service = PortfolioValueService.new(user: current_user)
+    @portfolio_value = portfolio_service.total_value
+    @total_cost_basis = portfolio_service.total_cost_basis
+    @total_return_amount = @portfolio_value - @total_cost_basis
+    @total_return_percent = @total_cost_basis > 0 ? (@total_return_amount / @total_cost_basis * 100) : 0
+    @annual_return_amount = 0 # Will be calculated when we have historical prices
     @annual_return_percent = 0
     @realized_net = 0
     @realized_percent = 0
@@ -18,36 +22,45 @@ class PortfoliosController < ApplicationController
     @sharpe_ratio = 0
     @std_deviation = 0
     
-    # Use actual portfolios as transactions for display
-    @transactions = @portfolios
+    # Use holdings as transactions for display
+    @transactions = @holdings
   end
   
   def create
-    @portfolio = current_user.portfolios.build(portfolio_params)
-    if @portfolio.save
-      redirect_to portfolios_path, notice: 'Investment added successfully.'
+    @portfolio = current_user.portfolio || current_user.build_portfolio
+    @portfolio.save if @portfolio.new_record?
+    
+    @holding = @portfolio.holdings.build(holding_params)
+    if @holding.save
+      redirect_to portfolios_path, notice: 'Holding added successfully.'
     else
-      flash.now[:alert] = 'Error adding investment.'
+      flash.now[:alert] = 'Error adding holding.'
+      @holdings = @portfolio.holdings.order(created_at: :desc)
       render :index
     end
   end
   
   def destroy
-    @portfolio = current_user.portfolios.find(params[:id])
-    @portfolio.destroy
-    redirect_to portfolios_path, notice: 'Investment removed.'
+    @holding = current_user.portfolio&.holdings&.find(params[:id])
+    if @holding
+      @holding.destroy
+      redirect_to portfolios_path, notice: 'Holding removed.'
+    else
+      redirect_to portfolios_path, alert: 'Holding not found.'
+    end
   end
   
   def edit
-    @portfolio = current_user.portfolios.find(params[:id])
+    @holding = current_user.portfolio&.holdings&.find(params[:id])
+    redirect_to portfolios_path, alert: 'Holding not found.' unless @holding
   end
   
   def update
-    @portfolio = current_user.portfolios.find(params[:id])
-    if @portfolio.update(portfolio_params)
-      redirect_to portfolios_path, notice: 'Investment updated successfully.'
+    @holding = current_user.portfolio&.holdings&.find(params[:id])
+    if @holding&.update(holding_params)
+      redirect_to portfolios_path, notice: 'Holding updated successfully.'
     else
-      flash.now[:alert] = 'Error updating investment.'
+      flash.now[:alert] = 'Error updating holding.'
       render :edit
     end
   end
@@ -64,9 +77,9 @@ class PortfoliosController < ApplicationController
     nasdaq_data = StockDataService.send(:generate_fallback_data, 365) if nasdaq_data.empty?
     sp500_data = StockDataService.send(:generate_fallback_data, 365) if sp500_data.empty?
     
-    # Generate portfolio data based on user's actual portfolios
-    user_portfolios = current_user.portfolios
-    current_value = user_portfolios.map { |p| (p.purchase_price || 0) * (p.quantity || 0) }.sum
+    # Generate portfolio data based on user's actual holdings
+    portfolio_service = PortfolioValueService.new(user: current_user)
+    current_value = portfolio_service.total_value
     portfolio_data = daily_dates.map do |date|
       # Simple growth calculation based on date
       growth_factor = 1 + ((date - base_date).to_f / 365.0) * 0.15
@@ -105,7 +118,12 @@ class PortfoliosController < ApplicationController
   
   private
   
-  def portfolio_params
-    params.require(:portfolio).permit(:asset_type, :ticker, :purchase_date, :purchase_price, :quantity, :status)
+  def holding_params
+    # Accept frontend-friendly names - cost_basis in dollars, convert to cents
+    params_hash = params.require(:holding).permit(:ticker, :name, :shares, :cost_basis, :index_weight)
+    if params_hash[:cost_basis]
+      params_hash[:cost_basis_cents] = (params_hash.delete(:cost_basis).to_f * 100).round
+    end
+    params_hash
   end
 end

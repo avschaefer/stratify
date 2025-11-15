@@ -31,13 +31,13 @@ module Users
     
     def savings_summary
       current_month = Date.today.beginning_of_month
-      total_balance = @user.savings_accounts.sum do |account|
-        account.monthly_snapshots.find_by(recorded_at: current_month)&.balance || 0
+      total_balance = @user.accounts.sum do |account|
+        account.balances.find_by(balance_date: current_month)&.amount_cents || 0
       end
       
       {
-        count: @user.savings_accounts.count,
-        total_balance: total_balance
+        count: @user.accounts.count,
+        total_balance: total_balance / 100.0  # Convert cents to dollars
       }
     end
     

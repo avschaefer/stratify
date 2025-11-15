@@ -5,11 +5,11 @@
 
 <div class="card">
   <div class="card-body">
-    <%= form_with model: @portfolio, local: true do |f| %>
-      <% if @portfolio.errors.any? %>
+    <%= form_with model: @holding, url: portfolio_path(@holding), local: true do |f| %>
+      <% if @holding.errors.any? %>
         <div class="alert alert-danger">
           <ul class="mb-0">
-            <% @portfolio.errors.full_messages.each do |message| %>
+            <% @holding.errors.full_messages.each do |message| %>
               <li><%= message %></li>
             <% end %>
           </ul>
@@ -19,51 +19,31 @@
       <div class="row">
         <div class="col-md-4">
           <div class="mb-3">
-            <%= f.label :asset_type, "Asset Type", class: "form-label" %>
-            <%= f.select :asset_type, options_for_select([
-              ['Stock', 'stock'],
-              ['ETF', 'etf'],
-              ['Bond ETF', 'bond_etf'],
-              ['Bond', 'bond'],
-              ['Crypto', 'crypto'],
-              ['Other', 'other']
-            ], @portfolio.asset_type), {}, { class: "form-select", required: true } %>
           </div>
         </div>
         <div class="col-md-4">
           <div class="mb-3">
             <%= f.label :ticker, "Ticker/Symbol", class: "form-label" %>
-            <%= f.text_field :ticker, class: "form-control", required: true %>
+            <%= f.text_field :ticker, class: "form-control", required: true, value: @holding.ticker %>
           </div>
         </div>
         <div class="col-md-4">
           <div class="mb-3">
-            <%= f.label :purchase_date, "Date", class: "form-label" %>
-            <%= f.date_field :purchase_date, class: "form-control", required: true %>
           </div>
         </div>
       </div>
       
       <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="mb-3">
-            <%= f.label :purchase_price, "Price", class: "form-label" %>
-            <%= f.number_field :purchase_price, step: 0.01, class: "form-control", required: true %>
+            <%= f.label :cost_basis, "Cost Basis", class: "form-label" %>
+            <%= f.number_field :cost_basis, step: 1, class: "form-control", required: true, value: @holding.cost_basis_cents ? (@holding.cost_basis_cents / 100.0).round(0) : '' %>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="mb-3">
-            <%= f.label :quantity, "Quantity", class: "form-label" %>
-            <%= f.number_field :quantity, step: 0.01, class: "form-control", required: true %>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="mb-3">
-            <%= f.label :status, "Status", class: "form-label" %>
-            <%= f.select :status, options_for_select([
-              ['Draft', 'draft'],
-              ['Active', 'active']
-            ], @portfolio.status), {}, { class: "form-select" } %>
+            <%= f.label :shares, "Shares", class: "form-label" %>
+            <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, value: @holding.shares %>
           </div>
         </div>
       </div>

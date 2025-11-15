@@ -87,13 +87,11 @@ class InsuranceAnalysisService
   
   # Calculate user's total assets (portfolios + savings)
   def total_assets
-    portfolio_value = user.portfolios.sum do |p|
-      (p.purchase_price || 0) * (p.quantity || 0)
-    end
+    portfolio_value = user.portfolio&.total_value || 0
     
-    savings_value = user.savings_accounts.sum do |account|
-      account.monthly_snapshots
-        .find_by(recorded_at: Date.today.beginning_of_month)&.balance || 0
+    savings_value = user.accounts.sum do |account|
+      (account.balances
+        .find_by(balance_date: Date.today.beginning_of_month)&.amount_cents || 0) / 100.0
     end
     
     portfolio_value + savings_value

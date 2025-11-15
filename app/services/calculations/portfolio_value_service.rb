@@ -9,34 +9,34 @@ class PortfolioValueService
     raise ArgumentError, "User cannot be nil" if user.nil?
   end
   
-  # Calculate total portfolio value (sum of all portfolio positions)
+  # Calculate total portfolio value (sum of all holdings)
   def total_value
-    return 0 unless user.respond_to?(:portfolios)
+    return 0 unless user.respond_to?(:portfolio)
+    return 0 if user.portfolio.nil?
     
-    user.portfolios.sum do |portfolio|
-      portfolio_value(portfolio)
-    end
+    user.portfolio.total_value || 0
   rescue => e
     Rails.logger.error "Error calculating portfolio value: #{e.message}"
     0
   end
   
-  # Calculate value of a specific portfolio
+  # Calculate value of a specific portfolio (for backward compatibility)
   def portfolio_value(portfolio)
     return 0 if portfolio.nil?
-    (portfolio.purchase_price || 0) * (portfolio.quantity || 0)
+    portfolio.total_value || 0
   end
   
-  # Calculate asset allocation by asset type
+  # Calculate asset allocation by ticker/asset
   def asset_allocation
     allocation = {}
     
-    return allocation unless user.respond_to?(:portfolios)
+    return allocation unless user.respond_to?(:portfolio)
+    return allocation if user.portfolio.nil?
     
-    user.portfolios.each do |portfolio|
-      value = portfolio_value(portfolio)
-      asset_type = portfolio.asset_type || 'other'
-      allocation[asset_type] = (allocation[asset_type] || 0) + value
+    user.portfolio.holdings.each do |holding|
+      value = holding.current_value
+      ticker = holding.ticker || 'other'
+      allocation[ticker] = (allocation[ticker] || 0) + value
     end
     
     allocation
@@ -45,14 +45,17 @@ class PortfolioValueService
     {}
   end
   
-  # Get portfolio value by asset type
-  def value_by_asset_type(asset_type)
-    user.portfolios
-      .where(asset_type: asset_type)
-      .sum { |p| portfolio_value(p) }
+  # Get portfolio value by ticker
+  def value_by_ticker(ticker)
+    return 0 unless user.respond_to?(:portfolio)
+    return 0 if user.portfolio.nil?
+    
+    user.portfolio.holdings
+      .where(ticker: ticker)
+      .sum { |h| h.current_value }
   end
   
-  # Calculate percentage allocation by asset type
+  # Calculate percentage allocation by ticker
   def allocation_percentages
     total = total_value
     return {} if total.zero?
@@ -62,14 +65,18 @@ class PortfolioValueService
     end
   end
   
-  # Get all active portfolios
-  def active_portfolios
-    user.portfolios.where(status: 'active')
+  # Get all holdings
+  def holdings
+    return [] unless user.respond_to?(:portfolio)
+    return [] if user.portfolio.nil?
+    user.portfolio.holdings
   end
   
-  # Calculate total active portfolio value
-  def active_value
-    active_portfolios.sum { |p| portfolio_value(p) }
+  # Calculate total cost basis
+  def total_cost_basis
+    return 0 unless user.respond_to?(:portfolio)
+    return 0 if user.portfolio.nil?
+    user.portfolio.total_cost_basis || 0
   end
 end
 

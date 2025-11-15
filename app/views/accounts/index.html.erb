@@ -164,7 +164,7 @@
                 <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
                   <div class="d-flex align-items-start" style="gap: 0.5rem;">
                     <i class="bi bi-grip-vertical" style="color: rgba(255, 255, 255, 0.4); cursor: move; flex-shrink: 0; margin-top: 0.25rem;"></i>
-                    <%= link_to edit_savings_account_path(account), class: "btn btn-sm btn-outline-primary", style: "flex-shrink: 0;" do %>
+                    <%= link_to edit_account_path(account), class: "btn btn-sm btn-outline-primary", style: "flex-shrink: 0;" do %>
                       <i class="bi bi-pencil"></i>
                     <% end %>
                     <div>
@@ -175,19 +175,19 @@
                   </div>
                 </td>
                 <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
-                  <span class="<%= account.balance_2_months_ago < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_2_months_ago < 0 ? '#fca5a5' : '#e5e5e5' %>;">
-                    $<%= number_with_delimiter(account.balance_2_months_ago.round(0)) %>
+                  <span class="<%= (account.balance_2_months_ago / 100.0) < 0 ? 'text-danger' : '' %>" style="color: <%= (account.balance_2_months_ago / 100.0) < 0 ? '#fca5a5' : '#e5e5e5' %>;">
+                    $<%= number_with_delimiter((account.balance_2_months_ago / 100.0).round(0)) %>
                   </span>
                 </td>
                 <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
-                  <span class="<%= account.balance_1_month_ago < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_1_month_ago < 0 ? '#fca5a5' : '#e5e5e5' %>;">
-                    $<%= number_with_delimiter(account.balance_1_month_ago.round(0)) %>
+                  <span class="<%= (account.balance_1_month_ago / 100.0) < 0 ? 'text-danger' : '' %>" style="color: <%= (account.balance_1_month_ago / 100.0) < 0 ? '#fca5a5' : '#e5e5e5' %>;">
+                    $<%= number_with_delimiter((account.balance_1_month_ago / 100.0).round(0)) %>
                   </span>
                 </td>
                 <td style="padding: 0.5rem 0.75rem; background-color: rgba(255, 255, 255, 0.02);">
                   <div class="d-flex align-items-center justify-content-between">
-                    <strong class="<%= account.balance_current < 0 ? 'text-danger' : '' %>" style="color: <%= account.balance_current < 0 ? '#fca5a5' : '#fafafa' %>;">
-                      $<%= number_with_delimiter(account.balance_current.round(0)) %>
+                    <strong class="<%= (account.balance_current / 100.0) < 0 ? 'text-danger' : '' %>" style="color: <%= (account.balance_current / 100.0) < 0 ? '#fca5a5' : '#fafafa' %>;">
+                      $<%= number_with_delimiter((account.balance_current / 100.0).round(0)) %>
                     </strong>
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editBalancesModal<%= account.id %>" style="flex-shrink: 0; margin-left: 0.5rem;">
                       <i class="bi bi-pencil"></i>
@@ -215,7 +215,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <%= form_with model: @account, url: savings_accounts_path, local: true do |f| %>
+        <%= form_with model: @account, url: accounts_path, local: true do |f| %>
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
@@ -273,8 +273,8 @@
               current = current.next_month
             end
             
-            # Get existing snapshots indexed by month
-            existing_snapshots = account.monthly_snapshots.index_by { |s| s.recorded_at.beginning_of_month }
+            # Get existing balances indexed by month
+            existing_balances = account.balances.index_by { |b| b.balance_date.beginning_of_month }
           %>
           <form id="bulkBalancesForm<%= account.id %>" data-account-id="<%= account.id %>">
             <table class="table table-sm">
@@ -286,7 +286,7 @@
               </thead>
               <tbody>
                 <% months_list.reverse.each do |month_date| %>
-                  <% snapshot = existing_snapshots[month_date] %>
+                  <% balance = existing_balances[month_date] %>
                   <tr style="background-color: rgba(255, 255, 255, 0.02);">
                     <td style="color: #e5e5e5; padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                       <strong><%= month_date.strftime('%B %Y') %></strong>
@@ -294,21 +294,21 @@
                     <td style="padding: 0.75rem 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                       <input 
                         type="hidden" 
-                        name="snapshots[][recorded_at]" 
+                        name="snapshots[][balance_date]" 
                         value="<%= month_date.strftime('%Y-%m-%d') %>"
                       >
-                      <% if snapshot %>
+                      <% if balance %>
                         <input 
                           type="hidden" 
                           name="snapshots[][id]" 
-                          value="<%= snapshot.id %>"
+                          value="<%= balance.id %>"
                         >
                       <% end %>
                       <input 
                         type="number" 
-                        name="snapshots[][balance]" 
-                        value="<%= snapshot ? snapshot.balance : '' %>"
-                        step="0.01" 
+                        name="snapshots[][amount]" 
+                        value="<%= balance ? (balance.amount_cents / 100.0).round(0) : '' %>"
+                        step="1" 
                         class="form-control form-control-sm"
                         placeholder="Enter balance"
                         style="background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); color: #e5e5e5;"
@@ -341,14 +341,14 @@
     const rows = form.querySelectorAll('tbody tr');
     
     rows.forEach((row, index) => {
-      const dateInput = row.querySelector('input[name*="[recorded_at]"]');
+      const dateInput = row.querySelector('input[name*="[balance_date]"]');
       const idInput = row.querySelector('input[name*="[id]"]');
-      const balanceInput = row.querySelector('input[name*="[balance]"]');
+      const amountInput = row.querySelector('input[name*="[amount]"]');
       
-      if (dateInput && balanceInput && balanceInput.value.trim() !== '') {
+      if (dateInput && amountInput && amountInput.value.trim() !== '') {
         const snapshotData = {
-          recorded_at: dateInput.value,
-          balance: balanceInput.value
+          balance_date: dateInput.value,
+          amount: parseFloat(amountInput.value) // Send as dollars, controller will convert to cents
         };
         
         if (idInput && idInput.value) {
@@ -360,7 +360,7 @@
     });
     
     // Send to server
-    fetch(`/savings_accounts/${accountId}/bulk_update_snapshots`, {
+    fetch(`/accounts/${accountId}/bulk_update_snapshots`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -435,7 +435,7 @@
           console.log('Reordering accounts:', { accountIds, accountType });
           
           // Send reorder request to server
-          fetch('/savings_accounts/reorder', {
+          fetch('/accounts/reorder', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -694,11 +694,11 @@
 
       // Load both cash flow and expenses data
       Promise.all([
-        fetch('/savings_accounts/cash_flow_chart_data', {
+        fetch('/accounts/cash_flow_chart_data', {
           headers: { 'Accept': 'application/json' },
           cache: 'no-cache'
         }).then(response => response.json()),
-        fetch('/savings_accounts/expenses_chart_data', {
+        fetch('/accounts/expenses_chart_data', {
           headers: { 'Accept': 'application/json' },
           cache: 'no-cache'
         }).then(response => response.json())
@@ -808,7 +808,7 @@
         }
       });
 
-      fetch('/savings_accounts/cash_flow_chart_data', {
+      fetch('/accounts/cash_flow_chart_data', {
         headers: { 'Accept': 'application/json' },
         cache: 'no-cache'
       })

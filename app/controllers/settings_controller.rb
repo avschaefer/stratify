@@ -63,14 +63,13 @@ class SettingsController < ApplicationController
         updated_at: current_user.updated_at
       },
       portfolios: current_user.portfolios.map(&:attributes),
-      savings_accounts: current_user.savings_accounts.map(&:attributes),
+      accounts: current_user.accounts.map(&:attributes),
       expenses: current_user.expenses.map(&:attributes),
       loans: current_user.loans.map(&:attributes),
-      retirement_scenarios: current_user.retirement_scenarios.map(&:attributes),
+      retirements: current_user.retirements.map(&:attributes),
       insurance_policies: current_user.insurance_policies.map(&:attributes),
-      tax_scenarios: current_user.tax_scenarios.map(&:attributes),
-      monthly_snapshots: current_user.savings_accounts.map(&:monthly_snapshots).flatten.map(&:attributes) +
-                         current_user.expenses.map(&:monthly_snapshots).flatten.map(&:attributes),
+      taxes: current_user.taxes.map(&:attributes),
+      balances: current_user.accounts.map(&:balances).flatten.map(&:attributes),
       exported_at: Time.current.iso8601
     }
     

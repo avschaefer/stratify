@@ -17,7 +17,7 @@ class PdfExportService
     add_header(pdf)
     add_summary_section(pdf)
     add_portfolio_section(pdf)
-    add_savings_accounts_section(pdf)
+    add_accounts_section(pdf)
     add_loans_section(pdf)
     
     pdf.render
@@ -79,15 +79,16 @@ class PdfExportService
     pdf.move_down 20
   end
   
-  def add_savings_accounts_section(pdf)
-    pdf.text "Savings Accounts", size: 16, style: :bold
+  def add_accounts_section(pdf)
+    pdf.text "Accounts", size: 16, style: :bold
     pdf.move_down 10
     
     current_month = Date.today.beginning_of_month
     savings_data = [["Account Name", "Type", "Current Balance"]]
     
-    user.savings_accounts.each do |account|
-      current_balance = account.monthly_snapshots.find_by(recorded_at: current_month)&.balance || 0
+    user.accounts.each do |account|
+      current_balance_cents = account.balances.find_by(balance_date: current_month)&.amount_cents || 0
+      current_balance = current_balance_cents / 100.0
       savings_data << [
         account.name,
         account.account_type,
@@ -103,18 +104,18 @@ class PdfExportService
     pdf.text "Loans", size: 16, style: :bold
     pdf.move_down 10
     
-    loans_data = [["Name", "Principal", "Interest Rate", "Term (Years)"]]
+    loans_data = [["Name", "Principal", "Rate APR", "Term (Years)"]]
     
     user.loans.each do |loan|
       loans_data << [
         loan.name,
         format_currency(loan.principal || 0),
-        "#{loan.interest_rate}%",
+        "#{loan.rate_apr}%",
         loan.term_years.to_s
       ]
     end
     
-    total_principal = user.loans.sum(:principal) || 0
+    total_principal = user.loans.sum { |loan| loan.principal || 0 }
     loans_data << ["Total Principal", format_currency(total_principal), "", ""]
     pdf.table(loans_data, header: true, width: pdf.bounds.width)
   end

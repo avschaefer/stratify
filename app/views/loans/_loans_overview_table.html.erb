@@ -1,0 +1,121 @@
+<div class="loans-overview-section mb-5">
+  <% if loans.any? %>
+    <div class="table-responsive">
+      <table class="loans-table" style="width: 100%;">
+        <thead>
+          <tr style="border-bottom: 2px solid rgba(255, 255, 255, 0.1);">
+            <th style="padding: 1rem; text-align: left; color: #a3a3a3; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">Loan</th>
+            <th style="padding: 1rem; text-align: center; color: #a3a3a3; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">Principal Paid</th>
+            <th style="padding: 1rem; text-align: center; color: #a3a3a3; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">Interest Paid</th>
+            <th style="padding: 1rem; text-align: center; color: #a3a3a3; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">Progress</th>
+            <th style="padding: 1rem; text-align: center; color: #a3a3a3; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">Time Remaining</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% loans.each do |loan| %>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 0.02)'" onmouseout="this.style.backgroundColor='transparent'">
+              <!-- Loan Name -->
+              <td style="padding: 1rem; vertical-align: middle;">
+                <div style="font-weight: 600; color: #fafafa; margin-bottom: 0.25rem;"><%= loan.name %></div>
+                <div style="font-size: 0.75rem; color: #a3a3a3;"><%= number_to_currency(loan.principal, unit: '$', precision: 0) %></div>
+              </td>
+
+              <!-- Principal Paid Progress -->
+              <td style="padding: 1rem; vertical-align: middle;">
+                <div style="margin-bottom: 0.5rem;">
+                  <div style="height: 48px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden; position: relative; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <!-- Principal Progress Bar -->
+                    <div style="height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); width: <%= loan.principal_paid_percentage || 0 %>%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
+                      <% if (loan.principal_paid_percentage || 0) > 10 %>
+                        <span style="color: white; font-size: 0.875rem; font-weight: 600; white-space: nowrap;"><%= number_with_precision(loan.principal_paid_percentage || 0, precision: 1) %>%</span>
+                      <% end %>
+                    </div>
+                    <!-- Outer percentage text if bar is small -->
+                    <% if (loan.principal_paid_percentage || 0) <= 10 %>
+                      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.875rem; font-weight: 600; color: #93c5fd; white-space: nowrap;"><%= number_with_precision(loan.principal_paid_percentage || 0, precision: 1) %>%</div>
+                    <% end %>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Interest Paid Progress -->
+              <td style="padding: 1rem; vertical-align: middle;">
+                <div style="margin-bottom: 0.5rem;">
+                  <div style="height: 48px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden; position: relative; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <!-- Interest Progress Bar -->
+                    <div style="height: 100%; background: linear-gradient(90deg, #ef4444 0%, #f87171 100%); width: <%= loan.interest_paid_percentage || 0 %>%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
+                      <% if (loan.interest_paid_percentage || 0) > 10 %>
+                        <span style="color: white; font-size: 0.875rem; font-weight: 600; white-space: nowrap;"><%= number_with_precision(loan.interest_paid_percentage || 0, precision: 1) %>%</span>
+                      <% end %>
+                    </div>
+                    <!-- Outer percentage text if bar is small -->
+                    <% if (loan.interest_paid_percentage || 0) <= 10 %>
+                      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.875rem; font-weight: 600; color: #fca5a5; white-space: nowrap;"><%= number_with_precision(loan.interest_paid_percentage || 0, precision: 1) %>%</div>
+                    <% end %>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Period Progress -->
+              <td style="padding: 1rem; vertical-align: middle; text-align: center;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                  <!-- Period Badge -->
+                  <div style="background-color: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 0.75rem 1rem; font-size: 1rem; color: #93c5fd; font-weight: 600; white-space: nowrap; display: flex; align-items: center; justify-content: center; height: 48px;">
+                    <span style="color: #60a5fa;"><%= loan.periods_paid || 0 %></span> &nbsp;/&nbsp; <span style="color: #a3a3a3;"><%= loan.total_periods || 0 %></span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Time Remaining -->
+              <td style="padding: 1rem; vertical-align: middle; text-align: center;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                  <!-- Years Remaining (Large) -->
+                  <div style="font-size: 1.5rem; font-weight: 700; color: #60a5fa; line-height: 1;">
+                    <%= number_with_precision(loan.years_remaining || 0, precision: 1) %>
+                  </div>
+                  <!-- Label -->
+                  <div style="font-size: 0.75rem; color: #a3a3a3; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500;">
+                    years left
+                  </div>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
+
+<style>
+  .loans-overview-section {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .loans-table {
+    border-collapse: collapse;
+  }
+
+  .loans-table tbody tr:last-child {
+    border-bottom: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .loans-table {
+      font-size: 0.875rem;
+    }
+
+    .loans-table th,
+    .loans-table td {
+      padding: 0.75rem 0.5rem !important;
+    }
+
+    .loans-table th {
+      font-size: 0.75rem !important;
+    }
+  }
+</style>
+

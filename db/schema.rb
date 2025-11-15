@@ -11,6 +11,17 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
+  create_table "accounts", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name", null: false
+    t.integer "account_type", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "index"
+    t.index ["user_id"], name: "index_accounts_on_user_id"
+  end
+
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -39,6 +50,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "balances", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.bigint "amount_cents"
+    t.date "balance_date", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_balances_on_balanceable_type_and_account_id"
+    t.index ["account_id"], name: "index_monthly_snapshots_on_snapshotable"
+    t.index ["balance_date"], name: "index_balances_on_balance_date"
+  end
+
   create_table "expenses", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name", null: false
@@ -46,6 +68,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_expenses_on_user_id"
+  end
+
+  create_table "feedbacks", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "rating_net_promoter"
+    t.text "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_feedbacks_on_user_id"
+  end
+
+  create_table "holdings", force: :cascade do |t|
+    t.integer "portfolio_id", null: false
+    t.string "ticker", null: false
+    t.string "name"
+    t.decimal "shares", precision: 10, scale: 2
+    t.bigint "cost_basis_cents"
+    t.decimal "index_weight", precision: 5, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["portfolio_id"], name: "index_holdings_on_portfolio_id"
+    t.index ["ticker"], name: "index_holdings_on_ticker"
   end
 
   create_table "insurance_policies", force: :cascade do |t|
@@ -65,67 +109,76 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
   create_table "loans", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name", null: false
-    t.decimal "principal", precision: 10, scale: 2, null: false
-    t.decimal "interest_rate", precision: 5, scale: 2, null: false
+    t.bigint "principal_cents"
+    t.decimal "rate_apr", precision: 5, scale: 2, null: false
     t.decimal "term_years", precision: 5, scale: 2, null: false
     t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "rate_type", default: "apr"
-    t.string "payment_frequency", default: "monthly"
+    t.string "payment_period", default: "monthly"
     t.string "compounding_period", default: "monthly"
     t.text "notes"
+    t.date "start_date"
+    t.date "end_date"
+    t.decimal "rate_apy", precision: 5, scale: 2
+    t.bigint "periodic_payment_cents"
+    t.bigint "current_period"
+    t.bigint "current_balance_cents"
     t.index ["user_id"], name: "index_loans_on_user_id"
-  end
-
-  create_table "monthly_snapshots", force: :cascade do |t|
-    t.string "snapshotable_type", null: false
-    t.integer "snapshotable_id", null: false
-    t.decimal "balance", precision: 10, scale: 2, null: false
-    t.date "recorded_at", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["recorded_at"], name: "index_monthly_snapshots_on_recorded_at"
-    t.index ["snapshotable_type", "snapshotable_id"], name: "idx_on_snapshotable_type_snapshotable_id_36196ad6c9"
-    t.index ["snapshotable_type", "snapshotable_id"], name: "index_monthly_snapshots_on_snapshotable"
   end
 
   create_table "portfolios", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "asset_type", null: false
-    t.string "ticker", null: false
-    t.date "purchase_date", null: false
-    t.decimal "purchase_price", precision: 10, scale: 2, null: false
-    t.decimal "quantity", precision: 10, scale: 2, null: false
-    t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_portfolios_on_user_id"
   end
 
-  create_table "retirement_scenarios", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "name", null: false
-    t.date "target_date", null: false
-    t.decimal "current_savings", precision: 12, scale: 2, default: "0.0", null: false
-    t.decimal "monthly_contribution", precision: 10, scale: 2, default: "0.0", null: false
-    t.decimal "target_amount", precision: 12, scale: 2, null: false
-    t.decimal "expected_return_rate", precision: 5, scale: 2, null: false
-    t.string "risk_level"
+  create_table "prices", force: :cascade do |t|
+    t.integer "holding_id", null: false
+    t.date "date", null: false
+    t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_retirement_scenarios_on_user_id"
+    t.index ["holding_id", "date"], name: "index_prices_on_holding_id_and_date"
+    t.index ["holding_id"], name: "index_prices_on_holding_id"
   end
 
-  create_table "savings_accounts", force: :cascade do |t|
+  create_table "referrals", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "name", null: false
-    t.integer "account_type", null: false
-    t.text "notes"
+    t.integer "referred_user_id", null: false
+    t.date "signup_date"
+    t.string "referral_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "position"
-    t.index ["user_id"], name: "index_savings_accounts_on_user_id"
+    t.index ["referral_code"], name: "index_referrals_on_referral_code", unique: true
+    t.index ["referred_user_id"], name: "index_referrals_on_referred_user_id"
+    t.index ["user_id"], name: "index_referrals_on_user_id"
+  end
+
+  create_table "retirements", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "age_start"
+    t.integer "age_retirement"
+    t.bigint "age_end"
+    t.decimal "rate_inflation", precision: 5, scale: 2
+    t.decimal "rate_contribution_growth", precision: 5, scale: 2
+    t.decimal "rate_low", precision: 5, scale: 2
+    t.decimal "rate_mid", precision: 5, scale: 2
+    t.decimal "rate_high", precision: 5, scale: 2
+    t.decimal "allocation_low_pre", precision: 5, scale: 2
+    t.decimal "allocation_mid_pre", precision: 5, scale: 2
+    t.decimal "allocation_high_pre", precision: 5, scale: 2
+    t.decimal "allocation_low_post", precision: 5, scale: 2
+    t.decimal "allocation_mid_post", precision: 5, scale: 2
+    t.decimal "allocation_high_post", precision: 5, scale: 2
+    t.bigint "contribution_annual_cents"
+    t.bigint "withdrawal_annual_pv_cents"
+    t.decimal "withdrawal_rate_fv", precision: 5, scale: 2
+    t.index ["user_id"], name: "index_retirements_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -140,19 +193,42 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "tax_scenarios", force: :cascade do |t|
+  create_table "settings", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name"
+    t.string "date_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_settings_on_user_id"
+  end
+
+  create_table "taxes", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name", null: false
     t.integer "year", null: false
-    t.decimal "income", precision: 12, scale: 2, default: "0.0", null: false
-    t.decimal "deductions", precision: 12, scale: 2, default: "0.0", null: false
+    t.bigint "gross_income_cents"
+    t.bigint "deductions_cents"
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.decimal "taxable_income", precision: 12, scale: 2, default: "0.0", null: false
-    t.decimal "tax_paid", precision: 12, scale: 2, default: "0.0", null: false
-    t.decimal "refund", precision: 12, scale: 2, default: "0.0", null: false
-    t.index ["user_id"], name: "index_tax_scenarios_on_user_id"
+    t.bigint "taxable_income_cents"
+    t.bigint "tax_paid_cents"
+    t.bigint "refund_cents"
+    t.string "payment_period"
+    t.index ["user_id"], name: "index_taxes_on_user_id"
+  end
+
+  create_table "trades", force: :cascade do |t|
+    t.integer "holding_id"
+    t.date "trade_date", null: false
+    t.bigint "shares_quantity"
+    t.bigint "amount_cents"
+    t.bigint "price_cents"
+    t.integer "trade_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["holding_id", "trade_date"], name: "index_trades_on_holding_id_and_trade_date"
+    t.index ["holding_id"], name: "index_trades_on_holding_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -163,17 +239,31 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.string "currency", default: "USD"
     t.string "timezone", default: "America/New_York"
     t.string "date_format", default: "MM/DD/YYYY"
+    t.string "referral_code"
+    t.string "subscription_period", default: "monthly"
+    t.integer "subscription_price_cents"
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["referral_code"], name: "index_users_on_referral_code", unique: true
   end
 
+  add_foreign_key "accounts", "users"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "balances", "accounts"
   add_foreign_key "expenses", "users"
+  add_foreign_key "feedbacks", "users"
+  add_foreign_key "holdings", "portfolios"
   add_foreign_key "insurance_policies", "users"
   add_foreign_key "loans", "users"
   add_foreign_key "portfolios", "users"
-  add_foreign_key "retirement_scenarios", "users"
-  add_foreign_key "savings_accounts", "users"
+  add_foreign_key "prices", "holdings"
+  add_foreign_key "referrals", "users"
+  add_foreign_key "referrals", "users", column: "referred_user_id"
+  add_foreign_key "retirements", "users"
   add_foreign_key "sessions", "users"
-  add_foreign_key "tax_scenarios", "users"
+  add_foreign_key "settings", "users"
+  add_foreign_key "taxes", "users"
+  add_foreign_key "trades", "holdings"
 end

@@ -1,22 +1,23 @@
 # frozen_string_literal: true
 
-# Query object for monthly snapshots with efficient loading
+# Query object for balances with efficient loading
+# Updated to use Balance model instead of MonthlySnapshot
 module Snapshots
   class MonthlySnapshotsQuery
-    def initialize(snapshotable)
-      @snapshotable = snapshotable
+    def initialize(account)
+      @account = account
     end
     
     def call
-      @snapshotable.monthly_snapshots.order(recorded_at: :desc)
+      @account.balances.order(balance_date: :desc)
     end
     
     def for_month(month_date)
-      call.find_by(recorded_at: month_date.beginning_of_month)
+      call.find_by(balance_date: month_date.beginning_of_month)
     end
     
     def for_date_range(start_date, end_date)
-      call.where(recorded_at: start_date.beginning_of_month..end_date.end_of_month)
+      call.where(balance_date: start_date.beginning_of_month..end_date.end_of_month)
     end
     
     def latest
@@ -24,7 +25,7 @@ module Snapshots
     end
   end
   
-  # Query object for filtering snapshots by date range
+  # Query object for filtering balances by date range
   class ByDateRangeQuery
     def initialize(user, start_date:, end_date:)
       @user = user
@@ -33,17 +34,12 @@ module Snapshots
     end
     
     def call
-      savings_snapshots = MonthlySnapshot
-        .joins("INNER JOIN savings_accounts ON monthly_snapshots.snapshotable_type = 'SavingsAccount' AND monthly_snapshots.snapshotable_id = savings_accounts.id")
-        .where(savings_accounts: { user_id: @user.id })
-        .where(recorded_at: @start_date..@end_date)
-      
-      expense_snapshots = MonthlySnapshot
-        .joins("INNER JOIN expenses ON monthly_snapshots.snapshotable_type = 'Expense' AND monthly_snapshots.snapshotable_id = expenses.id")
-        .where(expenses: { user_id: @user.id })
-        .where(recorded_at: @start_date..@end_date)
-      
-      MonthlySnapshot.where(id: savings_snapshots.select(:id).union(expense_snapshots.select(:id)))
+      # Get all balances for accounts belonging to the user
+      Balance
+        .joins(:account)
+        .where(accounts: { user_id: @user.id })
+        .where(balance_date: @start_date..@end_date)
+        .order(balance_date: :desc)
     end
   end
 end

@@ -17,7 +17,7 @@ class NetWorthService
   # Calculate total liabilities (sum of all loan principals)
   def total_liabilities
     return 0 unless user.respond_to?(:loans)
-    user.loans.sum(:principal) || 0
+    user.loans.sum { |loan| loan.principal_cents || 0 } / 100.0 || 0
   rescue => e
     Rails.logger.error "Error calculating liabilities: #{e.message}"
     0
@@ -37,12 +37,12 @@ class NetWorthService
   
   # Calculate total savings for a specific month
   def total_savings_for_month(month_date)
-    return 0 unless user.respond_to?(:savings_accounts)
+    return 0 unless user.respond_to?(:accounts)
     
-    user.savings_accounts.sum do |account|
-      account.monthly_snapshots
-        .find_by(recorded_at: month_date)&.balance || 0
-    end
+    user.accounts.sum do |account|
+      account.balances
+        .find_by(balance_date: month_date)&.amount_cents || 0
+    end / 100.0
   rescue => e
     Rails.logger.error "Error calculating savings for month: #{e.message}"
     0

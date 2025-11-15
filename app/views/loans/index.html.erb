@@ -12,6 +12,9 @@
   <h2 style="font-size: 1.5rem; font-weight: 600; color: #fafafa;">Your Loans</h2>
 </div>
 
+<!-- Loans Overview Table -->
+<%= render 'loans_overview_table', loans: @loans %>
+
 <div class="row">
   <% if @loans.any? %>
     <% @loans.each do |loan| %>
@@ -26,10 +29,11 @@
                 <h2 style="font-size: 1.25rem; font-weight: 600; color: #fafafa; margin: 0;"><%= loan.name rescue 'N/A' %></h2>
                 <!-- Wrapped pills in a flex container -->
                 <div class="d-flex align-items-center gap-2 mt-2">
+                  <% rate_type = loan.rate_apr.present? && loan.rate_apr > 0 ? 'apr' : (loan.rate_apy.present? && loan.rate_apy > 0 ? 'apy' : 'apr') %>
                   <span class="badge" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 9999px;">
-                    <%= (loan.rate_type rescue 'apr')&.upcase %>
+                    <%= rate_type.upcase %>
                   </span>
-                  <% if loan.payment_frequency == 'monthly' %>
+                  <% if loan.payment_period == 'monthly' %>
                     <span class="badge" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 9999px;">Fixed</span>
                   <% end %>
                 </div>
@@ -63,7 +67,7 @@
               </div>
               <div class="d-flex justify-content-between mb-3">
                 <span style="font-size: 0.875rem; color: #a3a3a3;">Interest Rate</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= loan.interest_rate rescue 0 %>%</span>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= loan.rate_apr rescue 0 %>%</span>
               </div>
               <div class="d-flex justify-content-between mb-3">
                 <span style="font-size: 0.875rem; color: #a3a3a3;">Term</span>
@@ -71,7 +75,7 @@
               </div>
               <div class="d-flex justify-content-between">
                 <span style="font-size: 0.875rem; color: #a3a3a3;">Payment Frequency</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= (loan.payment_frequency rescue 'monthly')&.humanize %></span>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= (loan.payment_period || 'monthly')&.humanize %></span>
               </div>
             </div>
           </div>
@@ -292,22 +296,13 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="mb-3">
-                <%= f.label :interest_rate, "Interest Rate (%)", class: "form-label" %>
-                <%= f.number_field :interest_rate, step: 0.01, class: "form-control", required: true %>
+                <%= f.label :rate_apr, "Interest Rate APR (%)", class: "form-label" %>
+                <%= f.number_field :rate_apr, step: 0.01, class: "form-control", required: true %>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :rate_type, "Rate Type", class: "form-label" %>
-                <%= f.select :rate_type, options_for_select([
-                  ['APR', 'apr'],
-                  ['APY', 'apy']
-                ]), {}, { class: "form-select" } %>
-              </div>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="mb-3">
                 <%= f.label :term_years, "Term (years)", class: "form-label" %>
                 <%= f.number_field :term_years, step: 0.25, class: "form-control", required: true %>
@@ -317,13 +312,13 @@
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
-                <%= f.label :payment_frequency, "Payment Frequency", class: "form-label" %>
-                <%= f.select :payment_frequency, options_for_select([
+                <%= f.label :payment_period, "Payment Frequency", class: "form-label" %>
+                <%= f.select :payment_period, options_for_select([
                   ['Monthly', 'monthly'],
                   ['Bi-weekly', 'biweekly'],
                   ['Weekly', 'weekly'],
-                  ['Quarterly', 'quarterly']
-                ]), {}, { class: "form-select", required: true } %>
+                  ['Yearly', 'yearly']
+                ], @loan.payment_period), {}, { class: "form-select", required: true } %>
               </div>
             </div>
             <div class="col-md-6">
@@ -388,10 +383,10 @@
           
           <!-- Hidden fields for calculated values -->
           <%= f.hidden_field :principal, id: "saveLoanPrincipal" %>
-          <%= f.hidden_field :interest_rate, id: "saveLoanInterestRate" %>
-          <%= f.hidden_field :rate_type, id: "saveLoanRateType" %>
+          <%= f.hidden_field :rate_apr, id: "saveLoanRateApr" %>
+          <%= f.hidden_field :rate_apy, id: "saveLoanRateApy" %>
           <%= f.hidden_field :term_years, id: "saveLoanTermYears" %>
-          <%= f.hidden_field :payment_frequency, id: "saveLoanPaymentFrequency" %>
+          <%= f.hidden_field :payment_period, id: "saveLoanPaymentPeriod" %>
           <%= f.hidden_field :compounding_period, id: "saveLoanCompoundingPeriod" %>
           
           <div class="modal-footer">
@@ -503,11 +498,17 @@
         saveBtn.addEventListener('click', function() {
     if (calculatorValues.principal) {
       document.getElementById('saveLoanPrincipal').value = calculatorValues.principal;
-      document.getElementById('saveLoanInterestRate').value = calculatorValues.interest_rate;
-      document.getElementById('saveLoanRateType').value = calculatorValues.rate_type;
+      // Set rate_apr or rate_apy based on rate_type
+      if (calculatorValues.rate_type === 'apy') {
+        document.getElementById('saveLoanRateApy').value = calculatorValues.interest_rate || calculatorValues.rate_apy;
+        document.getElementById('saveLoanRateApr').value = '';
+      } else {
+        document.getElementById('saveLoanRateApr').value = calculatorValues.interest_rate || calculatorValues.rate_apr;
+        document.getElementById('saveLoanRateApy').value = '';
+      }
       document.getElementById('saveLoanTermYears').value = calculatorValues.term_years;
-      document.getElementById('saveLoanPaymentFrequency').value = calculatorValues.payment_frequency;
-      document.getElementById('saveLoanCompoundingPeriod').value = calculatorValues.compounding_period;
+      document.getElementById('saveLoanPaymentPeriod').value = calculatorValues.payment_frequency || 'monthly';
+      document.getElementById('saveLoanCompoundingPeriod').value = calculatorValues.compounding_period || 'monthly';
     }
   });
       }

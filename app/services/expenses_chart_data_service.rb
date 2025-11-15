@@ -18,9 +18,9 @@ class ExpensesChartDataService
         raise "User is required"
       end
 
-      # Get all monthly snapshots for credit card accounts (expenses)
+      # Get all balances for credit card accounts (expenses)
       begin
-        credit_cards = user.savings_accounts.where(account_type: 2)
+        credit_cards = user.accounts.where(account_type: 2)
         Rails.logger.info "ExpensesChartDataService: Found #{credit_cards.count} credit card accounts"
       rescue => e
         Rails.logger.error "Error querying credit card accounts: #{e.message}"
@@ -28,22 +28,22 @@ class ExpensesChartDataService
       end
 
       begin
-        all_snapshots = credit_cards.flat_map(&:monthly_snapshots)
+        all_snapshots = credit_cards.flat_map(&:balances)
           .compact
-          .select { |s| s.recorded_at.present? && s.balance.present? }
-        Rails.logger.info "ExpensesChartDataService: Filtered snapshots: #{all_snapshots.length}"
+          .select { |s| s.balance_date.present? && s.amount_cents.present? }
+        Rails.logger.info "ExpensesChartDataService: Filtered balances: #{all_snapshots.length}"
       rescue => e
-        Rails.logger.error "Error getting monthly snapshots: #{e.message}"
+        Rails.logger.error "Error getting balances: #{e.message}"
         raise e
       end
 
-      Rails.logger.info "ExpensesChartDataService: Found #{all_snapshots.length} total snapshots"
+      Rails.logger.info "ExpensesChartDataService: Found #{all_snapshots.length} total balances"
 
       # Group by month and calculate monthly totals
       # Since you pay in full, the balance = monthly expense
       begin
-        monthly_expenses = all_snapshots.group_by { |s| s.recorded_at.beginning_of_month }
-          .transform_values { |snapshots| snapshots.sum { |s| s.balance.to_f } }
+        monthly_expenses = all_snapshots.group_by { |s| s.balance_date.beginning_of_month }
+          .transform_values { |snapshots| snapshots.sum { |s| (s.amount_cents || 0) } / 100.0 }
           .sort_by { |month, _| month }
           .to_h
         Rails.logger.info "ExpensesChartDataService: Monthly expenses calculated: #{monthly_expenses.inspect}"

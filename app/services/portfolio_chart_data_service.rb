@@ -29,13 +29,13 @@ class PortfolioChartDataService
   # Generate asset allocation data
   def asset_allocation_data
     portfolio_service = PortfolioValueService.new(user: user)
-    allocation = portfolio_service.asset_allocation_percentages
+    allocation = portfolio_service.allocation_percentages
     
-    allocation.map do |asset_type, percentage|
+    allocation.map do |ticker, percentage|
       {
-        label: asset_type.humanize,
+        label: ticker.humanize,
         value: percentage,
-        amount: portfolio_service.value_by_asset_type(asset_type)
+        amount: portfolio_service.value_by_ticker(ticker)
       }
     end
   end

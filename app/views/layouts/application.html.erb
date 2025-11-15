@@ -881,7 +881,7 @@
               <% end %>
             </li>
             <li>
-              <%= link_to savings_accounts_path, class: "nav-link #{'active' if current_page?(savings_accounts_path)}" do %>
+              <%= link_to accounts_path, class: "nav-link #{'active' if current_page?(accounts_path)}" do %>
                 <i class="bi bi-piggy-bank"></i>
                 <span>Savings & Expenses</span>
               <% end %>
@@ -899,13 +899,13 @@
               <% end %>
             </li>
             <li>
-              <%= link_to tax_scenarios_path, class: "nav-link #{'active' if current_page?(tax_scenarios_path)}" do %>
+              <%= link_to taxes_path, class: "nav-link #{'active' if current_page?(taxes_path)}" do %>
                 <i class="bi bi-receipt"></i>
                 <span>Taxes</span>
               <% end %>
             </li>
             <li>
-              <%= link_to retirement_scenarios_path, class: "nav-link #{'active' if current_page?(retirement_scenarios_path)}" do %>
+              <%= link_to retirements_path, class: "nav-link #{'active' if current_page?(retirements_path)}" do %>
                 <i class="bi bi-calendar-check"></i>
                 <span>Retirement</span>
               <% end %>

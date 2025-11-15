@@ -228,34 +228,32 @@
                 <tr>
                   <th>Date</th>
                   <th>Ticker</th>
-                  <th>Asset Type</th>
-                  <th>Quantity</th>
-                  <th>Price</th>
-                  <th>Total</th>
+                  <th>Name</th>
+                  <th>Shares</th>
+                  <th>Avg Price</th>
+                  <th>Cost Basis</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <% @transactions.each do |transaction| %>
+                <% @holdings.each do |holding| %>
                   <tr>
-                    <td><%= transaction.purchase_date.strftime('%Y-%m-%d') %></td>
-                    <td><strong><%= transaction.ticker %></strong></td>
-                    <td><%= transaction.asset_type&.humanize %></td>
-                    <td><%= transaction.quantity %></td>
-                    <td>$<%= number_with_precision(transaction.purchase_price, precision: 2) %></td>
-                    <td><strong>$<%= number_with_delimiter((transaction.purchase_price || 0) * (transaction.quantity || 0).round(2)) %></strong></td>
+                    <td><%= holding.created_at.strftime('%Y-%m-%d') %></td>
+                    <td><strong><%= holding.ticker %></strong></td>
+                    <td><%= holding.name %></td>
+                    <td><%= holding.shares %></td>
+                    <td>$<%= number_with_precision(holding.total_cost_basis / (holding.shares || 1), precision: 2) %></td>
+                    <td><strong>$<%= number_with_delimiter(holding.total_cost_basis.round(0)) %></strong></td>
                     <td>
-                      <span class="badge <%= transaction.status == 'active' ? 'bg-success' : 'bg-secondary' %>">
-                        <%= transaction.status&.humanize %>
-                      </span>
+                      <span class="badge bg-success">Active</span>
                     </td>
                     <td>
-                      <%= link_to edit_portfolio_path(transaction), class: "btn btn-sm btn-outline-primary" do %>
+                      <%= link_to edit_portfolio_path(holding), class: "btn btn-sm btn-outline-primary" do %>
                         <i class="bi bi-pencil"></i>
                       <% end %>
-                      <% confirm_message = "Are you sure you want to delete this portfolio transaction?" %>
-                      <%= button_to portfolio_path(transaction),
+                      <% confirm_message = "Are you sure you want to delete this holding?" %>
+                      <%= button_to portfolio_path(holding),
                           method: :delete,
                           class: "btn btn-sm btn-outline-danger",
                           aria: { label: "Delete portfolio transaction" },

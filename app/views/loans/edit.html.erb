@@ -27,24 +27,19 @@
         <div class="col-md-6">
           <div class="mb-3">
             <%= f.label :principal, "Loan Amount", class: "form-label" %>
-            <%= f.number_field :principal, step: 0.01, class: "form-control", required: true %>
+            <%= f.number_field :principal, step: 1, class: "form-control", required: true %>
           </div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-4">
           <div class="mb-3">
-            <%= f.label :interest_rate, "Interest Rate (%)", class: "form-label" %>
-            <%= f.number_field :interest_rate, step: 0.01, class: "form-control", required: true %>
+            <%= f.label :rate_apr, "Interest Rate (%)", class: "form-label" %>
+            <%= f.number_field :rate_apr, step: 0.01, class: "form-control", required: true %>
           </div>
         </div>
         <div class="col-md-4">
           <div class="mb-3">
-            <%= f.label :rate_type, "Rate Type", class: "form-label" %>
-            <%= f.select :rate_type, options_for_select([
-              ['APR', 'apr'],
-              ['APY', 'apy']
-            ], @loan.rate_type), {}, { class: "form-select" } %>
           </div>
         </div>
         <div class="col-md-4">
@@ -57,13 +52,13 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <%= f.label :payment_frequency, "Payment Frequency", class: "form-label" %>
-            <%= f.select :payment_frequency, options_for_select([
+            <%= f.label :payment_period, "Payment Frequency", class: "form-label" %>
+            <%= f.select :payment_period, options_for_select([
               ['Monthly', 'monthly'],
               ['Bi-weekly', 'biweekly'],
               ['Weekly', 'weekly'],
-              ['Quarterly', 'quarterly']
-            ], @loan.payment_frequency), {}, { class: "form-select", required: true } %>
+              ['Yearly', 'yearly']
+            ], @loan.payment_period), {}, { class: "form-select", required: true } %>
           </div>
         </div>
         <div class="col-md-6">

@@ -5,11 +5,11 @@
 
 <div class="card">
   <div class="card-body">
-    <%= form_with model: @scenario, local: true do |f| %>
-      <% if @scenario.errors.any? %>
+    <%= form_with model: @retirement, local: true do |f| %>
+      <% if @retirement.errors.any? %>
         <div class="alert alert-danger">
           <ul class="mb-0">
-            <% @scenario.errors.full_messages.each do |message| %>
+            <% @retirement.errors.full_messages.each do |message| %>
               <li><%= message %></li>
             <% end %>
           </ul>
@@ -66,20 +66,10 @@
             <%= f.number_field :expected_return_rate, step: 0.01, class: "form-control", required: true %>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <%= f.label :risk_level, "Risk Level", class: "form-label" %>
-            <%= f.select :risk_level, options_for_select([
-              ['Conservative', 'conservative'],
-              ['Moderate', 'moderate'],
-              ['Aggressive', 'aggressive']
-            ], @scenario.risk_level), {}, { class: "form-select" } %>
-          </div>
-        </div>
       </div>
       
       <div class="d-flex justify-content-end gap-2">
-        <%= link_to "Cancel", retirement_scenarios_path, class: "btn btn-secondary" %>
+        <%= link_to "Cancel", retirements_path, class: "btn btn-secondary" %>
         <%= f.submit "Update Scenario", class: "btn btn-primary" %>
       </div>
     <% end %>

@@ -26,7 +26,7 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :savings_accounts do
+  resources :accounts do
     collection do
       get :chart_data
       get :cash_flow_chart_data
@@ -36,11 +36,11 @@ Rails.application.routes.draw do
     member do
       post :bulk_update_snapshots
     end
-    resources :monthly_snapshots, only: [:create, :update, :destroy], controller: 'monthly_snapshots'
+    resources :balances, only: [:create, :update, :destroy], controller: 'balances'
   end
   
   resources :expenses do
-    resources :monthly_snapshots, only: [:create, :update, :destroy], controller: 'monthly_snapshots'
+    resources :balances, only: [:create, :update, :destroy], controller: 'balances'
   end
   
   resources :loans do
@@ -49,7 +49,7 @@ Rails.application.routes.draw do
     end
   end
   
-  resources :retirement_scenarios, only: [:index, :create, :edit, :update, :destroy] do
+  resources :retirements, only: [:index, :create, :edit, :update, :destroy] do
     collection do
       post :calculate
       get :chart_data
@@ -62,7 +62,7 @@ Rails.application.routes.draw do
   
   resources :insurance_policies
   
-  resources :tax_scenarios, only: [:index, :create, :edit, :update, :destroy]
+  resources :taxes, only: [:index, :create, :edit, :update, :destroy]
   
   resources :settings, only: [:index, :update] do
     collection do

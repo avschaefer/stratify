@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # Service for calculating retirement projections, contributions, and withdrawal scenarios
+# Updated to work with new Retirement model
 class RetirementProjectionService
   attr_reader :scenario
   
@@ -10,27 +11,27 @@ class RetirementProjectionService
   
   # Calculate projected value at retirement using current savings and monthly contributions
   def projected_value
-    return scenario.current_savings if years_to_goal <= 0
+    return current_savings if years_to_goal <= 0
     
-    monthly_rate = monthly_rate_for(scenario.expected_return_rate)
+    monthly_rate = monthly_rate_for(expected_return_rate)
     months = months_to_goal
     
-    future_value_of_savings = scenario.current_savings * (1 + monthly_rate)**months
-    future_value_of_contributions = scenario.monthly_contribution * (((1 + monthly_rate)**months - 1) / monthly_rate)
+    future_value_of_savings = current_savings * (1 + monthly_rate)**months
+    future_value_of_contributions = monthly_contribution * (((1 + monthly_rate)**months - 1) / monthly_rate)
     
     future_value_of_savings + future_value_of_contributions
   end
   
   # Calculate monthly contribution needed to reach target amount
   def monthly_contribution_needed
-    return 0 if years_to_goal <= 0 || scenario.target_amount <= scenario.current_savings
+    return 0 if years_to_goal <= 0 || target_amount <= current_savings
     
-    monthly_rate = monthly_rate_for(scenario.expected_return_rate)
+    monthly_rate = monthly_rate_for(expected_return_rate)
     months = months_to_goal
     
     if monthly_rate > 0
-      future_value_of_current = scenario.current_savings * (1 + monthly_rate)**months
-      needed_from_contributions = scenario.target_amount - future_value_of_current
+      future_value_of_current = current_savings * (1 + monthly_rate)**months
+      needed_from_contributions = target_amount - future_value_of_current
       
       if needed_from_contributions > 0
         needed_from_contributions * monthly_rate / ((1 + monthly_rate)**months - 1)
@@ -38,14 +39,14 @@ class RetirementProjectionService
         0
       end
     else
-      (scenario.target_amount - scenario.current_savings) / months.to_f
+      (target_amount - current_savings) / months.to_f
     end
   end
   
-  # Calculate years until target date
+  # Calculate years until target date (retirement age)
   def years_to_goal
-    return 0 if scenario.target_date.nil?
-    [scenario.target_date.year - Date.today.year, 0].max
+    return 0 if scenario.age_retirement.nil? || scenario.age_start.nil?
+    [scenario.age_retirement - scenario.age_start, 0].max
   end
   
   # Calculate months until target date
@@ -55,44 +56,44 @@ class RetirementProjectionService
   
   # Calculate projected value at retirement using actual contribution
   def projected_value_at_retirement
-    return scenario.current_savings if months_to_goal <= 0
+    return current_savings if months_to_goal <= 0
     
-    monthly_rate = monthly_rate_for(scenario.expected_return_rate)
+    monthly_rate = monthly_rate_for(expected_return_rate)
     months = months_to_goal
     
     if monthly_rate > 0
-      scenario.current_savings * (1 + monthly_rate)**months +
-        scenario.monthly_contribution * (((1 + monthly_rate)**months - 1) / monthly_rate)
+      current_savings * (1 + monthly_rate)**months +
+        monthly_contribution * (((1 + monthly_rate)**months - 1) / monthly_rate)
     else
-      scenario.current_savings + (scenario.monthly_contribution * months)
+      current_savings + (monthly_contribution * months)
     end
   end
   
   # Calculate target value at retirement using required contribution
   def target_value_at_retirement
-    return scenario.current_savings if months_to_goal <= 0
+    return current_savings if months_to_goal <= 0
     
-    monthly_rate = monthly_rate_for(scenario.expected_return_rate)
+    monthly_rate = monthly_rate_for(expected_return_rate)
     months = months_to_goal
     contribution_needed = monthly_contribution_needed
     
     if monthly_rate > 0
-      scenario.current_savings * (1 + monthly_rate)**months +
+      current_savings * (1 + monthly_rate)**months +
         contribution_needed * (((1 + monthly_rate)**months - 1) / monthly_rate)
     else
-      scenario.current_savings + (contribution_needed * months)
+      current_savings + (contribution_needed * months)
     end
   end
   
   # Calculate gap between projected value and target
   def gap_to_goal
-    projected_value - scenario.target_amount
+    projected_value - target_amount
   end
   
   # Calculate progress percentage
   def progress_percentage
-    return 0 if scenario.target_amount.nil? || scenario.target_amount.zero?
-    [projected_value / scenario.target_amount * 100, 100].min
+    return 0 if target_amount.nil? || target_amount.zero?
+    [projected_value / target_amount * 100, 100].min
   end
   
   # Generate chart data for accumulation phase
@@ -103,9 +104,9 @@ class RetirementProjectionService
     years = years_to_goal
     months = months_to_goal
     
-    monthly_rate = monthly_rate_for(scenario.expected_return_rate)
-    monthly_contribution_actual = scenario.monthly_contribution || 0
-    monthly_contribution_needed = monthly_contribution_needed()
+    monthly_rate = monthly_rate_for(expected_return_rate)
+    monthly_contribution_actual = monthly_contribution
+    monthly_contribution_needed_val = monthly_contribution_needed()
     
     # Generate historical dates (past 24 months)
     historical_dates = (-historical_months..0).map { |i| base_date + i.months }
@@ -119,13 +120,13 @@ class RetirementProjectionService
     # Add today's point
     actual_savings_data << {
       time: base_date.to_time.to_i,
-      value: scenario.current_savings.round(2)
+      value: current_savings.round(2)
     }
     
     # Projected savings using current contribution
     projected_savings_data = generate_future_data(
       future_monthly_dates,
-      scenario.current_savings,
+      current_savings,
       monthly_rate,
       monthly_contribution_actual
     )
@@ -133,9 +134,9 @@ class RetirementProjectionService
     # Target savings using required contribution
     target_savings_data = generate_future_data(
       future_monthly_dates,
-      scenario.current_savings,
+      current_savings,
       monthly_rate,
-      monthly_contribution_needed
+      monthly_contribution_needed_val
     )
     
     {
@@ -191,33 +192,62 @@ class RetirementProjectionService
   def summary
     {
       current_progress: progress_percentage.round(2),
-      saved_amount: scenario.current_savings,
-      goal_amount: scenario.target_amount,
+      saved_amount: current_savings,
+      goal_amount: target_amount,
       years_to_goal: years_to_goal,
-      expected_return_rate: scenario.expected_return_rate || 7.0,
+      expected_return_rate: expected_return_rate,
       projected_value: projected_value.round(2),
       gap_to_goal: gap_to_goal.round(2),
       monthly_contribution_needed: monthly_contribution_needed.round(2),
-      monthly_contribution_actual: scenario.monthly_contribution || 0
+      monthly_contribution_actual: monthly_contribution
     }
   end
   
   private
   
+  # Adapter methods for new Retirement model
+  def current_savings
+    # For new model, we assume current savings is 0 (tracked elsewhere)
+    # This could be enhanced to pull from accounts in the future
+    scenario.current_savings || 0
+  end
+  
+  def target_amount
+    # Calculate target based on withdrawal needs
+    scenario.target_amount || begin
+      return 0 if scenario.withdrawal_annual_pv_cents.nil? || scenario.withdrawal_rate_fv.nil? || scenario.withdrawal_rate_fv.zero?
+      (scenario.withdrawal_annual_pv_cents / 100.0) / (scenario.withdrawal_rate_fv / 100.0)
+    end
+  end
+  
+  def monthly_contribution
+    return 0 if scenario.contribution_annual_cents.nil?
+    scenario.contribution_annual_cents / 100.0 / 12.0
+  end
+  
+  def expected_return_rate
+    scenario.expected_return_rate || scenario.rate_mid || 7.0
+  end
+  
+  def target_date
+    return nil if scenario.age_retirement.nil? || scenario.age_start.nil?
+    Date.today + (scenario.age_retirement - scenario.age_start).years
+  end
+  
   def monthly_rate_for(annual_rate)
     (annual_rate || 7.0) / 100.0 / 12.0
   end
   
-  def generate_historical_data(dates, monthly_rate, monthly_contribution)
+  def generate_historical_data(dates, monthly_rate, monthly_contribution_val)
     data = []
-    current_value = scenario.current_savings
+    current_value = current_savings
     
     # Work backwards from today
     dates.reverse.each do |date|
       if monthly_rate > 0
-        current_value = (current_value - monthly_contribution) / (1 + monthly_rate)
+        current_value = (current_value - monthly_contribution_val) / (1 + monthly_rate)
       else
-        current_value = current_value - monthly_contribution
+        current_value = current_value - monthly_contribution_val
       end
       data << {
         time: date.to_time.to_i,

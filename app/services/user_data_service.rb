@@ -7,14 +7,13 @@ class UserDataService
         updated_at: user.updated_at
       },
       portfolios: user.portfolios.map(&:attributes),
-      savings_accounts: user.savings_accounts.map(&:attributes),
+      accounts: user.accounts.map(&:attributes),
       expenses: user.expenses.map(&:attributes),
       loans: user.loans.map(&:attributes),
-      retirement_scenarios: user.retirement_scenarios.map(&:attributes),
+      retirements: user.retirements.map(&:attributes),
       insurance_policies: user.insurance_policies.map(&:attributes),
-      tax_scenarios: user.tax_scenarios.map(&:attributes),
-      monthly_snapshots: user.savings_accounts.map(&:monthly_snapshots).flatten.map(&:attributes) +
-                          user.expenses.map(&:monthly_snapshots).flatten.map(&:attributes),
+      taxes: user.taxes.map(&:attributes),
+      balances: user.accounts.map(&:balances).flatten.map(&:attributes),
       exported_at: Time.current.iso8601
     }
     
@@ -57,13 +56,14 @@ class UserDataService
         end
       end
       
-      # Savings Accounts
-      if data['savings_accounts']
-        data['savings_accounts'].each do |account_data|
+      # Accounts (backward compatibility: check both 'accounts' and 'savings_accounts')
+      accounts_data = data['accounts'] || data['savings_accounts']
+      if accounts_data
+        accounts_data.each do |account_data|
           account_data.delete('id')
           account_data.delete('created_at')
           account_data.delete('updated_at')
-          user.savings_accounts.create!(account_data)
+          user.accounts.create!(account_data)
         end
       end
       
@@ -87,13 +87,14 @@ class UserDataService
         end
       end
       
-      # Retirement Scenarios
-      if data['retirement_scenarios']
-        data['retirement_scenarios'].each do |scenario_data|
+      # Retirements (backward compatibility: check both 'retirements' and 'retirement_scenarios')
+      retirements_data = data['retirements'] || data['retirement_scenarios']
+      if retirements_data
+        retirements_data.each do |scenario_data|
           scenario_data.delete('id')
           scenario_data.delete('created_at')
           scenario_data.delete('updated_at')
-          user.retirement_scenarios.create!(scenario_data)
+          user.retirements.create!(scenario_data)
         end
       end
       
@@ -107,13 +108,14 @@ class UserDataService
         end
       end
       
-      # Tax Scenarios
-      if data['tax_scenarios']
-        data['tax_scenarios'].each do |scenario_data|
+      # Taxes (backward compatibility: check both 'taxes' and 'tax_scenarios')
+      taxes_data = data['taxes'] || data['tax_scenarios']
+      if taxes_data
+        taxes_data.each do |scenario_data|
           scenario_data.delete('id')
           scenario_data.delete('created_at')
           scenario_data.delete('updated_at')
-          user.tax_scenarios.create!(scenario_data)
+          user.taxes.create!(scenario_data)
         end
       end
       

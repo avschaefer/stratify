@@ -17,7 +17,7 @@ class ExcelExportService
     
     add_summary_sheet(workbook)
     add_portfolio_sheet(workbook)
-    add_savings_accounts_sheet(workbook)
+    add_accounts_sheet(workbook)
     add_loans_sheet(workbook)
     
     package.to_stream
@@ -48,35 +48,34 @@ class ExcelExportService
   
   def add_portfolio_sheet(workbook)
     workbook.add_worksheet(name: "Portfolio") do |sheet|
-      sheet.add_row ["Ticker", "Asset Type", "Purchase Date", "Purchase Price", "Quantity", "Total Value", "Status"]
+      sheet.add_row ["Ticker", "Name", "Shares", "Cost Basis", "Current Value"]
       
       portfolio_service = PortfolioValueService.new(user: user)
       
-      user.portfolios.each do |portfolio|
-        value = portfolio_service.portfolio_value(portfolio)
+      user.portfolio&.holdings&.each do |holding|
+        value = holding.current_value
         sheet.add_row [
-          portfolio.ticker,
-          portfolio.asset_type,
-          portfolio.purchase_date,
-          portfolio.purchase_price,
-          portfolio.quantity,
-          value,
-          portfolio.status
+          holding.ticker,
+          holding.name,
+          holding.shares,
+          format_currency(holding.total_cost_basis),
+          format_currency(value)
         ]
       end
       
-      sheet.add_row ["Total", "", "", "", "", portfolio_service.total_value, ""]
+      sheet.add_row ["Total", "", "", "", format_currency(portfolio_service.total_value)]
     end
   end
   
-  def add_savings_accounts_sheet(workbook)
-    workbook.add_worksheet(name: "Savings Accounts") do |sheet|
+  def add_accounts_sheet(workbook)
+    workbook.add_worksheet(name: "Accounts") do |sheet|
       sheet.add_row ["Account Name", "Type", "Current Balance", "Notes"]
       
       current_month = Date.today.beginning_of_month
       
-      user.savings_accounts.each do |account|
-        current_balance = account.monthly_snapshots.find_by(recorded_at: current_month)&.balance || 0
+      user.accounts.each do |account|
+        current_balance_cents = account.balances.find_by(balance_date: current_month)&.amount_cents || 0
+        current_balance = current_balance_cents / 100.0
         sheet.add_row [account.name, account.account_type, current_balance, account.notes]
       end
     end
@@ -84,19 +83,19 @@ class ExcelExportService
   
   def add_loans_sheet(workbook)
     workbook.add_worksheet(name: "Loans") do |sheet|
-      sheet.add_row ["Name", "Principal", "Interest Rate", "Term (Years)", "Status"]
+      sheet.add_row ["Name", "Principal", "Rate APR", "Term (Years)", "Status"]
       
       user.loans.each do |loan|
         sheet.add_row [
           loan.name,
           loan.principal,
-          "#{loan.interest_rate}%",
+          "#{loan.rate_apr}%",
           loan.term_years,
           loan.status
         ]
       end
       
-      total_principal = user.loans.sum(:principal) || 0
+      total_principal = user.loans.sum { |loan| loan.principal || 0 }
       sheet.add_row ["Total Principal", total_principal, "", "", ""]
     end
   end

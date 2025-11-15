@@ -1,0 +1,150 @@
+{
+  "Portfolio": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "PK"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "is_fk": "yes",
+        "fk_target": "user.id",
+        "note": "belongs to:user"
+      }
+    ]
+  },
+  "Loan": {
+    "fields": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "PK"
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "is_fk": "yes",
+        "fk_target": "user.id",
+        "note": "belongs to:user"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "start_date",
+        "type": "date",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "end_date",
+        "type": "date",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "principal_cents",
+        "type": "bigint",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "rate_apy",
+        "type": "decimal",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "rate_apr",
+        "type": "decimal",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "payment_period",
+        "type": "enum",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "compounding_period",
+        "type": "enum",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "periodic_payment_cents",
+        "type": "bigint",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "term_years",
+        "type": "decimal",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "current_period",
+        "type": "bigint",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      },
+      {
+        "name": "current_balance_cents",
+        "type": "bigint",
+        "is_fk": "no",
+        "fk_target": "-",
+        "note": "-"
+      }
+    ]
+  }
+}

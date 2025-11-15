@@ -18,31 +18,31 @@ class SavingsChartDataService
       
       Rails.logger.info "SavingsChartDataService: Generated #{daily_dates.length} daily dates from #{base_date} to #{Date.today}"
       
-      # Get all monthly snapshots for savings accounts (savings and checking)
-      savings_accounts = user.savings_accounts.where(account_type: ['savings', 'checking']).includes(:monthly_snapshots)
+      # Get all balances for savings accounts (savings and checking)
+      savings_accounts = user.accounts.where(account_type: ['savings', 'checking']).includes(:balances)
       Rails.logger.info "SavingsChartDataService: Found #{savings_accounts.count} savings/checking accounts"
       
-      all_savings_snapshots_raw = savings_accounts.flat_map(&:monthly_snapshots)
-      Rails.logger.info "SavingsChartDataService: Found #{all_savings_snapshots_raw.length} raw savings snapshots"
+      all_savings_snapshots_raw = savings_accounts.flat_map(&:balances)
+      Rails.logger.info "SavingsChartDataService: Found #{all_savings_snapshots_raw.length} raw savings balances"
       
       all_savings_snapshots = all_savings_snapshots_raw
         .compact
-        .select { |s| s.recorded_at.present? && s.balance.present? }
-        .group_by { |s| s.recorded_at.beginning_of_month }
+        .select { |s| s.balance_date.present? && s.amount_cents.present? }
+        .group_by { |s| s.balance_date.beginning_of_month }
       
       Rails.logger.info "SavingsChartDataService: Grouped into #{all_savings_snapshots.keys.length} unique months for savings"
       
-      # Get all monthly snapshots for credit cards (spending/expenses)
-      credit_cards = user.savings_accounts.where(account_type: 'credit_card').includes(:monthly_snapshots)
+      # Get all balances for credit cards (spending/expenses)
+      credit_cards = user.accounts.where(account_type: 'credit_card').includes(:balances)
       Rails.logger.info "SavingsChartDataService: Found #{credit_cards.count} credit card accounts"
       
-      all_expense_snapshots_raw = credit_cards.flat_map(&:monthly_snapshots)
-      Rails.logger.info "SavingsChartDataService: Found #{all_expense_snapshots_raw.length} raw credit card snapshots"
+      all_expense_snapshots_raw = credit_cards.flat_map(&:balances)
+      Rails.logger.info "SavingsChartDataService: Found #{all_expense_snapshots_raw.length} raw credit card balances"
       
       all_expense_snapshots = all_expense_snapshots_raw
         .compact
-        .select { |s| s.recorded_at.present? && s.balance.present? }
-        .group_by { |s| s.recorded_at.beginning_of_month }
+        .select { |s| s.balance_date.present? && s.amount_cents.present? }
+        .group_by { |s| s.balance_date.beginning_of_month }
       
       Rails.logger.info "SavingsChartDataService: Grouped into #{all_expense_snapshots.keys.length} unique months for credit cards"
       
@@ -131,15 +131,15 @@ class SavingsChartDataService
     snapshot = snapshots_hash[month_start]
     
     if snapshot && snapshot.any?
-      # Sum all balances, ensuring they're numeric
-      snapshot.sum { |s| (s.balance || 0).to_f }
+      # Sum all balances in cents, then convert to dollars
+      snapshot.sum { |s| (s.amount_cents || 0) } / 100.0
     else
       # Interpolate from nearest snapshot
       nearest_snapshots = snapshots_hash.keys.sort
       if nearest_snapshots.any?
         nearest = nearest_snapshots.min_by { |d| (d - month_start).abs }
         if nearest && (nearest - month_start).abs < 3.months
-          snapshots_hash[nearest].sum { |s| (s.balance || 0).to_f }
+          snapshots_hash[nearest].sum { |s| (s.amount_cents || 0) } / 100.0
         else
           0.0
         end

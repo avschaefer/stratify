@@ -85,6 +85,10 @@ class LoansController < ApplicationController
   private
   
   def loan_params
-    params.require(:loan).permit(:name, :principal, :interest_rate, :term_years, :status, :rate_type, :payment_frequency, :compounding_period, :notes)
+    # Accept frontend-friendly names (principal in dollars) - model accessors will convert to cents
+    params.require(:loan).permit(:name, :principal, :rate_apr, :rate_apy, :term_years, 
+                                 :status, :payment_period, :compounding_period, 
+                                 :start_date, :end_date, :periodic_payment,
+                                 :current_period, :current_balance, :notes)
   end
 end

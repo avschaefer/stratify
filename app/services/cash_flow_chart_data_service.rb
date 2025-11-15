@@ -18,31 +18,31 @@ class CashFlowChartDataService
         raise "User is required"
       end
 
-      # Get all monthly snapshots for savings/checking accounts (cash)
+      # Get all balances for savings/checking accounts (cash)
       begin
-        cash_accounts = user.savings_accounts.where(account_type: [0, 1])
+        cash_accounts = user.accounts.where(account_type: [0, 1])
         Rails.logger.info "CashFlowChartDataService: Found #{cash_accounts.count} cash accounts"
       rescue => e
-        Rails.logger.error "Error querying savings_accounts: #{e.message}"
+        Rails.logger.error "Error querying accounts: #{e.message}"
         raise e
       end
 
       begin
-        all_snapshots = cash_accounts.flat_map(&:monthly_snapshots)
+        all_snapshots = cash_accounts.flat_map(&:balances)
           .compact
-          .select { |s| s.recorded_at.present? && s.balance.present? }
-        Rails.logger.info "CashFlowChartDataService: Filtered snapshots: #{all_snapshots.length}"
+          .select { |s| s.balance_date.present? && s.amount_cents.present? }
+        Rails.logger.info "CashFlowChartDataService: Filtered balances: #{all_snapshots.length}"
       rescue => e
-        Rails.logger.error "Error getting monthly snapshots: #{e.message}"
+        Rails.logger.error "Error getting balances: #{e.message}"
         raise e
       end
 
-      Rails.logger.info "CashFlowChartDataService: Found #{all_snapshots.length} total snapshots"
+      Rails.logger.info "CashFlowChartDataService: Found #{all_snapshots.length} total balances"
 
       # Group by month and calculate monthly totals
       begin
-        monthly_totals = all_snapshots.group_by { |s| s.recorded_at.beginning_of_month }
-          .transform_values { |snapshots| snapshots.sum { |s| s.balance.to_f } }
+        monthly_totals = all_snapshots.group_by { |s| s.balance_date.beginning_of_month }
+          .transform_values { |snapshots| snapshots.sum { |s| (s.amount_cents || 0) } / 100.0 }
           .sort_by { |month, _| month }
           .to_h
         Rails.logger.info "CashFlowChartDataService: Monthly totals calculated: #{monthly_totals.inspect}"
@@ -95,14 +95,18 @@ class CashFlowChartDataService
 
   def get_portfolio_investment_data(months)
     return {} if months.empty?
+    return {} unless user.portfolio
 
-    # Group portfolios by month of purchase and calculate total investments
-    portfolios = user.portfolios.where.not(purchase_date: nil)
-    portfolio_by_month = portfolios.group_by { |p| p.purchase_date.beginning_of_month }
+    # Group trades by month and calculate total investments
+    trades = Trade.joins(:holding)
+                  .where(holdings: { portfolio_id: user.portfolio.id })
+                  .where(trade_type: 'buy')
+    
+    trade_by_month = trades.group_by { |t| t.trade_date.beginning_of_month }
 
     monthly_investments = {}
-    portfolio_by_month.each do |month, month_portfolios|
-      monthly_investments[month] = month_portfolios.sum { |p| (p.purchase_price || 0) * (p.quantity || 0) }
+    trade_by_month.each do |month, month_trades|
+      monthly_investments[month] = month_trades.sum { |t| (t.amount_cents || 0) / 100.0 }
     end
 
     monthly_investments

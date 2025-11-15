@@ -10,7 +10,7 @@ class RetirementChartDataService
   
   # Generate chart data for active retirement scenario
   def generate(historical_months: 24, future_months_limit: 60)
-    active_scenario = user.retirement_scenarios.order(created_at: :desc).first
+    active_scenario = user.retirements.order(created_at: :desc).first
     
     return empty_chart_data unless active_scenario
     
@@ -23,7 +23,7 @@ class RetirementChartDataService
   
   # Generate withdrawal phase chart data
   def withdrawal_data(retirement_years: 30, monthly_withdrawal: 0)
-    active_scenario = user.retirement_scenarios.order(created_at: :desc).first
+    active_scenario = user.retirements.order(created_at: :desc).first
     
     return empty_withdrawal_data unless active_scenario
     
