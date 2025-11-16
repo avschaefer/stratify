@@ -296,16 +296,60 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="mb-3">
                 <%= f.label :rate_apr, "Interest Rate APR (%)", class: "form-label" %>
                 <%= f.number_field :rate_apr, step: 0.01, class: "form-control", required: true %>
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :rate_apy, "Interest Rate APY (%)", class: "form-label" %>
+                <%= f.number_field :rate_apy, step: 0.01, class: "form-control" %>
+                <small class="text-muted text-xs">Optional</small>
+              </div>
+            </div>
+            <div class="col-md-4">
               <div class="mb-3">
                 <%= f.label :term_years, "Term (years)", class: "form-label" %>
                 <%= f.number_field :term_years, step: 0.25, class: "form-control", required: true %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :start_date, "Start Date", class: "form-label" %>
+                <%= f.date_field :start_date, class: "form-control" %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :end_date, "End Date", class: "form-label" %>
+                <%= f.date_field :end_date, class: "form-control" %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <%= f.label :current_period, "Current Period", class: "form-label" %>
+                <%= f.number_field :current_period, step: 1, class: "form-control" %>
+                <small class="text-muted text-xs">Number of periods paid</small>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :current_balance, "Current Balance ($)", class: "form-label" %>
+                <%= f.number_field :current_balance, step: 0.01, class: "form-control" %>
+                <small class="text-muted text-xs">Current outstanding balance</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :periodic_payment, "Periodic Payment ($)", class: "form-label" %>
+                <%= f.number_field :periodic_payment, step: 0.01, class: "form-control" %>
+                <small class="text-muted text-xs">Payment amount per period</small>
               </div>
             </div>
           </div>

@@ -9,29 +9,54 @@ class AccountsController < ApplicationController
     @account = Account.new(user: current_user)
     
     begin
-      # Calculate net savings for past 3 months using NetWorthService
-      net_worth_service = NetWorthService.new(user: current_user)
+      # Calculate net savings: sum(change in cash from last month) - sum(this month credit card balances)
+      cash_accounts = current_user.accounts.where(account_type: ['savings', 'checking'])
+      credit_card_accounts = current_user.accounts.where(account_type: 'credit_card')
       
-      total_2_months_ago = net_worth_service.total_savings_for_month(2.months.ago.beginning_of_month)
-      total_1_month_ago = net_worth_service.total_savings_for_month(1.month.ago.beginning_of_month)
-      total_current = net_worth_service.total_savings_for_month(Date.today.beginning_of_month)
+      current_month = Date.today.beginning_of_month
+      last_month = 1.month.ago.beginning_of_month
+      two_months_ago = 2.months.ago.beginning_of_month
       
-      @net_savings_1_month_ago = total_1_month_ago - total_2_months_ago
-      @net_savings_current = total_current - total_1_month_ago
+      # Calculate change in cash accounts (savings + checking)
+      # Change = (current month balance - last month balance) for each cash account
+      cash_change_current = cash_accounts.sum do |account|
+        current_balance = account.balances.find_by(balance_date: current_month)&.amount_cents || 0
+        last_balance = account.balances.find_by(balance_date: last_month)&.amount_cents || 0
+        current_balance - last_balance
+      end
       
-      @total_balance_2_months_ago = total_2_months_ago
-      @total_balance_1_month_ago = total_1_month_ago
-      @total_balance_current = total_current
+      cash_change_1_month_ago = cash_accounts.sum do |account|
+        last_balance = account.balances.find_by(balance_date: last_month)&.amount_cents || 0
+        two_months_balance = account.balances.find_by(balance_date: two_months_ago)&.amount_cents || 0
+        last_balance - two_months_balance
+      end
+      
+      # Sum of credit card balances for current month
+      credit_card_balance_current = credit_card_accounts.sum do |account|
+        account.balances.find_by(balance_date: current_month)&.amount_cents || 0
+      end
+      
+      credit_card_balance_1_month_ago = credit_card_accounts.sum do |account|
+        account.balances.find_by(balance_date: last_month)&.amount_cents || 0
+      end
+      
+      credit_card_balance_2_months_ago = credit_card_accounts.sum do |account|
+        account.balances.find_by(balance_date: two_months_ago)&.amount_cents || 0
+      end
+      
+      # Net savings = cash change - credit card balances
+      @net_savings_current = (cash_change_current - credit_card_balance_current) / 100.0
+      @net_savings_1_month_ago = (cash_change_1_month_ago - credit_card_balance_1_month_ago) / 100.0
+      @net_savings_2_months_ago = (cash_accounts.sum { |a| (a.balances.find_by(balance_date: two_months_ago)&.amount_cents || 0) - (a.balances.find_by(balance_date: 3.months.ago.beginning_of_month)&.amount_cents || 0) } - credit_card_balance_2_months_ago) / 100.0
+      
     rescue => e
       Rails.logger.error "Accounts error: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
       
       # Set default values on error
+      @net_savings_2_months_ago = 0
       @net_savings_1_month_ago = 0
       @net_savings_current = 0
-      @total_balance_2_months_ago = 0
-      @total_balance_1_month_ago = 0
-      @total_balance_current = 0
       
       flash.now[:alert] = 'Unable to load accounts data. Please try again.'
     end

@@ -2,6 +2,9 @@ class SettingsController < ApplicationController
   def index
     @user_settings = current_user
     @data_files = current_user.data_files.order(created_at: :desc).limit(10)
+    @referral_code = current_user.referral_code
+    # Placeholder: Check if subscription is active (will be implemented with Stripe)
+    @subscription_active = current_user.stripe_subscription_id.present?
   end
   
   def update
@@ -114,10 +117,24 @@ class SettingsController < ApplicationController
     end
   end
   
+  def create_feedback
+    @feedback = current_user.feedbacks.build(feedback_params)
+    if @feedback.save
+      redirect_to settings_path, notice: 'Thank you for your feedback!'
+    else
+      flash.now[:alert] = 'Error submitting feedback. ' + @feedback.errors.full_messages.join(', ')
+      render :index
+    end
+  end
+  
   private
   
   def settings_params
-    params.require(:user).permit(:email, :currency, :timezone, :date_format)
+    params.require(:user).permit(:email, :timezone, :date_format)
+  end
+  
+  def feedback_params
+    params.require(:feedback).permit(:rating_net_promoter, :message)
   end
 end
 

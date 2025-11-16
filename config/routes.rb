@@ -23,6 +23,7 @@ Rails.application.routes.draw do
   resources :portfolios do
     collection do
       get :chart_data
+      post :update_prices
     end
   end
   
@@ -71,6 +72,7 @@ Rails.application.routes.draw do
       post :update_password
       post :update_account
       delete :destroy_account
+      post :feedback, to: 'settings#create_feedback', as: 'feedback'
     end
   end
 end

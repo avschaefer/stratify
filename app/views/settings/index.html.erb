@@ -7,7 +7,7 @@
 <div class="row g-3 mb-4">
   <!-- Account (Email & Password) -->
   <div class="col-md-6 col-lg-4">
-    <div class="card">
+    <div class="card h-100">
       <div class="card-glow"></div>
       <!-- Card: Top Section (Title) -->
       <div class="card-header">
@@ -44,7 +44,7 @@
 
   <!-- Preferences -->
   <div class="col-md-6 col-lg-4">
-    <div class="card">
+    <div class="card h-100">
       <div class="card-glow"></div>
       <!-- Card: Top Section (Title) -->
       <div class="card-header">
@@ -53,18 +53,6 @@
       <!-- Card: Bottom Section (Form) -->
       <div class="card-body">
         <%= form_with url: settings_path, method: :patch, local: true do |f| %>
-          <div class="mb-3">
-            <label class="form-label text-sm">Currency</label>
-            <select name="user[currency]" class="form-select form-select-sm">
-              <option value="USD" <%= 'selected' if @user_settings.currency == 'USD' || @user_settings.currency.nil? %>>USD ($)</option>
-              <option value="EUR" <%= 'selected' if @user_settings.currency == 'EUR' %>>EUR (€)</option>
-              <option value="GBP" <%= 'selected' if @user_settings.currency == 'GBP' %>>GBP (£)</option>
-              <option value="CAD" <%= 'selected' if @user_settings.currency == 'CAD' %>>CAD ($)</option>
-              <option value="AUD" <%= 'selected' if @user_settings.currency == 'AUD' %>>AUD ($)</option>
-              <option value="JPY" <%= 'selected' if @user_settings.currency == 'JPY' %>>JPY (¥)</option>
-              <option value="CHF" <%= 'selected' if @user_settings.currency == 'CHF' %>>CHF</option>
-            </select>
-          </div>
           <div class="mb-3">
             <label class="form-label text-sm">Timezone</label>
             <select name="user[timezone]" class="form-select form-select-sm">
@@ -99,19 +87,151 @@
     </div>
   </div>
 
-  <!-- Data Export -->
+  <!-- Subscription Status Card -->
   <div class="col-md-6 col-lg-4">
+    <div class="card h-100">
+      <div class="card-glow"></div>
+      <!-- Card: Top Section (Title) -->
+      <div class="card-header">
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Subscription</h2>
+      </div>
+      <!-- Card: Bottom Section (Content) -->
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="mb-2">
+            <span class="text-muted text-sm">Status:</span>
+            <span class="ms-2" style="color: <%= @subscription_active ? '#6ee7b7' : '#fca5a5' %>; font-weight: 600;">
+              <%= @subscription_active ? 'Active' : 'Not Active' %>
+            </span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted text-sm">Period:</span>
+            <span class="ms-2" style="color: #fafafa; font-weight: 500;">
+              <%= @user_settings.subscription_period&.humanize || 'Monthly' %>
+            </span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted text-sm">Cost:</span>
+            <span class="ms-2" style="color: #fafafa; font-weight: 500;">
+              <% if @user_settings.subscription_price_cents.present? %>
+                $<%= number_with_precision(@user_settings.subscription_price_cents / 100.0, precision: 2) %>/<%= @user_settings.subscription_period == 'yearly' ? 'year' : 'month' %>
+              <% else %>
+                N/A
+              <% end %>
+            </span>
+          </div>
+        </div>
+        <% current_period = @user_settings.subscription_period || 'monthly' %>
+        <% monthly_price = @user_settings.subscription_price_cents || 1000 %>
+        <% annual_price_monthly_equivalent = monthly_price * 12 %>
+        <% annual_price_with_discount = (annual_price_monthly_equivalent * 0.7).round %>
+        <% annual_savings = annual_price_monthly_equivalent - annual_price_with_discount %>
+        <% annual_discount_percent = 30 %>
+        
+        <% if current_period == 'monthly' %>
+          <div class="mb-3 p-3" style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 0.5rem;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-sm" style="color: #e5e5e5;">Switch to Annual:</span>
+              <span class="text-sm font-weight-bold" style="color: #93c5fd;">Save <%= annual_discount_percent %>%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-sm" style="color: #a3a3a3;">Annual Price:</span>
+              <span class="text-sm font-weight-bold" style="color: #fafafa;">$<%= number_with_precision(annual_price_with_discount / 100.0, precision: 2) %>/year</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-xs" style="color: #a3a3a3;">You save:</span>
+              <span class="text-xs font-weight-bold" style="color: #6ee7b7;">$<%= number_with_precision(annual_savings / 100.0, precision: 2) %>/year</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm mt-2 w-100" disabled title="TODO: Implement Stripe subscription management" style="background-color: white; color: #171717; border-color: white;">
+              Switch to Annual
+            </button>
+          </div>
+        <% elsif current_period == 'yearly' %>
+          <% monthly_from_annual = (@user_settings.subscription_price_cents || annual_price_with_discount) / 12 %>
+          <div class="mb-3 p-3" style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 0.5rem;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-sm" style="color: #e5e5e5;">Monthly Option:</span>
+              <span class="text-sm font-weight-bold" style="color: #fafafa;">$<%= number_with_precision(monthly_from_annual / 100.0, precision: 2) %>/month</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm mt-2 w-100" disabled title="TODO: Implement Stripe subscription management" style="background-color: white; color: #171717; border-color: white;">
+              Switch to Monthly
+            </button>
+          </div>
+        <% end %>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary btn-sm" disabled title="TODO: Implement Stripe subscription management" style="background-color: white; color: #171717; border-color: white;">
+            Renew Subscription
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" disabled title="TODO: Implement Stripe subscription management">
+            Cancel Subscription
+          </button>
+        </div>
+        <small class="text-muted text-xs mt-2 d-block">TODO: Implement Stripe subscription management</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Referral Card - Blue themed -->
+<div class="row g-3 mb-4">
+  <div class="col-md-12">
+    <div class="card" style="background-color: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3);">
+      <div class="card-glow"></div>
+      <!-- Card: Top Section (Title) -->
+      <div class="card-header" style="background-color: rgba(59, 130, 246, 0.1); border-bottom-color: rgba(59, 130, 246, 0.3);">
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: #93c5fd;">Referral Program</h2>
+      </div>
+      <!-- Card: Bottom Section (Content) -->
+      <div class="card-body">
+        <p class="text-muted mb-3 text-sm">Share your referral link and earn rewards. For each new member that signs up with your code, you receive 3 months free.</p>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm" id="copyReferralBtn" style="background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.4);">
+            <i class="bi bi-clipboard"></i> Copy
+          </button>
+          <div class="flex-grow-1">
+            <input type="text" id="referralLink" class="form-control form-control-sm" value="<%= request.base_url %>/signup?ref=<%= @referral_code %>" readonly style="background-color: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); color: #93c5fd;">
+          </div>
+        </div>
+        <div id="copySuccessMessage" class="mt-2" style="display: none; font-size: 0.875rem; color: #93c5fd;">
+          <i class="bi bi-check-circle"></i> Link copied to clipboard!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Card -->
+<div class="row g-3 mb-4">
+  <div class="col-md-12">
     <div class="card">
       <div class="card-glow"></div>
       <!-- Card: Top Section (Title) -->
       <div class="card-header">
-        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Data Export</h2>
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Feedback</h2>
       </div>
-      <!-- Card: Bottom Section (Content) -->
+      <!-- Card: Bottom Section (Form) -->
       <div class="card-body">
-        <p class="text-muted mb-4 text-sm">Export your financial data for backup or analysis</p>
-        <%= button_to export_data_settings_path, method: :post, class: "btn btn-primary btn-sm d-inline-flex align-items-center gap-2" do %>
-          <i class="bi bi-download"></i><span>Export Data</span>
+        <%= form_with url: feedback_settings_path, method: :post, local: true do |f| %>
+          <div class="mb-3">
+            <label class="form-label text-sm">How likely are you to recommend us to a friend or colleague? (0-10)</label>
+            <p class="text-muted text-xs mb-2">0 = Not at all likely, 10 = Extremely likely</p>
+            <select name="feedback[rating_net_promoter]" class="form-select form-select-sm" required>
+              <option value="">Select a score</option>
+              <% (0..10).each do |score| %>
+                <option value="<%= score %>"><%= score %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label text-sm">Additional Comments (max 100 characters)</label>
+            <textarea name="feedback[message]" class="form-control form-control-sm" rows="3" maxlength="100" placeholder="Share your thoughts..." required></textarea>
+            <small class="text-muted text-xs">
+              <span id="charCount">0</span>/100 characters
+            </small>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm">Submit Feedback</button>
+          </div>
         <% end %>
       </div>
     </div>
@@ -119,43 +239,53 @@
 </div>
 
 <!-- Export History -->
-<% if @data_files.any? %>
-  <div class="card mb-4">
-    <div class="card-glow"></div>
-    <!-- Card: Top Section (Title) -->
-    <div class="card-header">
-      <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Export History</h2>
-    </div>
-    <!-- Card: Bottom Section (Content) -->
-    <div class="card-body">
-      <p class="text-muted mb-4 text-sm">Previously exported data files</p>
-      <div class="table-responsive">
-        <table class="table table-sm export-history-table">
-          <thead>
-            <tr>
-              <th>Filename</th>
-              <th>Exported</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @data_files.each do |file| %>
-              <tr>
-                <td><%= file.filename %></td>
-                <td><%= file.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
-                <td>
-                  <%= link_to download_data_file_settings_path(id: file.id), class: "btn btn-sm btn-outline-primary" do %>
-                    <i class="bi bi-download"></i> Download
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+<div class="row g-3 mb-4">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-glow"></div>
+      <!-- Card: Top Section (Title) -->
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Export History</h2>
+        <%= button_to export_data_settings_path, method: :post, class: "btn btn-primary btn-sm d-inline-flex align-items-center gap-2" do %>
+          <i class="bi bi-download"></i><span>Export Data</span>
+        <% end %>
+      </div>
+      <!-- Card: Bottom Section (Content) -->
+      <div class="card-body">
+        <% if @data_files.any? %>
+          <p class="text-muted mb-4 text-sm">Previously exported data files</p>
+          <div class="table-responsive">
+            <table class="table table-sm export-history-table">
+              <thead>
+                <tr>
+                  <th>Filename</th>
+                  <th>Exported</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @data_files.each do |file| %>
+                  <tr>
+                    <td><%= file.filename %></td>
+                    <td><%= file.created_at.strftime('%Y-%m-%d %H:%M:%S') %></td>
+                    <td>
+                      <%= link_to download_data_file_settings_path(id: file.id), class: "btn btn-sm btn-outline-primary" do %>
+                        <i class="bi bi-download"></i> Download
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-muted text-center py-3 mb-0">No export history yet. Click "Export Data" above to create your first export.</p>
+        <% end %>
       </div>
     </div>
   </div>
-<% end %>
+</div>
+
 
 <style>
   /* Export History table - enforce dark theme contrasts */
@@ -223,3 +353,47 @@
     <% end %>
   </div>
 </div>
+
+<script>
+  // Copy referral link functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const copyBtn = document.getElementById('copyReferralBtn');
+    const referralLink = document.getElementById('referralLink');
+    const successMessage = document.getElementById('copySuccessMessage');
+    
+    if (copyBtn && referralLink) {
+      copyBtn.addEventListener('click', function() {
+        referralLink.select();
+        referralLink.setSelectionRange(0, 99999); // For mobile devices
+        
+        navigator.clipboard.writeText(referralLink.value).then(function() {
+          // Show success message
+          successMessage.style.display = 'block';
+          setTimeout(function() {
+            successMessage.style.display = 'none';
+          }, 3000);
+        }).catch(function(err) {
+          // Fallback for older browsers
+          try {
+            document.execCommand('copy');
+            successMessage.style.display = 'block';
+            setTimeout(function() {
+              successMessage.style.display = 'none';
+            }, 3000);
+          } catch (err) {
+            alert('Failed to copy link. Please copy manually.');
+          }
+        });
+      });
+    }
+    
+    // Character counter for feedback message
+    const feedbackTextarea = document.querySelector('textarea[name="feedback[message]"]');
+    const charCount = document.getElementById('charCount');
+    if (feedbackTextarea && charCount) {
+      feedbackTextarea.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+      });
+    }
+  });
+</script>

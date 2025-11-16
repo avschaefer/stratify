@@ -95,47 +95,22 @@
                 </strong>
               </td>
               <td style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
-                <div style="display: flex; flex-direction: column;">
-                  <% val2 = @net_savings_2_months_ago.to_f %>
-                  <span class="<%= val2 >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
-                    <%= val2 >= 0 ? '+' : '' %>$<%= number_with_delimiter(val2.round(0)) %>
-                  </span>
-                  <% if @net_savings_1_month_ago && @net_savings_2_months_ago %>
-                    <% change = @net_savings_1_month_ago - @net_savings_2_months_ago %>
-                    <% if change != 0 %>
-                      <small class="<%= change >= 0 ? 'text-success' : 'text-danger' %>" style="font-size: 0.75rem;">
-                        <i class="bi bi-arrow-<%= change >= 0 ? 'up' : 'down' %>"></i>
-                        <%= change >= 0 ? '+' : '' %>$<%= number_with_delimiter(change.round(0)) %>
-                      </small>
-                    <% end %>
-                  <% end %>
-                </div>
+                <% val2 = @net_savings_2_months_ago.to_f %>
+                <span class="<%= val2 >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                  <%= val2 >= 0 ? '+' : '' %>$<%= number_with_delimiter(val2.round(0)) %>
+                </span>
               </td>
               <td style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
-                <div style="display: flex; flex-direction: column;">
-                  <% val1 = @net_savings_1_month_ago.to_f %>
-                  <span class="<%= val1 >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
-                    <%= val1 >= 0 ? '+' : '' %>$<%= number_with_delimiter(val1.round(0)) %>
-                  </span>
-                  <% if @net_savings_current && @net_savings_1_month_ago %>
-                    <% change = @net_savings_current - @net_savings_1_month_ago %>
-                    <% if change != 0 %>
-                      <small class="<%= change >= 0 ? 'text-success' : 'text-danger' %>" style="font-size: 0.75rem;">
-                        <i class="bi bi-arrow-<%= change >= 0 ? 'up' : 'down' %>"></i>
-                        <%= change >= 0 ? '+' : '' %>$<%= number_with_delimiter(change.round(0)) %>
-                      </small>
-                    <% end %>
-                  <% end %>
-                </div>
+                <% val1 = @net_savings_1_month_ago.to_f %>
+                <span class="<%= val1 >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                  <%= val1 >= 0 ? '+' : '' %>$<%= number_with_delimiter(val1.round(0)) %>
+                </span>
               </td>
               <td style="padding: 0.5rem 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(255, 255, 255, 0.02);">
-                <div style="display: flex; flex-direction: column;">
-                  <% valc = @net_savings_current.to_f %>
-                  <span class="<%= valc >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
-                    <%= valc >= 0 ? '+' : '' %>$<%= number_with_delimiter(valc.round(0)) %>
-                  </span>
-                  <small class="text-muted" style="font-size: 0.75rem;">Current month</small>
-                </div>
+                <% valc = @net_savings_current.to_f %>
+                <span class="<%= valc >= 0 ? '' : 'text-danger' %>" style="font-weight: 600;">
+                  <%= valc >= 0 ? '+' : '' %>$<%= number_with_delimiter(valc.round(0)) %>
+                </span>
               </td>
             </tr>
             

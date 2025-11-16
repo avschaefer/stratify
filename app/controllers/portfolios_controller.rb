@@ -65,6 +65,16 @@ class PortfoliosController < ApplicationController
     end
   end
 
+  def update_prices
+    @portfolio = current_user.portfolio
+    if @portfolio&.persisted?
+      UpdateHoldingPricesJob.perform_later(@portfolio.id)
+      redirect_to portfolios_path, notice: 'Price update started. Prices will be updated shortly.'
+    else
+      redirect_to portfolios_path, alert: 'No portfolio found.'
+    end
+  end
+
   def chart_data
     base_date = Date.today - 365.days
     daily_dates = (0..364).map { |i| base_date + i.days }
