@@ -24,6 +24,51 @@ class PortfoliosController < ApplicationController
     
     # Use holdings as transactions for display
     @transactions = @holdings
+    
+    # Calculate index comparison data (3, 6, 12 month returns)
+    # For now, using placeholder calculations - will be replaced with actual historical data
+    @portfolio_3m = 0.0
+    @portfolio_6m = 0.0
+    @portfolio_12m = 0.0
+    @sp500_3m = 0.0
+    @sp500_6m = 0.0
+    @sp500_12m = 0.0
+    @nasdaq_3m = 0.0
+    @nasdaq_6m = 0.0
+    @nasdaq_12m = 0.0
+    
+    # Calculate yearly rollup
+    @yearly_rollup = []
+    if @holdings.any?
+      # Group holdings by year
+      years = @holdings.map { |h| h.created_at.year }.uniq.sort
+      years.each do |year|
+        year_start = Date.new(year, 1, 1)
+        year_end = Date.new(year, 12, 31)
+        
+        # Get holdings created in this year or earlier
+        holdings_in_year = @holdings.select { |h| h.created_at.year <= year }
+        
+        # Calculate end of year value (simplified - would need historical prices)
+        end_value = @portfolio_value # Placeholder - should use historical prices
+        
+        # Calculate total return (simplified)
+        total_cost = holdings_in_year.sum(&:total_cost_basis) / 100.0
+        total_return = end_value - total_cost
+        total_return_pct = total_cost > 0 ? (total_return / total_cost * 100) : 0
+        
+        # Calculate realized gain/loss (simplified - would need trade history)
+        realized_gain_loss = 0.0
+        
+        @yearly_rollup << {
+          year: year,
+          end_value: end_value,
+          total_return: total_return,
+          total_return_pct: total_return_pct,
+          realized_gain_loss: realized_gain_loss
+        }
+      end
+    end
   end
   
   def create
@@ -76,30 +121,52 @@ class PortfoliosController < ApplicationController
   end
 
   def chart_data
-    base_date = Date.today - 365.days
-    daily_dates = (0..364).map { |i| base_date + i.days }
+    # Find first user input (first holding date)
+    first_holding = current_user.portfolio&.holdings&.order(:created_at)&.first
+    if first_holding
+      base_date = [first_holding.created_at.to_date, Date.today - 365.days].min
+    else
+      base_date = Date.today - 365.days
+    end
+    
+    # Generate daily dates from base_date to today
+    days_diff = (Date.today - base_date).to_i
+    daily_dates = (0..days_diff).map { |i| base_date + i.days }
     
     # Fetch NASDAQ and S&P 500 data with fallback
-    nasdaq_data = StockDataService.fetch_nasdaq_data(365) || []
-    sp500_data = StockDataService.fetch_sp500_data(365) || []
+    nasdaq_data = StockDataService.fetch_nasdaq_data(days_diff + 1) || []
+    sp500_data = StockDataService.fetch_sp500_data(days_diff + 1) || []
     
     # Ensure we have data
-    nasdaq_data = StockDataService.send(:generate_fallback_data, 365) if nasdaq_data.empty?
-    sp500_data = StockDataService.send(:generate_fallback_data, 365) if sp500_data.empty?
+    nasdaq_data = StockDataService.send(:generate_fallback_data, days_diff + 1) if nasdaq_data.empty?
+    sp500_data = StockDataService.send(:generate_fallback_data, days_diff + 1) if sp500_data.empty?
     
     # Generate portfolio data based on user's actual holdings
     portfolio_service = PortfolioValueService.new(user: current_user)
     current_value = portfolio_service.total_value
+    
+    # Calculate portfolio value over time (simplified - would need historical prices)
     portfolio_data = daily_dates.map do |date|
-      # Simple growth calculation based on date
-      growth_factor = 1 + ((date - base_date).to_f / 365.0) * 0.15
-      current_value * growth_factor
+      if first_holding && date >= first_holding.created_at.to_date
+        # Simple growth calculation from first holding date
+        days_since_first = (date - first_holding.created_at.to_date).to_i
+        total_days = (Date.today - first_holding.created_at.to_date).to_i
+        if total_days > 0
+          growth_factor = 1 + (days_since_first.to_f / total_days) * 0.15
+          current_value * growth_factor
+        else
+          current_value
+        end
+      else
+        # Before first holding, use initial value
+        portfolio_service.total_cost_basis / 100.0
+      end
     end
     
-    # Trim to exactly 365 items
-    nasdaq_data = nasdaq_data.first(365)
-    sp500_data = sp500_data.first(365)
-    portfolio_data = portfolio_data.first(365)
+    # Trim to match date range
+    nasdaq_data = nasdaq_data.first(daily_dates.length)
+    sp500_data = sp500_data.first(daily_dates.length)
+    portfolio_data = portfolio_data.first(daily_dates.length)
     
     # Format for Lightweight Charts: { time: unix_timestamp_seconds, value: number }
     chart_data = {
@@ -107,18 +174,6 @@ class PortfoliosController < ApplicationController
         {
           time: date.to_time.to_i,
           value: portfolio_data[idx].round(2)
-        }
-      end,
-      nasdaq: daily_dates.map.with_index do |date, idx|
-        {
-          time: date.to_time.to_i,
-          value: nasdaq_data[idx].round(2)
-        }
-      end,
-      sp500: daily_dates.map.with_index do |date, idx|
-        {
-          time: date.to_time.to_i,
-          value: sp500_data[idx].round(2)
         }
       end
     }

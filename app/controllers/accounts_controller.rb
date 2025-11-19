@@ -49,6 +49,34 @@ class AccountsController < ApplicationController
       @net_savings_1_month_ago = (cash_change_1_month_ago - credit_card_balance_1_month_ago) / 100.0
       @net_savings_2_months_ago = (cash_accounts.sum { |a| (a.balances.find_by(balance_date: two_months_ago)&.amount_cents || 0) - (a.balances.find_by(balance_date: 3.months.ago.beginning_of_month)&.amount_cents || 0) } - credit_card_balance_2_months_ago) / 100.0
       
+      # Calculate average cash flow for 3, 6, and 9 months
+      cash_flows = []
+      (0..11).each do |months_ago|
+        month_start = months_ago.months.ago.beginning_of_month
+        prev_month_start = (months_ago + 1).months.ago.beginning_of_month
+        
+        # Change in cash accounts
+        cash_change = cash_accounts.sum do |account|
+          current_balance = account.balances.find_by(balance_date: month_start)&.amount_cents || 0
+          prev_balance = account.balances.find_by(balance_date: prev_month_start)&.amount_cents || 0
+          current_balance - prev_balance
+        end
+        
+        # Credit card balances for this month
+        credit_card_balance = credit_card_accounts.sum do |account|
+          account.balances.find_by(balance_date: month_start)&.amount_cents || 0
+        end
+        
+        # Cash flow = cash change - credit card balance
+        cash_flow = (cash_change - credit_card_balance) / 100.0
+        cash_flows << cash_flow
+      end
+      
+      # Calculate averages
+      @avg_cash_flow_3_months = cash_flows.first(3).sum / 3.0 rescue 0
+      @avg_cash_flow_6_months = cash_flows.first(6).sum / 6.0 rescue 0
+      @avg_cash_flow_12_months = cash_flows.first(12).sum / 12.0 rescue 0
+      
     rescue => e
       Rails.logger.error "Accounts error: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
@@ -57,6 +85,9 @@ class AccountsController < ApplicationController
       @net_savings_2_months_ago = 0
       @net_savings_1_month_ago = 0
       @net_savings_current = 0
+      @avg_cash_flow_3_months = 0
+      @avg_cash_flow_6_months = 0
+      @avg_cash_flow_12_months = 0
       
       flash.now[:alert] = 'Unable to load accounts data. Please try again.'
     end

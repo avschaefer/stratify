@@ -67,7 +67,7 @@
 </div>
 
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-12">
     <div class="card mb-4">
       <div class="card-glow"></div>
       <!-- Card: Top Section (Title) -->
@@ -102,87 +102,3 @@
   </div>
 </div>
 
-<!-- Cash Flow Tiles - Single Card -->
-<div class="row g-3 mb-4">
-  <div class="col-md-12">
-    <div class="card mb-4">
-      <div class="card-glow"></div>
-      <div class="card-header">
-        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Average Cash Flow</h2>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-4">
-            <div class="metric-label" style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">3 Month Avg</div>
-            <div class="metric-value" style="color: <%= @avg_cash_flow_3_months >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-              <%= @avg_cash_flow_3_months >= 0 ? '+' : '' %>$<%= number_with_delimiter(@avg_cash_flow_3_months.round(0)) %>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="metric-label" style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">6 Month Avg</div>
-            <div class="metric-value" style="color: <%= @avg_cash_flow_6_months >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-              <%= @avg_cash_flow_6_months >= 0 ? '+' : '' %>$<%= number_with_delimiter(@avg_cash_flow_6_months.round(0)) %>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="metric-label" style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">12 Month Avg</div>
-            <div class="metric-value" style="color: <%= @avg_cash_flow_12_months >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-              <%= @avg_cash_flow_12_months >= 0 ? '+' : '' %>$<%= number_with_delimiter(@avg_cash_flow_12_months.round(0)) %>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Quick Actions Section -->
-<div class="card mt-4 quick-actions">
-  <div class="card-glow"></div>
-  <!-- Card: Top Section (Title) -->
-  <div class="card-header">
-    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Quick Actions</h2>
-    <p class="text-muted mb-0 text-sm mt-1">Common tasks you may want to perform</p>
-  </div>
-  <!-- Card: Bottom Section (Content) -->
-  <div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-3">
-        <%= link_to portfolios_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
-          <i class="bi bi-graph-up" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-          <span>Portfolio</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <%= link_to accounts_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
-          <i class="bi bi-piggy-bank" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-          <span>Savings & Expenses</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <%= link_to loans_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
-          <i class="bi bi-cash-coin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-          <span>Loans</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <%= link_to insurance_policies_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
-          <i class="bi bi-shield-check" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-          <span>Insurance</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <%= link_to taxes_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
-          <i class="bi bi-receipt" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-          <span>Taxes</span>
-        <% end %>
-      </div>
-      <div class="col-md-3">
-        <%= link_to retirements_path, class: "btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-3" do %>
-          <i class="bi bi-calendar-check" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
-          <span>Retirement</span>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>

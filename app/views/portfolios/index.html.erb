@@ -117,38 +117,101 @@
     
     <!-- Controls below chart -->
     <div class="chart-controls-container">
-      <!-- Series Group -->
+      <!-- Time Range Group -->
       <div class="chart-control-group">
-        <label class="chart-control-label">Series</label>
+        <label class="chart-control-label">Time Range</label>
         <div class="chart-button-group">
-          <button type="button" class="chart-button-toggle active" data-series="portfolio" id="btnPortfolio">
-            Portfolio
+          <button type="button" class="chart-button-toggle" data-time-range="ytd" data-chart-id="portfolio">
+            YTD
           </button>
-          <button type="button" class="chart-button-toggle active" data-series="nasdaq" id="btnNasdaq">
-            NASDAQ
+          <button type="button" class="chart-button-toggle active" data-time-range="all" data-chart-id="portfolio">
+            All
           </button>
-          <button type="button" class="chart-button-toggle active" data-series="sp500" id="btnSp500">
-            S&P 500
+          <button type="button" class="chart-button-toggle" data-time-range="home" data-chart-id="portfolio" title="Auto resize to fit data">
+            Home
           </button>
         </div>
       </div>
-      
-      <!-- Chart Type Group -->
-      <div class="chart-control-group">
-        <label class="chart-control-label">Chart Type</label>
-        <div class="chart-button-group">
-          <button type="button" class="chart-button-toggle active" data-chart-type="area" id="btnArea">
-            Area
-          </button>
-          <button type="button" class="chart-button-toggle" data-chart-type="line" id="btnLine">
-            Line
-          </button>
-        </div>
+    </div>
+    
+    <!-- Index Comparison Table -->
+    <div class="mt-4">
+      <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #fafafa;">Index Comparison</h3>
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th style="color: #a3a3a3; font-size: 0.875rem;">Period</th>
+              <th style="color: #a3a3a3; font-size: 0.875rem;">Portfolio</th>
+              <th style="color: #a3a3a3; font-size: 0.875rem;">S&P 500</th>
+              <th style="color: #a3a3a3; font-size: 0.875rem;">NASDAQ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color: #e5e5e5;">3 Month</td>
+              <td style="color: <%= @portfolio_3m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @portfolio_3m >= 0 ? '+' : '' %><%= number_with_precision(@portfolio_3m, precision: 2) %>%</td>
+              <td style="color: <%= @sp500_3m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @sp500_3m >= 0 ? '+' : '' %><%= number_with_precision(@sp500_3m, precision: 2) %>%</td>
+              <td style="color: <%= @nasdaq_3m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @nasdaq_3m >= 0 ? '+' : '' %><%= number_with_precision(@nasdaq_3m, precision: 2) %>%</td>
+            </tr>
+            <tr>
+              <td style="color: #e5e5e5;">6 Month</td>
+              <td style="color: <%= @portfolio_6m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @portfolio_6m >= 0 ? '+' : '' %><%= number_with_precision(@portfolio_6m, precision: 2) %>%</td>
+              <td style="color: <%= @sp500_6m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @sp500_6m >= 0 ? '+' : '' %><%= number_with_precision(@sp500_6m, precision: 2) %>%</td>
+              <td style="color: <%= @nasdaq_6m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @nasdaq_6m >= 0 ? '+' : '' %><%= number_with_precision(@nasdaq_6m, precision: 2) %>%</td>
+            </tr>
+            <tr>
+              <td style="color: #e5e5e5;">12 Month</td>
+              <td style="color: <%= @portfolio_12m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @portfolio_12m >= 0 ? '+' : '' %><%= number_with_precision(@portfolio_12m, precision: 2) %>%</td>
+              <td style="color: <%= @sp500_12m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @sp500_12m >= 0 ? '+' : '' %><%= number_with_precision(@sp500_12m, precision: 2) %>%</td>
+              <td style="color: <%= @nasdaq_12m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @nasdaq_12m >= 0 ? '+' : '' %><%= number_with_precision(@nasdaq_12m, precision: 2) %>%</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Annualized Returns Summary Section -->
+<% if @holdings.any? %>
+<div class="card mb-4">
+  <div class="card-glow"></div>
+  <div class="card-header">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Annualized Returns Summary</h2>
+    <p class="text-muted mb-0 text-sm mt-1">Portfolio performance by year</p>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>End of Year Value</th>
+            <th>Total Return</th>
+            <th>Realized Gain/Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @yearly_rollup.each do |year_data| %>
+            <tr>
+              <td><strong><%= year_data[:year] %></strong></td>
+              <td>$<%= number_with_delimiter(year_data[:end_value].round(0)) %></td>
+              <td style="color: <%= year_data[:total_return] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                <%= year_data[:total_return] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:total_return].round(0)) %>
+                (<%= year_data[:total_return_pct] >= 0 ? '+' : '' %><%= number_with_precision(year_data[:total_return_pct], precision: 2) %>%)
+              </td>
+              <td style="color: <%= year_data[:realized_gain_loss] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                <%= year_data[:realized_gain_loss] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:realized_gain_loss].round(0)) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
 
 <!-- Add Transaction Modal -->
 <div class="modal" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
@@ -293,15 +356,10 @@
 <script>
 (function() {
   let chartInstance = null;
-  let allSeries = {};
+  let portfolioSeries = null;
   let allData = {};
   let currentSettings = {
-    visibleSeries: {
-      portfolio: true,
-      nasdaq: true,
-      sp500: true
-    },
-    chartType: 'area'
+    timeRange: 'all' // 'all', 'ytd', 'home'
   };
 
   // Wait for Lightweight Charts to load
@@ -336,8 +394,6 @@
       }
 
       const { createChart } = window.LightweightCharts;
-      const AreaSeries = window.LightweightCharts.AreaSeries;
-      const LineSeries = window.LightweightCharts.LineSeries;
       
       if (!createChart || typeof createChart !== 'function') {
         console.error('createChart not available', window.LightweightCharts);
@@ -388,177 +444,51 @@
         console.log('Chart created:', chart);
         console.log('Chart methods:', Object.keys(chart).filter(k => typeof chart[k] === 'function'));
 
-        // Generate sample data for multiple series
-        function generateSampleData(baseValue, name) {
-          const randomFactor = 25 + Math.random() * 25;
-          const samplePoint = i =>
-            baseValue * (1 + 
-              i * 0.001 +
-              Math.sin(i / 10) * 0.2 +
-              Math.sin(i / 20) * 0.4 +
-              Math.sin(i / randomFactor) * 0.8 +
-              Math.sin(i / 500) * 0.5);
-
-          const res = [];
-          const date = new Date(Date.UTC(2018, 0, 1, 0, 0, 0, 0));
-          const numberOfPoints = 500;
-          
-          for (let i = 0; i < numberOfPoints; ++i) {
-            const time = date.getTime() / 1000;
-            const value = samplePoint(i);
-            res.push({ time, value: Math.round(value) });
-            date.setUTCDate(date.getUTCDate() + 1);
-          }
-
-          return res;
+        // Create portfolio line series
+        const LineSeries = window.LightweightCharts.LineSeries;
+        if (typeof chart.addLineSeries === 'function') {
+          portfolioSeries = chart.addLineSeries({
+            color: '#3b82f6',
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true
+          });
+        } else if (LineSeries && typeof chart.addSeries === 'function') {
+          portfolioSeries = chart.addSeries(LineSeries, {
+            color: '#3b82f6',
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: true
+          });
         }
 
-        // Generate data for all series
-        allData = {
-          portfolio: generateSampleData(420000, 'portfolio'),
-          nasdaq: generateSampleData(12000, 'nasdaq'),
-          sp500: generateSampleData(4000, 'sp500')
-        };
-
-        // Create series configuration - matching image style
-        const seriesConfig = {
-          portfolio: {
-            title: 'Portfolio',
-            lineColor: '#3b82f6',
-            topColor: 'rgba(59, 130, 246, 0.3)',
-            bottomColor: 'rgba(59, 130, 246, 0.05)',
-            color: '#3b82f6'
-          },
-          nasdaq: {
-            title: 'NASDAQ',
-            lineColor: '#ec4899',
-            topColor: 'rgba(236, 72, 153, 0.3)',
-            bottomColor: 'rgba(236, 72, 153, 0.05)',
-            color: '#ec4899'
-          },
-          sp500: {
-            title: 'S&P 500',
-            lineColor: '#f97316',
-            topColor: 'rgba(249, 115, 22, 0.3)',
-            bottomColor: 'rgba(249, 115, 22, 0.05)',
-            color: '#f97316'
-          }
-        };
-
-        // Helper function to create series
-        function createSeries(type, name, config) {
-          console.log(`Creating ${type} series for ${name}`);
-          
-          if (type === 'area') {
-            // Try standalone API first (most reliable)
-            if (typeof chart.addAreaSeries === 'function') {
-              console.log(`Using addAreaSeries for ${name}`);
-              return chart.addAreaSeries({
-                lineColor: config.lineColor,
-                topColor: config.topColor,
-                bottomColor: config.bottomColor,
-                lineWidth: 2,
-                priceLineVisible: false,
-                lastValueVisible: true
-              });
-            } else if (AreaSeries && typeof chart.addSeries === 'function') {
-              console.log(`Using addSeries with AreaSeries for ${name}`);
-              return chart.addSeries(AreaSeries, {
-                lineColor: config.lineColor,
-                topColor: config.topColor,
-                bottomColor: config.bottomColor,
-                lineWidth: 2,
-                priceLineVisible: false,
-                lastValueVisible: true
-              });
-            } else {
-              console.error(`Neither addAreaSeries nor addSeries available for ${name}`);
-            }
-          } else {
-            // Try standalone API first
-            if (typeof chart.addLineSeries === 'function') {
-              console.log(`Using addLineSeries for ${name}`);
-              return chart.addLineSeries({
-                color: config.color,
-                lineWidth: 2,
-                priceLineVisible: false,
-                lastValueVisible: true
-              });
-            } else if (LineSeries && typeof chart.addSeries === 'function') {
-              console.log(`Using addSeries with LineSeries for ${name}`);
-              return chart.addSeries(LineSeries, {
-                color: config.color,
-                lineWidth: 2,
-                priceLineVisible: false,
-                lastValueVisible: true
-              });
-            } else {
-              console.error(`Neither addLineSeries nor addSeries available for ${name}`);
-            }
-          }
-          return null;
-        }
-
-        // Create all series
-        Object.keys(seriesConfig).forEach(name => {
-          const series = createSeries(currentSettings.chartType, name, seriesConfig[name]);
-          if (series) {
-            allSeries[name] = series;
-            console.log(`Created ${name} series:`, series);
-          } else {
-            console.error(`Failed to create ${name} series`);
-          }
-        });
-
-        // Apply initial visibility and data
-        console.log('All data generated:', {
-          portfolio: allData.portfolio.length,
-          nasdaq: allData.nasdaq.length,
-          sp500: allData.sp500.length
-        });
-        
-        // Set data directly first
-        const seriesNames = ['portfolio', 'nasdaq', 'sp500'];
-        
-        console.log('Setting up series visibility:', currentSettings.visibleSeries);
-        
-        seriesNames.forEach((name, index) => {
-          const series = allSeries[name];
-          if (!series) {
-            console.error(`Series ${name} not found!`);
-            return;
-          }
-          
-          const isVisible = currentSettings.visibleSeries[name];
-          
-          if (isVisible) {
-            const dataToSet = allData[name];
-            console.log(`Setting data for ${name}:`, {
-              dataPoints: dataToSet.length,
-              firstPoint: dataToSet[0],
-              lastPoint: dataToSet[dataToSet.length - 1]
-            });
+        // Fetch portfolio data from backend
+        fetch('/portfolios/chart_data', {
+          headers: { 'Accept': 'application/json' },
+          cache: 'no-cache'
+        })
+        .then(response => response.json())
+        .then(chartData => {
+          if (chartData.portfolio && chartData.portfolio.length > 0) {
+            allData.portfolio = chartData.portfolio;
             
-            // Ensure data is properly formatted
-            const formattedData = dataToSet.map(point => ({
+            // Format and set data
+            const formattedData = chartData.portfolio.map(point => ({
               time: point.time,
               value: Number(point.value)
             }));
             
-            series.setData(formattedData);
-            series.applyOptions({ visible: true });
-            console.log(`${name} series visible and data set`);
-          } else {
-            series.applyOptions({ visible: false });
-            console.log(`${name} series hidden`);
+            if (portfolioSeries) {
+              portfolioSeries.setData(formattedData);
+            }
+            
+            // Fit content
+            updateChartTimeRange();
           }
+        })
+        .catch(error => {
+          console.error('Error loading portfolio chart data:', error);
         });
-
-        // Fit content
-        chart.timeScale().fitContent();
-        
-        console.log('Chart setup complete, series count:', Object.keys(allSeries).length);
-        console.log('Chart timeScale:', chart.timeScale());
 
         // Handle resize
         const resizeObserver = new ResizeObserver((entries) => {
@@ -588,153 +518,43 @@
     });
   }
 
-  // Update chart based on current settings
-  function updateChart() {
+  // Update chart time range
+  function updateChartTimeRange() {
     if (!chartInstance) return;
-
-    const seriesNames = ['portfolio', 'nasdaq', 'sp500'];
     
-    // Update series visibility based on settings
-    seriesNames.forEach((name) => {
-      const series = allSeries[name];
-      if (!series) return;
-
-      const isVisible = currentSettings.visibleSeries[name];
-      series.applyOptions({ visible: isVisible });
-      
-      // If making visible and data exists, ensure data is set
-      if (isVisible && allData[name] && allData[name].length > 0) {
-        const formattedData = allData[name].map(point => ({
-          time: point.time,
-          value: Number(point.value)
-        }));
-        series.setData(formattedData);
-      }
-    });
-
-    // Fit content after update
-    chartInstance.timeScale().fitContent();
+    if (currentSettings.timeRange === 'home') {
+      chartInstance.timeScale().fitContent();
+    } else if (currentSettings.timeRange === 'ytd') {
+      const currentYear = new Date().getFullYear();
+      const yearStart = new Date(currentYear, 0, 1).getTime() / 1000;
+      chartInstance.timeScale().setVisibleRange({
+        from: yearStart,
+        to: Math.floor(Date.now() / 1000)
+      });
+    } else {
+      chartInstance.timeScale().fitContent();
+    }
   }
 
   // Setup control event listeners
   function setupControls(chart) {
-    // Series toggle buttons
-    document.querySelectorAll('.chart-button-toggle[data-series]').forEach(btn => {
+    // Time range buttons
+    document.querySelectorAll('.chart-button-toggle[data-time-range][data-chart-id="portfolio"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const seriesName = e.target.dataset.series;
-        const isActive = e.target.classList.contains('active');
+        const timeRange = e.target.dataset.timeRange;
         
-        // Toggle active state
-        e.target.classList.toggle('active');
-        currentSettings.visibleSeries[seriesName] = !isActive;
-        updateChart();
-      });
-    });
-
-    // Chart type buttons
-    document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const chartType = e.target.dataset.chartType;
-        
-        // Remove active from all chart type buttons
-        document.querySelectorAll('.chart-button-toggle[data-chart-type]').forEach(b => {
+        // Remove active from all time range buttons
+        document.querySelectorAll('.chart-button-toggle[data-time-range][data-chart-id="portfolio"]').forEach(b => {
           b.classList.remove('active');
         });
         
         // Add active to clicked button
         e.target.classList.add('active');
         
-        currentSettings.chartType = chartType;
-        recreateSeries(chart);
+        currentSettings.timeRange = timeRange;
+        updateChartTimeRange();
       });
     });
-  }
-
-  // Recreate series when chart type changes
-  function recreateSeries(chart) {
-    const seriesConfig = {
-      portfolio: {
-        title: 'Portfolio',
-        lineColor: '#3b82f6',
-        topColor: 'rgba(59, 130, 246, 0.3)',
-        bottomColor: 'rgba(59, 130, 246, 0.05)',
-        color: '#3b82f6'
-      },
-      nasdaq: {
-        title: 'NASDAQ',
-        lineColor: '#ec4899',
-        topColor: 'rgba(236, 72, 153, 0.3)',
-        bottomColor: 'rgba(236, 72, 153, 0.05)',
-        color: '#ec4899'
-      },
-      sp500: {
-        title: 'S&P 500',
-        lineColor: '#f97316',
-        topColor: 'rgba(249, 115, 22, 0.3)',
-        bottomColor: 'rgba(249, 115, 22, 0.05)',
-        color: '#f97316'
-      }
-    };
-
-    const AreaSeries = window.LightweightCharts.AreaSeries;
-    const LineSeries = window.LightweightCharts.LineSeries;
-
-    // Remove existing series
-    Object.values(allSeries).forEach(series => {
-      try {
-        chart.removeSeries(series);
-      } catch (e) {
-        console.error('Error removing series:', e);
-      }
-    });
-
-    allSeries = {};
-
-    // Create new series with correct type
-    Object.keys(seriesConfig).forEach(name => {
-      let series;
-      if (currentSettings.chartType === 'area') {
-        if (AreaSeries && typeof chart.addSeries === 'function') {
-          series = chart.addSeries(AreaSeries, {
-            lineColor: seriesConfig[name].lineColor,
-            topColor: seriesConfig[name].topColor,
-            bottomColor: seriesConfig[name].bottomColor,
-            lineWidth: 2,
-            priceLineVisible: false,
-            lastValueVisible: true
-          });
-        } else if (typeof chart.addAreaSeries === 'function') {
-          series = chart.addAreaSeries({
-            lineColor: seriesConfig[name].lineColor,
-            topColor: seriesConfig[name].topColor,
-            bottomColor: seriesConfig[name].bottomColor,
-            lineWidth: 2
-          });
-        }
-      } else {
-        if (LineSeries && typeof chart.addSeries === 'function') {
-          series = chart.addSeries(LineSeries, {
-            color: seriesConfig[name].color,
-            lineWidth: 2,
-            priceLineVisible: false,
-            lastValueVisible: true
-          });
-        } else if (typeof chart.addLineSeries === 'function') {
-          series = chart.addLineSeries({
-            color: seriesConfig[name].color,
-            lineWidth: 2,
-            priceLineVisible: false,
-            lastValueVisible: true
-          });
-        }
-      }
-      
-      if (series) {
-        allSeries[name] = series;
-      }
-    });
-
-    updateChart();
   }
 
   // Cleanup function
@@ -747,7 +567,7 @@
       }
       window._portfolioChart = null;
       chartInstance = null;
-      allSeries = {};
+      portfolioSeries = null;
     }
     if (window._portfolioResizeObserver) {
       window._portfolioResizeObserver.disconnect();
