@@ -13,15 +13,36 @@ class PortfolioChartDataService
     base_date = Date.today - days.days
     daily_dates = (0..(days - 1)).map { |i| base_date + i.days }
     
-    portfolio_service = PortfolioValueService.new(user: user)
-    current_value = portfolio_service.total_value
+    portfolio = user.portfolio
+    return [] unless portfolio
     
-    # For now, use current portfolio value as proxy
-    # In a real app, would track historical prices
+    holdings = portfolio.holdings.holdings.includes(:prices)
+    return [] if holdings.empty?
+    
     daily_dates.map do |date|
+      total_value = holdings.sum do |holding|
+        entry_date = holding.entry_date || holding.created_at.to_date
+        next 0 if date < entry_date
+        
+        price_record = holding.prices.where("date <= ?", date).order(date: :desc).first
+        price = if price_record
+                  price_record.amount_cents / 100.0
+                else
+                  price_data = StockPriceService.fetch_price(holding.ticker, date)
+                  if price_data
+                    amount = price_data[:price]
+                    holding.prices.create!(date: price_data[:date], amount_cents: (amount * 100).round)
+                    amount
+                  else
+                    holding.average_cost || 0
+                  end
+                end
+        holding.shares * price
+      end
+      
       {
         time: date.to_time.to_i,
-        value: current_value.round(2)
+        value: total_value.round(2)
       }
     end
   end

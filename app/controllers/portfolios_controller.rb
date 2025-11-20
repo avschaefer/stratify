@@ -27,42 +27,31 @@ class PortfoliosController < ApplicationController
     current_year = Date.today.year
     year_start = Date.new(current_year, 1, 1)
     
-    # Get holdings that existed at start of year
     holdings_at_year_start = actual_holdings.select do |h|
       (h.entry_date || h.created_at.to_date) <= year_start
     end
     
-    # Calculate portfolio value at start of year (simplified - would need historical prices)
-    # For now, estimate based on cost basis of holdings at year start
-    year_start_cost_basis = holdings_at_year_start.sum { |h| h.total_cost_basis }
-    
-    # Calculate YTD return for holdings that existed at year start
-    # This is simplified - ideally we'd use actual prices from Jan 1
-    ytd_cost_basis = holdings_at_year_start.sum { |h| h.total_cost_basis }
-    ytd_current_value = holdings_at_year_start.sum { |h| h.current_value }
-    @annual_return_amount = ytd_current_value - ytd_cost_basis
-    @annual_return_percent = ytd_cost_basis > 0 ? (@annual_return_amount / ytd_cost_basis * 100) : 0
+    year_start_value = calculate_portfolio_value_at(year_start - 1.day, holdings_at_year_start) # Use day before to avoid including Jan 1 buys if needed
+    @annual_return_amount = @portfolio_value - year_start_value
+    @annual_return_percent = year_start_value > 0 ? (@annual_return_amount / year_start_value * 100).round(2) : 0
     
     # Calculate realized P&L from sell trades
     sell_trades = @portfolio.persisted? ? @portfolio.holdings.sell_trades : []
     @realized_net = sell_trades.sum do |trade|
-      avg_cost = trade.average_cost
-      # For realized P&L, we use the price at time of sale (entry_date price)
-      # Since we don't store sale price separately, use cost basis as proxy
-      # This is simplified - ideally we'd track sale price vs cost basis
-      trade.unrealized_return
+      price = get_price_for_holding(trade, trade.entry_date)
+      sale_value = trade.shares * price
+      sale_value - trade.total_cost_basis
     end
     
-    # Calculate realized P&L percentage based on cost basis of sold shares
     sold_cost_basis = sell_trades.sum { |t| t.total_cost_basis }
-    @realized_percent = sold_cost_basis > 0 ? (@realized_net / sold_cost_basis * 100) : 0
+    @realized_percent = sold_cost_basis > 0 ? (@realized_net / sold_cost_basis * 100).round(2) : 0
     
     # Calculate index comparisons (vs S&P 500 and NASDAQ)
     @sp500_return = calculate_index_return('SPX', 365)
     @nasdaq_return = calculate_index_return('IXIC', 365)
     
     # Portfolio return for comparison (1 year)
-    portfolio_return_1y = @total_cost_basis > 0 ? @total_return_percent : 0
+    portfolio_return_1y = calculate_portfolio_return(365)
     
     @vs_sp500 = portfolio_return_1y - @sp500_return
     @vs_nasdaq = portfolio_return_1y - @nasdaq_return
@@ -73,25 +62,24 @@ class PortfoliosController < ApplicationController
     @std_deviation = sharpe_data[:std_deviation]
     
     # Calculate index comparison data (3, 6, 12 month returns)
-    # For now, using placeholder calculations - will be replaced with actual historical data
-    @portfolio_3m = 0.0
-    @portfolio_6m = 0.0
-    @portfolio_12m = 0.0
-    @sp500_3m = 0.0
-    @sp500_6m = 0.0
-    @sp500_12m = 0.0
-    @nasdaq_3m = 0.0
-    @nasdaq_6m = 0.0
-    @nasdaq_12m = 0.0
+    @portfolio_3m = calculate_portfolio_return(90)
+    @portfolio_6m = calculate_portfolio_return(180)
+    @portfolio_12m = calculate_portfolio_return(365)
+    @sp500_3m = calculate_index_return('SPX', 90)
+    @sp500_6m = calculate_index_return('SPX', 180)
+    @sp500_12m = calculate_index_return('SPX', 365)
+    @nasdaq_3m = calculate_index_return('IXIC', 90)
+    @nasdaq_6m = calculate_index_return('IXIC', 180)
+    @nasdaq_12m = calculate_index_return('IXIC', 365)
     
     # Calculate yearly rollup - YTD for current year, frozen for past years
     @yearly_rollup = []
-    if @holdings.any?
+    if actual_holdings.any?
       current_year = Date.today.year
       current_date = Date.today
       
       # Get all years from first holding to current year
-      first_year = @holdings.map { |h| (h.entry_date || h.created_at.to_date).year }.min || current_year
+      first_year = actual_holdings.map { |h| (h.entry_date || h.created_at.to_date).year }.min || current_year
       years = (first_year..current_year).to_a
       
       years.each do |year|
@@ -101,30 +89,28 @@ class PortfoliosController < ApplicationController
         # For current year, use today's date; for past years, use year end
         calculation_date = year == current_year ? current_date : year_end
         
-        # Get holdings entered on or before the calculation date
-        holdings_in_year = @holdings.select do |h|
+        # Get holdings entered on or before the calculation date (only holdings, not trades)
+        holdings_in_period = actual_holdings.select do |h|
           entry_date = h.entry_date || h.created_at.to_date
           entry_date <= calculation_date
         end
         
-        # Calculate end of period value
-        # For current year (YTD), use current portfolio value
-        # For past years, would need historical prices (placeholder for now)
-        if year == current_year
-          end_value = @portfolio_value
-        else
-          # For past years, use current value as placeholder
-          # TODO: Implement historical price lookup
-          end_value = @portfolio_value
-        end
+        # Calculate end of period value using historical prices
+        end_value = calculate_portfolio_value_at(calculation_date, holdings_in_period)
         
         # Calculate total cost basis for holdings entered by this date
-        total_cost = holdings_in_year.sum(&:total_cost_basis)
+        total_cost = holdings_in_period.sum(&:total_cost_basis)
         total_return = end_value - total_cost
-        total_return_pct = total_cost > 0 ? (total_return / total_cost * 100) : 0
+        total_return_pct = total_cost > 0 ? (total_return / total_cost * 100).round(2) : 0
         
-        # Calculate realized gain/loss (simplified - would need trade history)
-        realized_gain_loss = 0.0
+        # Calculate realized gain/loss from sell trades in this period
+        period_start = year_start
+        period_end = calculation_date
+        sell_trades_in_period = @portfolio.holdings.sell_trades.where("entry_date >= ? AND entry_date <= ?", period_start, period_end)
+        realized_gain_loss = sell_trades_in_period.sum do |t|
+          price = get_price_for_holding(t, t.entry_date)
+          (t.shares * price) - t.total_cost_basis
+        end
         
         @yearly_rollup << {
           year: year,
@@ -307,8 +293,12 @@ class PortfoliosController < ApplicationController
   end
   
   def edit
-    @holding = current_user.portfolio&.holdings&.find(params[:id])
-    redirect_to portfolios_path, alert: 'Holding not found.' unless @holding
+    portfolio = current_user.portfolio
+    if portfolio.nil?
+      redirect_to portfolios_path, alert: 'No portfolio found.'
+      return
+    end
+    @holding = portfolio.holdings.find_by(id: params[:id]) || Holding.new(portfolio: portfolio)
   end
   
   def update
@@ -336,8 +326,40 @@ class PortfoliosController < ApplicationController
   def update_prices
     @portfolio = current_user.portfolio
     if @portfolio&.persisted?
+      # Update prices synchronously for immediate feedback
+      # Update ALL holdings regardless of entry_type (holdings AND trades)
+      holdings = @portfolio.holdings.where.not(ticker: [nil, ''])
+      updated_count = 0
+      
+      # Group by ticker to avoid fetching the same price multiple times
+      unique_tickers = holdings.pluck(:ticker).uniq
+      
+      unique_tickers.each do |ticker|
+        begin
+          prices_data = StockPriceService.fetch_daily_prices(ticker, 30)
+          next unless prices_data&.any?
+          
+          # Update all holdings with this ticker
+          holdings_with_ticker = holdings.where(ticker: ticker)
+          
+          prices_data.each do |price_data|
+            holdings_with_ticker.each do |holding|
+              price = holding.prices.find_or_initialize_by(date: price_data[:date])
+              price.amount_cents = (price_data[:price] * 100).round
+              price.save
+            end
+          end
+          
+          updated_count += holdings_with_ticker.count
+        rescue => e
+          Rails.logger.error("Error updating prices for #{ticker}: #{e.message}")
+        end
+      end
+      
+      # Also queue background job for comprehensive update
       UpdateHoldingPricesJob.perform_later(@portfolio.id)
-      redirect_to portfolios_path, notice: 'Price update started. Prices will be updated shortly.'
+      
+      redirect_to portfolios_path, notice: "Price update started. Updated prices for #{updated_count} entries."
     else
       redirect_to portfolios_path, alert: 'No portfolio found.'
     end
@@ -347,7 +369,7 @@ class PortfoliosController < ApplicationController
     portfolio = current_user.portfolio
     return render json: { portfolio: [] } unless portfolio
     
-    # Get all holdings
+    # Get all holdings (both initial holdings and trades) to calculate portfolio value
     holdings = portfolio.holdings.includes(:prices)
     return render json: { portfolio: [] } if holdings.empty?
     
@@ -406,13 +428,21 @@ class PortfoliosController < ApplicationController
     end
     
     # Format for Lightweight Charts: { time: unix_timestamp_seconds, value: number }
+    # Filter out zero values at the beginning (before any holdings existed)
+    chart_points = daily_dates.map.with_index do |date, idx|
+      {
+        time: date.to_time.to_i,
+        value: portfolio_data[idx]
+      }
+    end
+    
+    # Remove leading zeros (before portfolio had any value)
+    while chart_points.first && chart_points.first[:value] == 0 && chart_points.length > 1
+      chart_points.shift
+    end
+    
     chart_data = {
-      portfolio: daily_dates.map.with_index do |date, idx|
-        {
-          time: date.to_time.to_i,
-          value: portfolio_data[idx]
-        }
-      end
+      portfolio: chart_points
     }
     
     render json: chart_data
@@ -527,5 +557,38 @@ class PortfoliosController < ApplicationController
     # This allows for different handling of buy vs sell trades
     
     params_hash
+  end
+
+  def get_price_for_holding(holding, date)
+    price_record = holding.prices.where("date <= ?", date).order(date: :desc).first
+    if price_record
+      price_record.amount_cents / 100.0
+    else
+      price_data = StockPriceService.fetch_price(holding.ticker, date)
+      if price_data
+        amount = price_data[:price]
+        holding.prices.create!(date: price_data[:date], amount_cents: (amount * 100).round)
+        amount
+      else
+        holding.average_cost || 0
+      end
+    end
+  end
+
+  def calculate_portfolio_value_at(date, holdings)
+    holdings.sum do |h|
+      entry_date = h.entry_date || h.created_at.to_date
+      next 0 if entry_date > date
+      price = get_price_for_holding(h, date)
+      h.shares * price
+    end
+  end
+
+  def calculate_portfolio_return(days)
+    start_date = Date.today - days.days
+    start_holdings = @portfolio.holdings.holdings.select { |h| (h.entry_date || h.created_at.to_date) <= start_date }
+    start_value = calculate_portfolio_value_at(start_date, start_holdings)
+    end_value = @portfolio_value
+    start_value > 0 ? ((end_value - start_value) / start_value * 100).round(2) : 0
   end
 end

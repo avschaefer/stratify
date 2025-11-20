@@ -1,11 +1,16 @@
 <div class="page-header mb-4">
-  <h1>Edit Investment</h1>
-  <p class="text-muted mb-0">Update your portfolio trade</p>
+  <% if @holding %>
+    <h1>Edit <%= @holding.entry_type == 'trade' ? 'Trade' : 'Holding' %></h1>
+    <p class="text-muted mb-0">Update your portfolio <%= @holding.entry_type == 'trade' ? 'trade' : 'holding' %></p>
+  <% else %>
+    <h1>Edit Investment</h1>
+    <p class="text-muted mb-0">Update your portfolio investment</p>
+  <% end %>
 </div>
 
 <div class="card">
   <div class="card-body">
-    <%= form_with model: @holding, url: portfolio_path(@holding), local: true do |f| %>
+    <%= form_with model: @holding, url: (@holding.persisted? ? portfolio_path(@holding) : portfolios_path), method: (@holding.persisted? ? :patch : :post), local: true do |f| %>
       <% if @holding.errors.any? %>
         <div class="alert alert-danger">
           <ul class="mb-0">

@@ -8,6 +8,7 @@ class UpdateHoldingPricesJob < ApplicationJob
     portfolio = Portfolio.find_by(id: portfolio_id)
     return unless portfolio
 
+    # Update prices for all holdings (including trades)
     holdings = portfolio.holdings.where.not(ticker: [nil, ''])
     return if holdings.empty?
 

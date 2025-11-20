@@ -20,20 +20,20 @@
         <div class="row">
           <div class="col-md-4 text-center">
             <div class="metric-label" style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">3 Month Avg</div>
-            <div class="metric-value" style="color: <%= @avg_cash_flow_3_months >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-              <%= @avg_cash_flow_3_months >= 0 ? '+' : '' %>$<%= number_with_delimiter(@avg_cash_flow_3_months.round(0)) %>
+            <div class="metric-value" style="color: <%= @avg_cash_flow_3_months.nil? ? '#a3a3a3' : (@avg_cash_flow_3_months >= 0 ? '#6ee7b7' : '#fca5a5') %>;">
+              <%= @avg_cash_flow_3_months.nil? ? '-' : (@avg_cash_flow_3_months >= 0 ? '+' : '') + '$' + number_with_delimiter(@avg_cash_flow_3_months.round(0)).to_s %>
             </div>
           </div>
           <div class="col-md-4 text-center">
             <div class="metric-label" style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">6 Month Avg</div>
-            <div class="metric-value" style="color: <%= @avg_cash_flow_6_months >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-              <%= @avg_cash_flow_6_months >= 0 ? '+' : '' %>$<%= number_with_delimiter(@avg_cash_flow_6_months.round(0)) %>
+            <div class="metric-value" style="color: <%= @avg_cash_flow_6_months.nil? ? '#a3a3a3' : (@avg_cash_flow_6_months >= 0 ? '#6ee7b7' : '#fca5a5') %>;">
+              <%= @avg_cash_flow_6_months.nil? ? '-' : (@avg_cash_flow_6_months >= 0 ? '+' : '') + '$' + number_with_delimiter(@avg_cash_flow_6_months.round(0)).to_s %>
             </div>
           </div>
           <div class="col-md-4 text-center">
             <div class="metric-label" style="color: #a3a3a3; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">12 Month Avg</div>
-            <div class="metric-value" style="color: <%= @avg_cash_flow_12_months >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-              <%= @avg_cash_flow_12_months >= 0 ? '+' : '' %>$<%= number_with_delimiter(@avg_cash_flow_12_months.round(0)) %>
+            <div class="metric-value" style="color: <%= @avg_cash_flow_12_months.nil? ? '#a3a3a3' : (@avg_cash_flow_12_months >= 0 ? '#6ee7b7' : '#fca5a5') %>;">
+              <%= @avg_cash_flow_12_months.nil? ? '-' : (@avg_cash_flow_12_months >= 0 ? '+' : '') + '$' + number_with_delimiter(@avg_cash_flow_12_months.round(0)).to_s %>
             </div>
           </div>
         </div>
@@ -872,19 +872,22 @@
 
         charts.cashFlowBar.data = chartData;
 
-        // Create bar series for cash flow with automatic color coding (green for positive, red for negative)
-        const BarSeries = window.LightweightCharts.BarSeries;
-        if (typeof chart.addBarSeries === 'function') {
-          charts.cashFlowBar.series.cash_flow_bar = chart.addBarSeries({
-            upColor: '#10b981', // Green for positive
-            downColor: '#ef4444', // Red for negative
+        // Create histogram series for cash flow with solid bars (green for positive, red for negative)
+        const HistogramSeries = window.LightweightCharts.HistogramSeries;
+        if (typeof chart.addHistogramSeries === 'function') {
+          charts.cashFlowBar.series.cash_flow_bar = chart.addHistogramSeries({
+            color: '#10b981', // Default color
             priceLineVisible: false,
-            lastValueVisible: true
+            lastValueVisible: true,
+            priceFormat: {
+              type: 'price',
+              precision: 2,
+              minMove: 0.01
+            }
           });
-        } else if (BarSeries && typeof chart.addSeries === 'function') {
-          charts.cashFlowBar.series.cash_flow_bar = chart.addSeries(BarSeries, {
-            upColor: '#10b981',
-            downColor: '#ef4444',
+        } else if (HistogramSeries && typeof chart.addSeries === 'function') {
+          charts.cashFlowBar.series.cash_flow_bar = chart.addSeries(HistogramSeries, {
+            color: '#10b981',
             priceLineVisible: false,
             lastValueVisible: true
           });
@@ -981,28 +984,15 @@
         filteredData = data['cash_flow'].filter(point => point.time >= yearStart);
       }
 
-      // Convert to OHLC format for BarSeries (solid vertical bars)
-      // For positive values: open=0, high=value, low=0, close=value
-      // For negative values: open=0, high=0, low=value, close=value
+      // Convert to histogram format (solid vertical bars)
+      // HistogramSeries uses { time, value, color } format
       const formattedData = filteredData.map(point => {
         const value = Number(point.value);
-        if (value >= 0) {
-          return {
-            time: point.time,
-            open: 0,
-            high: value,
-            low: 0,
-            close: value
-          };
-        } else {
-          return {
-            time: point.time,
-            open: 0,
-            high: 0,
-            low: value,
-            close: value
-          };
-        }
+        return {
+          time: point.time,
+          value: value,
+          color: value >= 0 ? '#10b981' : '#ef4444' // Green for positive, red for negative
+        };
       });
 
       series.setData(formattedData);
@@ -1029,50 +1019,72 @@
     // Series toggle buttons for combined chart
     document.querySelectorAll('.chart-button-toggle[data-series][data-chart-id="combined"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const chartId = e.target.dataset.chartId;
-        const seriesName = e.target.dataset.series;
-        const isActive = e.target.classList.contains('active');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Use currentTarget to ensure we get the button, not a child element
+        const button = e.currentTarget;
+        const chartId = button.dataset.chartId;
+        const seriesName = button.dataset.series;
+        const isActive = button.classList.contains('active');
 
-        e.target.classList.toggle('active');
-        charts[chartId].settings.visibleSeries[seriesName] = !isActive;
-
-        updateCombinedChart(charts.combined.instance);
+        button.classList.toggle('active');
+        if (charts[chartId] && charts[chartId].settings) {
+          charts[chartId].settings.visibleSeries[seriesName] = !isActive;
+          if (charts.combined && charts.combined.instance) {
+            updateCombinedChart(charts.combined.instance);
+          }
+        }
       });
     });
 
     // Time range buttons for combined chart
     document.querySelectorAll('.chart-button-toggle[data-time-range][data-chart-id="combined"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const chartId = e.target.dataset.chartId;
-        const timeRange = e.target.dataset.timeRange;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const button = e.currentTarget;
+        const chartId = button.dataset.chartId;
+        const timeRange = button.dataset.timeRange;
         
         // Remove active from all time range buttons for this chart
         document.querySelectorAll(`.chart-button-toggle[data-time-range][data-chart-id="${chartId}"]`).forEach(b => {
           b.classList.remove('active');
         });
         
-        e.target.classList.add('active');
-        charts[chartId].settings.timeRange = timeRange;
-        
-        updateCombinedChart(charts.combined.instance);
+        button.classList.add('active');
+        if (charts[chartId] && charts[chartId].settings) {
+          charts[chartId].settings.timeRange = timeRange;
+          if (charts.combined && charts.combined.instance) {
+            updateCombinedChart(charts.combined.instance);
+          }
+        }
       });
     });
 
     // Time range buttons for cash flow bar chart
     document.querySelectorAll('.chart-button-toggle[data-time-range][data-chart-id="cashFlowBar"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const chartId = e.target.dataset.chartId;
-        const timeRange = e.target.dataset.timeRange;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const button = e.currentTarget;
+        const chartId = button.dataset.chartId;
+        const timeRange = button.dataset.timeRange;
         
         // Remove active from all time range buttons for this chart
         document.querySelectorAll(`.chart-button-toggle[data-time-range][data-chart-id="${chartId}"]`).forEach(b => {
           b.classList.remove('active');
         });
         
-        e.target.classList.add('active');
-        charts[chartId].settings.timeRange = timeRange;
-        
-        updateCashFlowBarChart(charts.cashFlowBar.instance);
+        button.classList.add('active');
+        if (charts[chartId] && charts[chartId].settings) {
+          charts[chartId].settings.timeRange = timeRange;
+          if (charts.cashFlowBar && charts.cashFlowBar.instance) {
+            updateCashFlowBarChart(charts.cashFlowBar.instance);
+          }
+        }
       });
     });
   }

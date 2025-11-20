@@ -72,10 +72,10 @@ class AccountsController < ApplicationController
         cash_flows << cash_flow
       end
       
-      # Calculate averages
-      @avg_cash_flow_3_months = cash_flows.first(3).sum / 3.0 rescue 0
-      @avg_cash_flow_6_months = cash_flows.first(6).sum / 6.0 rescue 0
-      @avg_cash_flow_12_months = cash_flows.first(12).sum / 12.0 rescue 0
+      # Calculate averages - only if we have enough data
+      @avg_cash_flow_3_months = cash_flows.length >= 3 ? (cash_flows.first(3).sum / 3.0) : nil
+      @avg_cash_flow_6_months = cash_flows.length >= 6 ? (cash_flows.first(6).sum / 6.0) : nil
+      @avg_cash_flow_12_months = cash_flows.length >= 12 ? (cash_flows.sum / 12.0) : nil
       
     rescue => e
       Rails.logger.error "Accounts error: #{e.message}"

@@ -42,13 +42,22 @@
         <div class="metric-value">$<%= number_with_delimiter(@portfolio_value.round(0)) %></div>
       </div>
       
-      <!-- Total Return (Unrealized) -->
+      <!-- Total Realized Return -->
       <div class="metric-tile">
-        <div class="metric-label">Total Return</div>
+        <div class="metric-label">Total Realized Return</div>
+        <div class="metric-value" style="color: <%= @realized_net >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+          <%= @realized_net >= 0 ? '+' : '' %>$<%= number_with_delimiter(@realized_net.round(0)) %>
+        </div>
+        <div class="metric-subtext"><%= @realized_net >= 0 ? '+' : '' %><%= number_with_precision(@realized_percent, precision: 2) %>%</div>
+      </div>
+      
+      <!-- Total Unrealized Return -->
+      <div class="metric-tile">
+        <div class="metric-label">Total Unrealized Return</div>
         <div class="metric-value" style="color: <%= @total_return_amount >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
           <%= @total_return_amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(@total_return_amount.round(0)) %>
         </div>
-        <div class="metric-subtext"><%= @total_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@total_return_percent, precision: 2) %>% (Unrealized)</div>
+        <div class="metric-subtext"><%= @total_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@total_return_percent, precision: 2) %>%</div>
       </div>
       
       <!-- Annual Return (YTD Unrealized) -->
@@ -58,15 +67,6 @@
           <%= @annual_return_amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(@annual_return_amount.round(0)) %>
         </div>
         <div class="metric-subtext"><%= @annual_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@annual_return_percent, precision: 2) %>% (YTD Unrealized)</div>
-      </div>
-      
-      <!-- Realized Gains/Losses -->
-      <div class="metric-tile">
-        <div class="metric-label">Realized P&L</div>
-        <div class="metric-value" style="color: <%= @realized_net >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-          <%= @realized_net >= 0 ? '+' : '' %>$<%= number_with_delimiter(@realized_net.round(0)) %>
-        </div>
-        <div class="metric-subtext"><%= @realized_net >= 0 ? '+' : '' %><%= number_with_precision(@realized_percent, precision: 2) %>%</div>
       </div>
       
       <!-- vs S&P 500 -->
@@ -185,12 +185,12 @@
             <tr>
               <td><strong><%= holding.ticker %></strong></td>
               <td><%= holding.name || '-' %></td>
-              <td><%= number_with_precision(holding.shares, precision: 2) %></td>
-              <td>$<%= number_with_precision(avg_price, precision: 2) %></td>
-              <td>$<%= current_price > 0 ? number_with_precision(current_price, precision: 2) : '-' %></td>
+              <td><%= number_with_precision(holding.shares, precision: 2, delimiter: ',') %></td>
+              <td>$<%= number_with_delimiter(number_with_precision(avg_price, precision: 2)) %></td>
+              <td>$<%= current_price > 0 ? number_with_delimiter(number_with_precision(current_price, precision: 2)) : '-' %></td>
               <td>$<%= number_with_delimiter(current_val.round(0)) %></td>
               <td style="color: <%= todays_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= todays_return >= 0 ? '+' : '' %>$<%= number_with_precision(todays_return, precision: 2) %>
+                <%= todays_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(number_with_precision(todays_return, precision: 2)) %>
                 (<%= todays_return_pct >= 0 ? '+' : '' %><%= number_with_precision(todays_return_pct, precision: 2) %>%)
               </td>
               <td style="color: <%= unrealized_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
@@ -200,7 +200,7 @@
               <td><%= number_with_precision(portfolio_pct, precision: 2) %>%</td>
               <td>
                 <div class="d-flex gap-1">
-                  <%= link_to edit_portfolio_path(holding), class: "btn btn-sm btn-outline-primary" do %>
+                  <%= link_to edit_portfolio_path(holding.id), class: "btn btn-sm btn-outline-primary" do %>
                     <i class="bi bi-pencil"></i>
                   <% end %>
                   <% confirm_message = "Are you sure you want to delete this holding? This is different from a sell trade." %>
@@ -408,8 +408,8 @@
                     </td>
                     <td><strong><%= trade.ticker %></strong></td>
                     <td><%= trade.name || '-' %></td>
-                    <td><%= number_with_precision(trade.shares, precision: 2) %></td>
-                    <td>$<%= number_with_precision(trade.total_cost_basis / (trade.shares || 1), precision: 2) %></td>
+                    <td><%= number_with_delimiter(number_with_precision(trade.shares, precision: 2)) %></td>
+                    <td>$<%= number_with_delimiter(number_with_precision(trade.total_cost_basis / (trade.shares || 1), precision: 2)) %></td>
                     <td style="color: <%= unrealized_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
                       <%= unrealized_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(unrealized_return.round(0)) %>
                       (<%= unrealized_return_pct >= 0 ? '+' : '' %><%= number_with_precision(unrealized_return_pct, precision: 2) %>%)
@@ -419,7 +419,7 @@
                     </td>
                     <td>
                       <div class="d-flex gap-1">
-                        <%= link_to edit_portfolio_path(trade), class: "btn btn-sm btn-outline-primary" do %>
+                        <%= link_to edit_portfolio_path(trade.id), class: "btn btn-sm btn-outline-primary" do %>
                           <i class="bi bi-pencil"></i>
                         <% end %>
                         <% confirm_message = "Are you sure you want to delete this trade?" %>
@@ -601,21 +601,29 @@
         })
         .then(response => response.json())
         .then(chartData => {
+          console.log('Received chart data:', chartData);
           if (chartData.portfolio && chartData.portfolio.length > 0) {
             allData.portfolio = chartData.portfolio;
             
-            // Format and set data
+            // Format and set data - ensure time is a number
             const formattedData = chartData.portfolio.map(point => ({
-              time: point.time,
+              time: Number(point.time),
               value: Number(point.value)
             }));
             
+            console.log('Formatted data points:', formattedData.length);
+            
             if (portfolioSeries) {
               portfolioSeries.setData(formattedData);
+              // Fit content after setting data
+              setTimeout(() => {
+                updateChartTimeRange();
+              }, 100);
+            } else {
+              console.warn('Portfolio series not initialized');
             }
-            
-            // Fit content
-            updateChartTimeRange();
+          } else {
+            console.warn('No portfolio data received');
           }
         })
         .catch(error => {

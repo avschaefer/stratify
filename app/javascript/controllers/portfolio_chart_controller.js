@@ -1,5 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Remove duplicate controller code and fallback generator
+
+// Keep only the version without random data
+
+import { Controller } from "@hotwired/stimulus"
+
 export default class extends Controller {
   static values = {
     dataUrl: String
@@ -23,7 +29,6 @@ export default class extends Controller {
     const container = this.element
     if (!container) return
 
-    // Access Lightweight Charts from global scope (standalone script pattern)
     const { LightweightCharts } = window
     if (!LightweightCharts || typeof LightweightCharts.createChart !== 'function') {
       console.error('Lightweight Charts not loaded. Ensure lightweight-charts.standalone.production.js is loaded.')
@@ -33,7 +38,6 @@ export default class extends Controller {
 
     const createChart = LightweightCharts.createChart
 
-    // Create chart with proper options per TradingView tutorial
     this.chart = createChart(container, {
       width: container.clientWidth,
       height: 400,
@@ -54,7 +58,6 @@ export default class extends Controller {
       }
     })
 
-    // Create three area series for comparison
     const portfolioSeries = this.chart.addAreaSeries({
       title: 'Portfolio',
       lineColor: '#3b82f6',
@@ -79,93 +82,62 @@ export default class extends Controller {
       lineWidth: 2
     })
 
-    // Fetch data from backend
-    let chartData
+    let chartData = { portfolio: [], nasdaq: [], sp500: [] }
+
     try {
       const dataUrl = this.dataUrlValue || '/portfolios/chart_data'
       const response = await fetch(dataUrl, {
         headers: { 'Accept': 'application/json' },
         cache: 'no-cache'
       })
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
       }
-      
-      chartData = await response.json()
-      
-      // Validate data structure
-      if (!chartData || 
-          !Array.isArray(chartData.portfolio) || 
-          !Array.isArray(chartData.nasdaq) || 
-          !Array.isArray(chartData.sp500) ||
-          chartData.portfolio.length === 0) {
-        throw new Error('Invalid data structure')
+
+      const raw = await response.json()
+
+      // Accept responses that only contain portfolio data.
+      const portfolio = Array.isArray(raw.portfolio) ? raw.portfolio : []
+      const nasdaq = Array.isArray(raw.nasdaq) ? raw.nasdaq : []
+      const sp500 = Array.isArray(raw.sp500) ? raw.sp500 : []
+
+      chartData = {
+        portfolio: portfolio.map(p => ({
+          time: Number(p.time),
+          value: Number(p.value)
+        })),
+        nasdaq: nasdaq.map(p => ({
+          time: Number(p.time),
+          value: Number(p.value)
+        })),
+        sp500: sp500.map(p => ({
+          time: Number(p.time),
+          value: Number(p.value)
+        }))
       }
-      
-      // Validate each data point has required fields
-      const isValid = chartData.portfolio.every(point => 
-        typeof point.time === 'number' && typeof point.value === 'number'
-      )
-      
-      if (!isValid) {
-        throw new Error('Invalid data format')
-      }
-      
     } catch (error) {
-      console.warn('Failed to load chart data from server, using fallback data:', error)
-      chartData = this.generateFallbackData()
+      console.error('Failed to load chart data from server:', error)
+      // Show empty chart if no data
+      chartData = { portfolio: [], nasdaq: [], sp500: [] }
+      // Optionally add a message
+      container.innerHTML = '<p class="text-muted text-center py-5">No chart data available. Please add holdings and update prices.</p>'
     }
 
-    // Set data to series
     portfolioSeries.setData(chartData.portfolio)
     nasdaqSeries.setData(chartData.nasdaq)
     sp500Series.setData(chartData.sp500)
 
-    // Fit content to show all data
-    this.chart.timeScale().fitContent()
+    if (chartData.portfolio.length > 0) {
+      this.chart.timeScale().fitContent()
+    }
 
-    // Handle window resize
     this.resizeObserver = new ResizeObserver(() => {
       if (container.clientWidth > 0) {
         this.chart.applyOptions({ width: container.clientWidth })
       }
     })
     this.resizeObserver.observe(container)
-  }
-
-  generateFallbackData() {
-    const now = Math.floor(Date.now() / 1000)
-    const days = 365
-    const portfolio = []
-    const nasdaq = []
-    const sp500 = []
-    
-    let portfolioValue = 420000
-    let nasdaqValue = 12000
-    let sp500Value = 4000
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const time = now - (i * 86400) // Unix timestamp in seconds
-      
-      // Portfolio with upward trend
-      const portfolioChange = (Math.random() - 0.4) * 0.02
-      portfolioValue *= (1 + portfolioChange)
-      
-      // NASDAQ with upward trend
-      const nasdaqChange = (Math.random() - 0.4) * 0.02
-      nasdaqValue *= (1 + nasdaqChange)
-      
-      // S&P 500 with upward trend
-      const sp500Change = (Math.random() - 0.4) * 0.02
-      sp500Value *= (1 + sp500Change)
-      
-      portfolio.push({ time: time, value: Math.round(portfolioValue) })
-      nasdaq.push({ time: time, value: Math.round(nasdaqValue) })
-      sp500.push({ time: time, value: Math.round(sp500Value) })
-    }
-    
-    return { portfolio, nasdaq, sp500 }
   }
 }
 
