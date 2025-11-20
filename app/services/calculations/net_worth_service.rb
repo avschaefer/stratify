@@ -14,10 +14,15 @@ class NetWorthService
     portfolio_value_service.total_value + total_savings
   end
   
-  # Calculate total liabilities (sum of all loan principals)
+  # Calculate total liabilities (sum of all loan current balances)
+  # Uses current_balance_cents if available, otherwise falls back to principal_cents
   def total_liabilities
     return 0 unless user.respond_to?(:loans)
-    user.loans.sum { |loan| loan.principal_cents || 0 } / 100.0 || 0
+    user.loans.sum do |loan|
+      # Use current balance if available, otherwise use original principal
+      balance_cents = loan.current_balance_cents || loan.principal_cents || 0
+      balance_cents
+    end / 100.0
   rescue => e
     Rails.logger.error "Error calculating liabilities: #{e.message}"
     0

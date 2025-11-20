@@ -42,22 +42,22 @@
         <div class="metric-value">$<%= number_with_delimiter(@portfolio_value.round(0)) %></div>
       </div>
       
-      <!-- Total Return -->
+      <!-- Total Return (Unrealized) -->
       <div class="metric-tile">
         <div class="metric-label">Total Return</div>
-        <div class="metric-value" style="color: #6ee7b7;">
-          +$<%= number_with_delimiter(@total_return_amount.round(0)) %>
+        <div class="metric-value" style="color: <%= @total_return_amount >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+          <%= @total_return_amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(@total_return_amount.round(0)) %>
         </div>
-        <div class="metric-subtext">+<%= number_with_precision(@total_return_percent, precision: 2) %>%</div>
+        <div class="metric-subtext"><%= @total_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@total_return_percent, precision: 2) %>% (Unrealized)</div>
       </div>
       
-      <!-- Annual Return -->
+      <!-- Annual Return (YTD Unrealized) -->
       <div class="metric-tile">
         <div class="metric-label">Annual Return</div>
-        <div class="metric-value" style="color: #6ee7b7;">
-          +$<%= number_with_delimiter(@annual_return_amount.round(0)) %>
+        <div class="metric-value" style="color: <%= @annual_return_amount >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+          <%= @annual_return_amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(@annual_return_amount.round(0)) %>
         </div>
-        <div class="metric-subtext">+<%= number_with_precision(@annual_return_percent, precision: 2) %>%</div>
+        <div class="metric-subtext"><%= @annual_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@annual_return_percent, precision: 2) %>% (YTD Unrealized)</div>
       </div>
       
       <!-- Realized Gains/Losses -->
@@ -228,46 +228,6 @@
             <td></td>
           </tr>
         </tfoot>
-      </table>
-    </div>
-  </div>
-</div>
-<% end %>
-
-<!-- Annualized Returns Summary Section -->
-<% if @holdings.any? %>
-<div class="card mb-4">
-  <div class="card-glow"></div>
-  <div class="card-header">
-    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Year-to-Date Returns</h2>
-    <p class="text-muted mb-0 text-sm mt-1">Portfolio performance for <%= Date.today.year %></p>
-  </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>End of Year Value</th>
-            <th>Total Return</th>
-            <th>Realized Gain/Loss</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @yearly_rollup.each do |year_data| %>
-            <tr>
-              <td><strong><%= year_data[:year] %><%= ' (YTD)' if year_data[:year] == Date.today.year %></strong></td>
-              <td>$<%= number_with_delimiter(year_data[:end_value].round(0)) %></td>
-              <td style="color: <%= year_data[:total_return] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= year_data[:total_return] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:total_return].round(0)) %>
-                (<%= year_data[:total_return_pct] >= 0 ? '+' : '' %><%= number_with_precision(year_data[:total_return_pct], precision: 2) %>%)
-              </td>
-              <td style="color: <%= year_data[:realized_gain_loss] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= year_data[:realized_gain_loss] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:realized_gain_loss].round(0)) %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
       </table>
     </div>
   </div>
@@ -484,6 +444,46 @@
     </div>
   </div>
 </div>
+
+<!-- Annualized Returns Summary Section -->
+<% if @holdings.any? %>
+<div class="card mb-4">
+  <div class="card-glow"></div>
+  <div class="card-header">
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Year-to-Date Returns</h2>
+    <p class="text-muted mb-0 text-sm mt-1">Portfolio performance for <%= Date.today.year %></p>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>End of Year Value</th>
+            <th>Total Return</th>
+            <th>Realized Gain/Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @yearly_rollup.each do |year_data| %>
+            <tr>
+              <td><strong><%= year_data[:year] %><%= ' (YTD)' if year_data[:year] == Date.today.year %></strong></td>
+              <td>$<%= number_with_delimiter(year_data[:end_value].round(0)) %></td>
+              <td style="color: <%= year_data[:total_return] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                <%= year_data[:total_return] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:total_return].round(0)) %>
+                (<%= year_data[:total_return_pct] >= 0 ? '+' : '' %><%= number_with_precision(year_data[:total_return_pct], precision: 2) %>%)
+              </td>
+              <td style="color: <%= year_data[:realized_gain_loss] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                <%= year_data[:realized_gain_loss] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:realized_gain_loss].round(0)) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<% end %>
 
 <script>
 (function() {

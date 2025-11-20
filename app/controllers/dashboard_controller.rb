@@ -4,7 +4,7 @@ class DashboardController < ApplicationController
   
   def index
     begin
-      net_worth_service = Calculations::NetWorthService.new(user: current_user)
+      net_worth_service = NetWorthService.new(user: current_user)
       summary = net_worth_service.calculate
       
       @total_assets = summary[:total_assets]
@@ -64,9 +64,64 @@ class DashboardController < ApplicationController
     end
     
     # Calculate trends (simplified - would come from historical data)
-    @assets_trend = 12.0
-    @liabilities_trend = -8.0
-    @net_worth_trend = 18.0
+    # TODO: Calculate actual trends from historical data
+    @assets_trend = calculate_assets_trend
+    @liabilities_trend = calculate_liabilities_trend
+    @net_worth_trend = calculate_net_worth_trend
+  end
+  
+  private
+  
+  def calculate_assets_trend
+    # Calculate year-over-year change in assets
+    current_assets = @total_assets
+    return 0 if current_assets.zero?
+    
+    # Get assets from 1 year ago (simplified - using current portfolio value as proxy)
+    # In a real implementation, would track historical asset values
+    begin
+      # For now, estimate based on portfolio growth
+      portfolio = current_user.portfolio
+      if portfolio&.persisted?
+        holdings = portfolio.holdings.holdings
+        if holdings.any?
+          # Estimate previous year value based on cost basis
+          previous_cost_basis = holdings.sum { |h| h.total_cost_basis }
+          current_value = holdings.sum { |h| h.current_value }
+          
+          # Simple estimate: assume linear growth
+          if previous_cost_basis > 0
+            growth_rate = ((current_value - previous_cost_basis) / previous_cost_basis * 100)
+            # Estimate last year's assets
+            estimated_last_year = current_assets / (1 + growth_rate / 100.0)
+            return ((current_assets - estimated_last_year) / estimated_last_year * 100).round(2) rescue 0
+          end
+        end
+      end
+    rescue => e
+      Rails.logger.error("Error calculating assets trend: #{e.message}")
+    end
+    
+    0
+  end
+  
+  def calculate_liabilities_trend
+    # Calculate year-over-year change in liabilities
+    current_liabilities = @total_liabilities
+    return 0 if current_liabilities.zero?
+    
+    # In a real implementation, would track historical liability values
+    # For now, return 0 (no change) as placeholder
+    0
+  end
+  
+  def calculate_net_worth_trend
+    # Calculate year-over-year change in net worth
+    current_net_worth = @net_worth
+    return 0 if current_net_worth.zero?
+    
+    # Use assets trend as proxy for net worth trend (simplified)
+    @assets_trend
   end
   
   def export

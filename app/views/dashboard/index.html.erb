@@ -77,22 +77,31 @@
       <!-- Card: Bottom Section (Content) -->
       <div class="card-body">
         <% if @asset_allocation.any? %>
-          <div class="mb-3">
-            <% total_assets = @asset_allocation.values.sum %>
-            <% @asset_allocation.sort_by { |_, v| -v }.each do |asset_type, value| %>
-              <% percentage = total_assets > 0 ? (value / total_assets * 100) : 0 %>
-              <div class="mb-2">
-                <div class="d-flex justify-content-between mb-1">
-                  <span class="text-sm" style="color: #e5e5e5;"><%= asset_type.humanize %></span>
-                  <span class="text-sm font-medium" style="color: #fafafa;"><%= number_with_precision(percentage, precision: 1) %>%</span>
-                </div>
-                <div class="progress" style="height: 20px;">
-                  <div class="progress-bar" role="progressbar" style="width: <%= percentage %>%">
-                    $<%= number_with_delimiter(value.round(0)) %>
+          <div class="row">
+            <div class="col-md-6">
+              <!-- Pie Chart -->
+              <canvas id="assetAllocationChart" style="max-height: 400px;"></canvas>
+            </div>
+            <div class="col-md-6">
+              <!-- Legend/List -->
+              <div class="mb-3">
+                <% total_assets = @asset_allocation.values.sum %>
+                <% @asset_allocation.sort_by { |_, v| -v }.each do |asset_type, value| %>
+                  <% percentage = total_assets > 0 ? (value / total_assets * 100) : 0 %>
+                  <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span class="text-sm" style="color: #e5e5e5;"><%= asset_type %></span>
+                      <span class="text-sm font-medium" style="color: #fafafa;"><%= number_with_precision(percentage, precision: 1) %>%</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                      <div class="progress-bar" role="progressbar" style="width: <%= percentage %>%">
+                        $<%= number_with_delimiter(value.round(0)) %>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                <% end %>
               </div>
-            <% end %>
+            </div>
           </div>
         <% else %>
           <p class="text-muted text-center py-5">Add investments to see allocation.</p>
@@ -102,3 +111,72 @@
   </div>
 </div>
 
+<% if @asset_allocation.any? %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const ctx = document.getElementById('assetAllocationChart');
+  if (!ctx) return;
+  
+  const assetData = <%= @asset_allocation.to_json.html_safe %>;
+  const labels = Object.keys(assetData);
+  const values = Object.values(assetData);
+  const total = values.reduce((a, b) => a + b, 0);
+  
+  // Color scheme for different asset types
+  const colorMap = {
+    'Stocks': '#3b82f6',
+    'Bonds': '#10b981',
+    'Crypto': '#f59e0b',
+    'Mortgage': '#ef4444',
+    'Auto Loan': '#f97316',
+    'Student Loan': '#8b5cf6',
+    'Credit Card': '#ec4899',
+    'Personal Loan': '#6366f1',
+    'Other Debt': '#64748b',
+    'Other': '#94a3b8'
+  };
+  
+  const backgroundColors = labels.map(label => colorMap[label] || '#94a3b8');
+  
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: labels.map(label => `${label} (${((assetData[label] / total) * 100).toFixed(1)}%)`),
+      datasets: [{
+        data: values,
+        backgroundColor: backgroundColors,
+        borderColor: '#000000',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: '#ffffff',
+            font: {
+              size: 12
+            },
+            padding: 15
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label.split(' (')[0]}: $${value.toLocaleString()} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
+<% end %>

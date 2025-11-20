@@ -14,20 +14,63 @@ class PortfoliosController < ApplicationController
     
     # Calculate summary statistics for metrics tiles based on actual data
     portfolio_service = PortfolioValueService.new(user: current_user)
-    @portfolio_value = portfolio_service.total_value
-    @total_cost_basis = portfolio_service.total_cost_basis
+    
+    # Only use holdings (not trades) for portfolio calculations
+    actual_holdings = @portfolio.persisted? ? @portfolio.holdings.holdings : []
+    
+    @portfolio_value = actual_holdings.sum { |h| h.current_value }
+    @total_cost_basis = actual_holdings.sum { |h| h.total_cost_basis }
     @total_return_amount = @portfolio_value - @total_cost_basis
     @total_return_percent = @total_cost_basis > 0 ? (@total_return_amount / @total_cost_basis * 100) : 0
-    @annual_return_amount = 0 # Will be calculated when we have historical prices
-    @annual_return_percent = 0
-    @realized_net = 0
-    @realized_percent = 0
-    @vs_sp500 = 0
-    @sp500_return = 0
-    @vs_nasdaq = 0
-    @nasdaq_return = 0
-    @sharpe_ratio = 0
-    @std_deviation = 0
+    
+    # Calculate annual return (YTD)
+    current_year = Date.today.year
+    year_start = Date.new(current_year, 1, 1)
+    
+    # Get holdings that existed at start of year
+    holdings_at_year_start = actual_holdings.select do |h|
+      (h.entry_date || h.created_at.to_date) <= year_start
+    end
+    
+    # Calculate portfolio value at start of year (simplified - would need historical prices)
+    # For now, estimate based on cost basis of holdings at year start
+    year_start_cost_basis = holdings_at_year_start.sum { |h| h.total_cost_basis }
+    
+    # Calculate YTD return for holdings that existed at year start
+    # This is simplified - ideally we'd use actual prices from Jan 1
+    ytd_cost_basis = holdings_at_year_start.sum { |h| h.total_cost_basis }
+    ytd_current_value = holdings_at_year_start.sum { |h| h.current_value }
+    @annual_return_amount = ytd_current_value - ytd_cost_basis
+    @annual_return_percent = ytd_cost_basis > 0 ? (@annual_return_amount / ytd_cost_basis * 100) : 0
+    
+    # Calculate realized P&L from sell trades
+    sell_trades = @portfolio.persisted? ? @portfolio.holdings.sell_trades : []
+    @realized_net = sell_trades.sum do |trade|
+      avg_cost = trade.average_cost
+      # For realized P&L, we use the price at time of sale (entry_date price)
+      # Since we don't store sale price separately, use cost basis as proxy
+      # This is simplified - ideally we'd track sale price vs cost basis
+      trade.unrealized_return
+    end
+    
+    # Calculate realized P&L percentage based on cost basis of sold shares
+    sold_cost_basis = sell_trades.sum { |t| t.total_cost_basis }
+    @realized_percent = sold_cost_basis > 0 ? (@realized_net / sold_cost_basis * 100) : 0
+    
+    # Calculate index comparisons (vs S&P 500 and NASDAQ)
+    @sp500_return = calculate_index_return('SPX', 365)
+    @nasdaq_return = calculate_index_return('IXIC', 365)
+    
+    # Portfolio return for comparison (1 year)
+    portfolio_return_1y = @total_cost_basis > 0 ? @total_return_percent : 0
+    
+    @vs_sp500 = portfolio_return_1y - @sp500_return
+    @vs_nasdaq = portfolio_return_1y - @nasdaq_return
+    
+    # Calculate Sharpe ratio and standard deviation
+    sharpe_data = calculate_sharpe_ratio(actual_holdings)
+    @sharpe_ratio = sharpe_data[:sharpe_ratio]
+    @std_deviation = sharpe_data[:std_deviation]
     
     # Calculate index comparison data (3, 6, 12 month returns)
     # For now, using placeholder calculations - will be replaced with actual historical data
@@ -376,6 +419,86 @@ class PortfoliosController < ApplicationController
   end
   
   private
+  
+  def calculate_index_return(symbol, days)
+    begin
+      index_data = symbol == 'SPX' ? StockDataService.fetch_sp500_data(days) : StockDataService.fetch_nasdaq_data(days)
+      return 0 unless index_data && index_data.length >= 2
+      
+      start_price = index_data.first
+      end_price = index_data.last
+      return 0 if start_price.nil? || end_price.nil? || start_price.zero?
+      
+      ((end_price - start_price) / start_price * 100).round(2)
+    rescue => e
+      Rails.logger.error("Error calculating index return for #{symbol}: #{e.message}")
+      0
+    end
+  end
+  
+  def calculate_sharpe_ratio(holdings)
+    return { sharpe_ratio: 0, std_deviation: 0 } if holdings.empty?
+    
+    # Need at least 30 days of price data for meaningful calculation
+    # Calculate daily returns for the past 90 days (more data = better calculation)
+    daily_values = []
+    (0..89).each do |days_ago|
+      date = Date.today - days_ago.days
+      
+      # Calculate portfolio value on this date
+      portfolio_value = holdings.sum do |holding|
+        price = holding.prices.where("date <= ?", date).order(date: :desc).first
+        if price
+          (holding.shares || 0) * (price.amount_cents / 100.0)
+        else
+          # If no price data, skip this holding for this date
+          nil
+        end
+      end
+      
+      # Only add if we have valid data
+      daily_values << portfolio_value if portfolio_value && portfolio_value > 0
+    end
+    
+    # Need at least 30 data points
+    return { sharpe_ratio: 0, std_deviation: 0 } if daily_values.length < 30
+    
+    # Reverse to get chronological order (oldest first)
+    daily_values.reverse!
+    
+    # Calculate daily percentage returns
+    daily_pct_returns = []
+    (1...daily_values.length).each do |i|
+      prev_value = daily_values[i - 1]
+      curr_value = daily_values[i]
+      if prev_value && curr_value && prev_value > 0
+        daily_pct_returns << ((curr_value - prev_value) / prev_value * 100)
+      end
+    end
+    
+    return { sharpe_ratio: 0, std_deviation: 0 } if daily_pct_returns.empty? || daily_pct_returns.length < 10
+    
+    # Calculate mean return
+    mean_return = daily_pct_returns.sum / daily_pct_returns.length
+    
+    # Calculate standard deviation (sample standard deviation)
+    variance = daily_pct_returns.sum { |r| (r - mean_return) ** 2 } / (daily_pct_returns.length - 1)
+    std_deviation = Math.sqrt(variance)
+    
+    # Annualize returns (assuming 252 trading days)
+    annualized_return = mean_return * 252
+    annualized_std = std_deviation * Math.sqrt(252)
+    
+    # Sharpe ratio = (Return - Risk-free rate) / Std Dev
+    # Using 0% as risk-free rate for simplicity
+    sharpe_ratio = annualized_std > 0 ? (annualized_return / annualized_std) : 0
+    
+    { sharpe_ratio: sharpe_ratio.round(2), std_deviation: annualized_std.round(2) }
+  rescue => e
+    Rails.logger.error("Error calculating Sharpe ratio: #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
+    { sharpe_ratio: 0, std_deviation: 0 }
+  end
   
   def normalize_ticker_for_search(ticker)
     return ticker if ticker.blank?
