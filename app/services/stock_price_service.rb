@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
-# Service for fetching daily stock prices for individual tickers
+# Service for fetching daily stock prices for individual tickers using TwelveData API
 class StockPriceService
   require 'net/http'
+  require 'json'
   require 'date'
+  require 'uri'
+
+  BASE_URL = 'https://api.twelvedata.com/time_series'
 
   # Fetch price for a specific ticker on a specific date
   # Returns { date: Date, price: Float } or nil
@@ -21,28 +25,47 @@ class StockPriceService
   def self.fetch_daily_prices(ticker, days = 365, end_date = Date.today)
     return nil if ticker.blank?
     
+    api_key = ENV['TWELVEDATA_API_KEY']
+    if api_key.blank?
+      Rails.logger.error("TWELVEDATA_API_KEY is not set in environment variables")
+      return nil
+    end
+    
     begin
       start_date = end_date - days.days
-      period1 = start_date.to_time.to_i
-      period2 = end_date.to_time.to_i
       
-      # Yahoo Finance CSV endpoint
-      url = "https://query1.finance.yahoo.com/v7/finance/download/#{ticker.upcase}?period1=#{period1}&period2=#{period2}&interval=1d&events=history"
+      # Format dates for TwelveData API (YYYY-MM-DD)
+      start_date_str = start_date.strftime('%Y-%m-%d')
+      end_date_str = end_date.strftime('%Y-%m-%d')
       
-      uri = URI(url)
+      # Normalize ticker symbol (handle crypto pairs like BTC/USD)
+      symbol = normalize_symbol(ticker)
+      
+      # Build query parameters
+      params = {
+        symbol: symbol,
+        interval: '1day',
+        apikey: api_key,
+        start_date: start_date_str,
+        end_date: end_date_str,
+        format: 'JSON'
+      }
+      
+      uri = URI(BASE_URL)
+      uri.query = URI.encode_www_form(params)
+      
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
-      http.read_timeout = 10
+      http.read_timeout = 15
       
       request = Net::HTTP::Get.new(uri.request_uri)
-      request['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       
       response = http.request(request)
       
       if response.code == '200'
-        parse_yahoo_csv(response.body)
+        parse_twelvedata_json(response.body)
       else
-        Rails.logger.warn("Failed to fetch price for #{ticker}: HTTP #{response.code}")
+        Rails.logger.warn("Failed to fetch price for #{ticker}: HTTP #{response.code} - #{response.body}")
         nil
       end
     rescue => e
@@ -54,28 +77,79 @@ class StockPriceService
 
   private
 
-  def self.parse_yahoo_csv(csv_data)
-    lines = csv_data.split("\n")
-    return nil if lines.length < 2
+  # Normalize ticker symbol for TwelveData API
+  # Crypto symbols should be in format BASE/QUOTE (e.g., BTC/USD)
+  # Stock symbols are used as-is
+  def self.normalize_symbol(ticker)
+    return nil if ticker.blank?
+    
+    # If ticker contains a slash, assume it's already in correct format (crypto)
+    return ticker.upcase if ticker.include?('/')
+    
+    ticker_upper = ticker.upcase.strip
+    
+    # Common crypto tickers (major cryptocurrencies)
+    crypto_tickers = %w[
+      BTC ETH BNB SOL ADA XRP DOGE DOT AVAX MATIC LTC UNI LINK ATOM ETC XLM 
+      ALGO VET FIL TRX EOS THETA AAVE COMP MKR SNX YFI SUSHI CRV 1INCH ENJ 
+      SAND MANA AXS CHZ FLOW ICP NEAR FTM HBAR QNT BAT ZRX OMG GRT REN ZEC 
+      DASH XMR EOS WAVES ZIL ONT QTUM IOST NEO GAS VTHO CELO CEL
+    ]
+    
+    # If it's a known crypto ticker, convert to BASE/USD format
+    if crypto_tickers.include?(ticker_upper)
+      return "#{ticker_upper}/USD"
+    end
+    
+    # Check if it looks like a crypto ticker (short, all caps, common patterns)
+    # Most crypto tickers are 2-5 characters and don't match stock patterns
+    if ticker_upper.length <= 5 && ticker_upper.match?(/\A[A-Z0-9]+\z/) && !ticker_upper.match?(/\A[A-Z]{1,2}\z/)
+      # Try as crypto first - if API fails, can fallback to stock
+      return "#{ticker_upper}/USD"
+    end
+    
+    # For stocks, use uppercase
+    ticker.upcase
+  end
+
+  def self.parse_twelvedata_json(json_data)
+    data = JSON.parse(json_data)
+    
+    # Check for API errors
+    if data['status'] == 'error'
+      Rails.logger.error("TwelveData API error: #{data['message']}")
+      return nil
+    end
+    
+    # Check if we have values array
+    unless data['values'].is_a?(Array)
+      Rails.logger.warn("Unexpected response format from TwelveData API: #{data.keys.inspect}")
+      return nil
+    end
+    
+    # Return empty array if no values
+    return [] if data['values'].empty?
     
     prices = []
     
-    # Skip header line
-    lines[1..-1].each do |line|
-      next if line.strip.empty?
-      parts = line.split(',')
-      next if parts.length < 5
-      
+    data['values'].each do |entry|
       begin
-        date_str = parts[0]
-        close_price = parts[4].to_f
+        # TwelveData returns datetime in format: "2024-01-15 16:00:00"
+        datetime_str = entry['datetime']
+        close_price = entry['close'].to_f
         
-        next if close_price <= 0
+        next if close_price <= 0 || datetime_str.blank?
         
-        date = Date.parse(date_str)
+        # Parse date (handle both date-only and datetime formats)
+        date = if datetime_str.include?(' ')
+          Date.parse(datetime_str.split(' ').first)
+        else
+          Date.parse(datetime_str)
+        end
+        
         prices << { date: date, price: close_price }
       rescue => e
-        Rails.logger.debug("Error parsing CSV line: #{line} - #{e.message}")
+        Rails.logger.debug("Error parsing TwelveData entry: #{entry.inspect} - #{e.message}")
         next
       end
     end

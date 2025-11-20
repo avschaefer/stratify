@@ -88,6 +88,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_05_232241) do
     t.decimal "index_weight", precision: 5, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "entry_type", default: "holding"
+    t.date "entry_date"
+    t.string "trade_type"
+    t.index ["entry_date"], name: "index_holdings_on_entry_date"
+    t.index ["entry_type"], name: "index_holdings_on_entry_type"
     t.index ["portfolio_id"], name: "index_holdings_on_portfolio_id"
     t.index ["ticker"], name: "index_holdings_on_ticker"
   end

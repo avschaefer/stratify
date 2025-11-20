@@ -1,6 +1,6 @@
 <div class="page-header mb-4">
   <h1>Edit Investment</h1>
-  <p class="text-muted mb-0">Update your portfolio transaction</p>
+  <p class="text-muted mb-0">Update your portfolio trade</p>
 </div>
 
 <div class="card">
@@ -36,14 +36,15 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <%= f.label :cost_basis, "Cost Basis", class: "form-label" %>
-            <%= f.number_field :cost_basis, step: 1, class: "form-control", required: true, value: @holding.cost_basis_cents ? (@holding.cost_basis_cents / 100.0).round(0) : '' %>
+            <%= f.label :shares, "Shares", class: "form-label" %>
+            <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, value: @holding.shares %>
           </div>
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <%= f.label :shares, "Shares", class: "form-label" %>
-            <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, value: @holding.shares %>
+            <%= f.label :average_cost, "Average Cost ($)", class: "form-label" %>
+            <%= f.number_field :average_cost, step: 0.01, class: "form-control", required: true, value: @holding.average_cost %>
+            <small class="text-muted">Price per share</small>
           </div>
         </div>
       </div>

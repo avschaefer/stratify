@@ -17,8 +17,11 @@
         <i class="bi bi-arrow-clockwise"></i> Update Prices
       <% end %>
     <% end %>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
-      <i class="bi bi-plus-circle"></i> Add Transaction
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
+      <i class="bi bi-plus-circle"></i> Add Holding
+    </button>
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addTradeModal">
+      <i class="bi bi-plus-circle"></i> Add Trade
     </button>
   </div>
 </div>
@@ -134,52 +137,110 @@
       </div>
     </div>
     
-    <!-- Index Comparison Table -->
-    <div class="mt-4">
-      <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #fafafa;">Index Comparison</h3>
-      <div class="table-responsive">
-        <table class="table table-sm">
-          <thead>
+  </div>
+</div>
+
+<!-- Holdings Section -->
+<% if @holdings.any? %>
+<div class="card mb-4">
+  <div class="card-glow"></div>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Holdings</h2>
+      <p class="text-muted mb-0 text-sm mt-1">Complete portfolio overview (includes cash)</p>
+    </div>
+    <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
+      <i class="bi bi-plus-circle"></i><span>Add Holding</span>
+    </button>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Name</th>
+            <th>Shares</th>
+            <th>Avg Price</th>
+            <th>Current Price</th>
+            <th>Current Value</th>
+            <th>Today's Return</th>
+            <th>Unrealized Return</th>
+            <th>% of Portfolio</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @all_holdings.each do |holding| %>
+            <% current_val = holding.current_value %>
+            <% cost_basis = holding.total_cost_basis %>
+            <% avg_price = holding.average_cost %>
+            <% current_price_record = holding.latest_price %>
+            <% current_price = current_price_record ? (current_price_record.amount_cents / 100.0) : 0 %>
+            <% unrealized_return = holding.unrealized_return %>
+            <% unrealized_return_pct = holding.unrealized_return_percent %>
+            <% todays_return = holding.todays_return %>
+            <% todays_return_pct = holding.todays_return_percent %>
+            <% portfolio_pct = @portfolio_value > 0 ? (current_val / @portfolio_value * 100) : 0 %>
             <tr>
-              <th style="color: #a3a3a3; font-size: 0.875rem;">Period</th>
-              <th style="color: #a3a3a3; font-size: 0.875rem;">Portfolio</th>
-              <th style="color: #a3a3a3; font-size: 0.875rem;">S&P 500</th>
-              <th style="color: #a3a3a3; font-size: 0.875rem;">NASDAQ</th>
+              <td><strong><%= holding.ticker %></strong></td>
+              <td><%= holding.name || '-' %></td>
+              <td><%= number_with_precision(holding.shares, precision: 2) %></td>
+              <td>$<%= number_with_precision(avg_price, precision: 2) %></td>
+              <td>$<%= current_price > 0 ? number_with_precision(current_price, precision: 2) : '-' %></td>
+              <td>$<%= number_with_delimiter(current_val.round(0)) %></td>
+              <td style="color: <%= todays_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                <%= todays_return >= 0 ? '+' : '' %>$<%= number_with_precision(todays_return, precision: 2) %>
+                (<%= todays_return_pct >= 0 ? '+' : '' %><%= number_with_precision(todays_return_pct, precision: 2) %>%)
+              </td>
+              <td style="color: <%= unrealized_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                <%= unrealized_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(unrealized_return.round(0)) %>
+                (<%= unrealized_return_pct >= 0 ? '+' : '' %><%= number_with_precision(unrealized_return_pct, precision: 2) %>%)
+              </td>
+              <td><%= number_with_precision(portfolio_pct, precision: 2) %>%</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to edit_portfolio_path(holding), class: "btn btn-sm btn-outline-primary" do %>
+                    <i class="bi bi-pencil"></i>
+                  <% end %>
+                  <% confirm_message = "Are you sure you want to delete this holding? This is different from a sell trade." %>
+                  <%= button_to portfolio_path(holding),
+                      method: :delete,
+                      class: "btn btn-sm btn-outline-danger",
+                      aria: { label: "Delete holding" },
+                      title: "Delete holding",
+                      data: { turbo_confirm: confirm_message } do %>
+                    <i class="bi bi-trash"></i>
+                  <% end %>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="color: #e5e5e5;">3 Month</td>
-              <td style="color: <%= @portfolio_3m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @portfolio_3m >= 0 ? '+' : '' %><%= number_with_precision(@portfolio_3m, precision: 2) %>%</td>
-              <td style="color: <%= @sp500_3m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @sp500_3m >= 0 ? '+' : '' %><%= number_with_precision(@sp500_3m, precision: 2) %>%</td>
-              <td style="color: <%= @nasdaq_3m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @nasdaq_3m >= 0 ? '+' : '' %><%= number_with_precision(@nasdaq_3m, precision: 2) %>%</td>
-            </tr>
-            <tr>
-              <td style="color: #e5e5e5;">6 Month</td>
-              <td style="color: <%= @portfolio_6m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @portfolio_6m >= 0 ? '+' : '' %><%= number_with_precision(@portfolio_6m, precision: 2) %>%</td>
-              <td style="color: <%= @sp500_6m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @sp500_6m >= 0 ? '+' : '' %><%= number_with_precision(@sp500_6m, precision: 2) %>%</td>
-              <td style="color: <%= @nasdaq_6m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @nasdaq_6m >= 0 ? '+' : '' %><%= number_with_precision(@nasdaq_6m, precision: 2) %>%</td>
-            </tr>
-            <tr>
-              <td style="color: #e5e5e5;">12 Month</td>
-              <td style="color: <%= @portfolio_12m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @portfolio_12m >= 0 ? '+' : '' %><%= number_with_precision(@portfolio_12m, precision: 2) %>%</td>
-              <td style="color: <%= @sp500_12m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @sp500_12m >= 0 ? '+' : '' %><%= number_with_precision(@sp500_12m, precision: 2) %>%</td>
-              <td style="color: <%= @nasdaq_12m >= 0 ? '#6ee7b7' : '#fca5a5' %>;"><%= @nasdaq_12m >= 0 ? '+' : '' %><%= number_with_precision(@nasdaq_12m, precision: 2) %>%</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr style="border-top: 2px solid rgba(255, 255, 255, 0.1);">
+            <td colspan="3"><strong>Total</strong></td>
+            <td></td>
+            <td></td>
+            <td><strong>$<%= number_with_delimiter(@portfolio_value.round(0)) %></strong></td>
+            <td colspan="2"></td>
+            <td><strong>100%</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   </div>
 </div>
+<% end %>
 
 <!-- Annualized Returns Summary Section -->
 <% if @holdings.any? %>
 <div class="card mb-4">
   <div class="card-glow"></div>
   <div class="card-header">
-    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Annualized Returns Summary</h2>
-    <p class="text-muted mb-0 text-sm mt-1">Portfolio performance by year</p>
+    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Year-to-Date Returns</h2>
+    <p class="text-muted mb-0 text-sm mt-1">Portfolio performance for <%= Date.today.year %></p>
   </div>
   <div class="card-body">
     <div class="table-responsive">
@@ -195,7 +256,7 @@
         <tbody>
           <% @yearly_rollup.each do |year_data| %>
             <tr>
-              <td><strong><%= year_data[:year] %></strong></td>
+              <td><strong><%= year_data[:year] %><%= ' (YTD)' if year_data[:year] == Date.today.year %></strong></td>
               <td>$<%= number_with_delimiter(year_data[:end_value].round(0)) %></td>
               <td style="color: <%= year_data[:total_return] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
                 <%= year_data[:total_return] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:total_return].round(0)) %>
@@ -213,69 +274,58 @@
 </div>
 <% end %>
 
-<!-- Add Transaction Modal -->
-<div class="modal" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
+<!-- Add Holding Modal -->
+<div class="modal" id="addHoldingModal" tabindex="-1" aria-labelledby="addHoldingModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addTransactionModalLabel">Add Transaction</h5>
+        <h5 class="modal-title" id="addHoldingModalLabel">Add Holding</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <%= form_with model: @portfolio, local: true do |f| %>
+        <%= form_with model: [@portfolio, @holding], url: portfolios_path, local: true do |f| %>
+          <%= hidden_field_tag :entry_type, 'holding' %>
           <div class="row">
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :asset_type, "Asset Type", class: "form-label" %>
-                <%= f.select :asset_type, options_for_select([
-                  ['Stock', 'stock'],
-                  ['ETF', 'etf'],
-                  ['Bond ETF', 'bond_etf'],
-                  ['Bond', 'bond'],
-                  ['Crypto', 'crypto'],
-                  ['Other', 'other']
-                ]), {}, { class: "form-select", required: true } %>
-              </div>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="mb-3">
                 <%= f.label :ticker, "Ticker/Symbol", class: "form-label" %>
-                <%= f.text_field :ticker, class: "form-control", required: true %>
+                <%= f.text_field :ticker, class: "form-control", required: true, placeholder: "e.g., GOOG, AAPL, BTC/USD" %>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="mb-3">
-                <%= f.label :purchase_date, "Date", class: "form-label" %>
-                <%= f.date_field :purchase_date, class: "form-control", required: true %>
+                <%= f.label :name, "Name (Optional)", class: "form-label" %>
+                <%= f.text_field :name, class: "form-control", placeholder: "e.g., Alphabet Inc." %>
               </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-4">
               <div class="mb-3">
-                <%= f.label :purchase_price, "Price", class: "form-label" %>
-                <%= f.number_field :purchase_price, step: 0.01, class: "form-control", required: true %>
+                <%= f.label :entry_date, "Entry Date", class: "form-label" %>
+                <%= f.date_field :entry_date, class: "form-control", required: true, value: Date.today %>
               </div>
             </div>
             <div class="col-md-4">
               <div class="mb-3">
-                <%= f.label :quantity, "Quantity", class: "form-label" %>
-                <%= f.number_field :quantity, step: 0.01, class: "form-control", required: true %>
+                <%= f.label :shares, "Shares", class: "form-label" %>
+                <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
               </div>
             </div>
             <div class="col-md-4">
               <div class="mb-3">
-                <%= f.label :status, "Status", class: "form-label" %>
-                <%= f.select :status, options_for_select([
-                  ['Draft', 'draft'],
-                  ['Active', 'active']
-                ]), {}, { class: "form-select" } %>
+                <%= f.label :average_cost, "Average Cost ($)", class: "form-label" %>
+                <%= f.number_field :average_cost, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
+                <small class="text-muted">Price per share</small>
               </div>
             </div>
+          </div>
+          <div class="alert alert-info">
+            <small><i class="bi bi-info-circle"></i> Holdings represent existing assets in your portfolio. They may show immediate gain/loss based on current market prices.</small>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= f.submit "Add Transaction", class: "btn btn-primary" %>
+            <%= f.submit "Add Holding", class: "btn btn-primary" %>
           </div>
         <% end %>
       </div>
@@ -283,62 +333,145 @@
   </div>
 </div>
 
-<!-- Transaction History Section -->
+<!-- Add Trade Modal -->
+<div class="modal" id="addTradeModal" tabindex="-1" aria-labelledby="addTradeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addTradeModalLabel">Add Trade</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <%= form_with model: [@portfolio, @holding], url: portfolios_path, local: true do |f| %>
+          <%= hidden_field_tag :entry_type, 'trade' %>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :ticker, "Ticker/Symbol", class: "form-label" %>
+                <%= f.text_field :ticker, class: "form-control", required: true, placeholder: "e.g., GOOG, AAPL, BTC/USD" %>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <%= f.label :name, "Name (Optional)", class: "form-label" %>
+                <%= f.text_field :name, class: "form-control", placeholder: "e.g., Alphabet Inc." %>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :trade_type, "Trade Type", class: "form-label" %>
+                <%= f.select :trade_type, options_for_select([
+                  ['Buy', 'buy'],
+                  ['Sell', 'sell']
+                ], 'buy'), {}, { class: "form-select", required: true, id: "tradeTypeSelect" } %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :entry_date, "Trade Date", class: "form-label" %>
+                <%= f.date_field :entry_date, class: "form-control", required: true, value: Date.today %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :shares, "Shares", class: "form-label" %>
+                <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <%= f.label :average_cost, "Price ($)", class: "form-label" %>
+                <%= f.number_field :average_cost, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
+                <small class="text-muted">Price per share</small>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-info" id="sellTradeInfo" style="display: none;">
+            <small><i class="bi bi-info-circle"></i> Sell trades will reduce shares from your existing holdings. Make sure you have enough shares to sell.</small>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= f.submit "Add Trade", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Trade History Section -->
 <div class="card mb-4">
   <div class="card-glow"></div>
   <!-- Card: Top Section (Title) -->
-  <div class="card-header">
-    <button class="btn btn-link p-0 text-decoration-none w-100 text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#transactionHistoryCollapse" aria-expanded="false" aria-controls="transactionHistoryCollapse" style="border: none; background: none; color: inherit;">
-      <div>
-        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; color: #fafafa;">Transaction History</h2>
-        <p class="text-muted mb-0 text-sm">View all your buy and sell transactions</p>
-      </div>
-      <i class="bi bi-chevron-down collapse-icon" style="transition: transform 0.3s ease; color: #a3a3a3;"></i>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Trade History</h2>
+      <p class="text-muted mb-0 text-sm mt-1">View all your buy and sell trades</p>
+    </div>
+    <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addTradeModal">
+      <i class="bi bi-plus-circle"></i><span>Add Trade</span>
     </button>
   </div>
   <!-- Card: Bottom Section (Content) -->
   <div class="card-body">
-    <div class="collapse" id="transactionHistoryCollapse">
-        <% if @transactions.any? %>
+    <div id="tradeHistoryContent">
+        <% if @trades.any? %>
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Type</th>
                   <th>Ticker</th>
                   <th>Name</th>
                   <th>Shares</th>
-                  <th>Avg Price</th>
-                  <th>Cost Basis</th>
+                  <th>Price</th>
+                  <th>Unrealized Return</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <% @holdings.each do |holding| %>
+                <% @trades.each do |trade| %>
+                  <% current_val = trade.current_value %>
+                  <% cost_basis = trade.total_cost_basis %>
+                  <% unrealized_return = trade.unrealized_return %>
+                  <% unrealized_return_pct = trade.unrealized_return_percent %>
+                  <% trade_type_badge = trade.trade_type == 'sell' ? 'danger' : 'success' %>
+                  <% trade_type_label = trade.trade_type == 'sell' ? 'Sell' : 'Buy' %>
                   <tr>
-                    <td><%= holding.created_at.strftime('%Y-%m-%d') %></td>
-                    <td><strong><%= holding.ticker %></strong></td>
-                    <td><%= holding.name %></td>
-                    <td><%= holding.shares %></td>
-                    <td>$<%= number_with_precision(holding.total_cost_basis / (holding.shares || 1), precision: 2) %></td>
-                    <td><strong>$<%= number_with_delimiter(holding.total_cost_basis.round(0)) %></strong></td>
+                    <td><%= trade.entry_date&.strftime('%Y-%m-%d') || trade.created_at.strftime('%Y-%m-%d') %></td>
+                    <td>
+                      <span class="badge bg-<%= trade_type_badge %>"><%= trade_type_label %></span>
+                    </td>
+                    <td><strong><%= trade.ticker %></strong></td>
+                    <td><%= trade.name || '-' %></td>
+                    <td><%= number_with_precision(trade.shares, precision: 2) %></td>
+                    <td>$<%= number_with_precision(trade.total_cost_basis / (trade.shares || 1), precision: 2) %></td>
+                    <td style="color: <%= unrealized_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
+                      <%= unrealized_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(unrealized_return.round(0)) %>
+                      (<%= unrealized_return_pct >= 0 ? '+' : '' %><%= number_with_precision(unrealized_return_pct, precision: 2) %>%)
+                    </td>
                     <td>
                       <span class="badge bg-success">Active</span>
                     </td>
                     <td>
-                      <%= link_to edit_portfolio_path(holding), class: "btn btn-sm btn-outline-primary" do %>
-                        <i class="bi bi-pencil"></i>
-                      <% end %>
-                      <% confirm_message = "Are you sure you want to delete this holding?" %>
-                      <%= button_to portfolio_path(holding),
-                          method: :delete,
-                          class: "btn btn-sm btn-outline-danger",
-                          aria: { label: "Delete portfolio transaction" },
-                          title: "Delete portfolio transaction",
-                          data: { turbo_confirm: confirm_message } do %>
-                        <i class="bi bi-trash"></i>
-                      <% end %>
+                      <div class="d-flex gap-1">
+                        <%= link_to edit_portfolio_path(trade), class: "btn btn-sm btn-outline-primary" do %>
+                          <i class="bi bi-pencil"></i>
+                        <% end %>
+                        <% confirm_message = "Are you sure you want to delete this trade?" %>
+                        <%= button_to portfolio_path(trade),
+                            method: :delete,
+                            class: "btn btn-sm btn-outline-danger",
+                            aria: { label: "Delete trade" },
+                            title: "Delete trade",
+                            data: { turbo_confirm: confirm_message } do %>
+                          <i class="bi bi-trash"></i>
+                        <% end %>
+                      </div>
                     </td>
                   </tr>
                 <% end %>
@@ -346,9 +479,8 @@
             </table>
           </div>
         <% else %>
-          <p class="text-muted text-center py-4">No transactions found.</p>
+          <p class="text-muted text-center py-4">No trades found. Add your first trade using the "Add Trade" button above.</p>
         <% end %>
-      </div>
     </div>
   </div>
 </div>
@@ -589,6 +721,27 @@
   });
   document.addEventListener('turbo:before-cache', cleanup);
 })();
+
+// Show/hide sell trade info based on trade type selection
+(function() {
+  const tradeTypeSelect = document.getElementById('tradeTypeSelect');
+  const sellTradeInfo = document.getElementById('sellTradeInfo');
+  
+  if (tradeTypeSelect && sellTradeInfo) {
+    tradeTypeSelect.addEventListener('change', function() {
+      if (this.value === 'sell') {
+        sellTradeInfo.style.display = 'block';
+      } else {
+        sellTradeInfo.style.display = 'none';
+      }
+    });
+    
+    // Set initial state
+    if (tradeTypeSelect.value === 'sell') {
+      sellTradeInfo.style.display = 'block';
+    }
+  }
+})();
 </script>
 
 
@@ -665,7 +818,7 @@
     font-weight: 500;
   }
   
-  /* Transaction History Collapse Icon Animation */
+  /* Trade History Collapse Icon Animation */
   .collapse-icon {
     font-size: 1.25rem;
     color: #64748b;
@@ -674,6 +827,7 @@
   [data-bs-toggle="collapse"][aria-expanded="true"] .collapse-icon {
     transform: rotate(180deg);
   }
+  
   
   /* Modern Chart Controls - Dark Theme */
   .chart-controls-container {
