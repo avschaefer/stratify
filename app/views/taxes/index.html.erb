@@ -1,229 +1,91 @@
-<div class="page-header d-flex justify-content-between align-items-start mb-4">
-  <div>
-    <h1>Taxes</h1>
-    <p class="text-muted mb-0">Record your tax information by year</p>
-  </div>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newTaxYearModal">
-    <i class="bi bi-plus-circle"></i> New Tax Year
-  </button>
-</div>
+<div class="space-y-6 animate-fade-in" data-controller="modal">
+    <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-gray-900">Tax Years</h2>
+        <button data-action="modal#open" class="btn-primary">
+          New Tax Year
+        </button>
+    </div>
 
-<div class="mb-4">
-  <h2 style="font-size: 1.5rem; font-weight: 600; color: #fafafa;">Your Tax Years</h2>
-</div>
-
-<div class="row">
-  <% if @taxes.any? %>
-    <% @taxes.each do |scenario| %>
-      <div class="col-md-4 mb-4">
-        <div class="card">
-          <div class="card-glow"></div>
-          <!-- Card: Top Section (Details) -->
-          <div class="card-body">
-            <!-- Card Header: Title & Actions -->
-            <div class="d-flex justify-content-between align-items-start mb-4">
-              <div>
-                <h2 style="font-size: 1.25rem; font-weight: 600; color: #fafafa; margin: 0;">Tax Year <%= scenario.year %></h2>
-              </div>
-              <!-- Action Buttons -->
-              <div class="d-flex gap-1">
-                <%= link_to edit_tax_path(scenario), class: "p-2 rounded", style: "color: #a3a3a3; text-decoration: none; transition: all 0.2s; cursor: pointer;", onmouseover: "this.style.backgroundColor='rgba(255,255,255,0.05)'; this.style.color='#e5e5e5';", onmouseout: "this.style.backgroundColor='transparent'; this.style.color='#a3a3a3';" do %>
-                  <svg style="width: 20px; height: 20px; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                  </svg>
-                <% end %>
-                <% confirm_message = "Are you sure you want to delete this tax year?" %>
-                <%= button_to tax_path(scenario),
-                    method: :delete,
-                    form_class: "card-delete-form",
-                    class: "card-delete-btn",
-                    aria: { label: "Delete tax year" },
-                    title: "Delete tax year",
-                    data: { turbo_confirm: confirm_message } do %>
-                  <i class="bi bi-trash" style="pointer-events: none;"></i>
-                <% end %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% if @taxes.any? %>
+      <% @taxes.each do |tax| %>
+         <% 
+            status = tax.tax_paid.to_f > 0 ? 'Filed' : 'Projected'
+            paid_color = 'text-red-600'
+         %>
+        <%= ui_card class: "p-6" do %>
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="font-bold text-lg text-gray-900">Tax Year <%= tax.year %></h3>
+              <div class="flex gap-2 items-center">
+                  <%= ui_badge status, type: status == 'Filed' ? :success : :warning %>
+                  <%= link_to "Edit", edit_tax_path(tax), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
               </div>
             </div>
-
-            <!-- Details List -->
-            <div>
-              <div class="d-flex justify-content-between mb-3">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Annual Income</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.gross_income rescue 0).round(0)) %></span>
-              </div>
-              <div class="d-flex justify-content-between mb-3">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Deductions</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.deductions rescue 0).round(0)) %></span>
-              </div>
-              <div class="d-flex justify-content-between mb-3">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Taxable Income</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.taxable_income rescue 0).round(0)) %></span>
-              </div>
-              <div class="d-flex justify-content-between mb-3">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Tax Paid</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((scenario.tax_paid rescue 0).round(0)) %></span>
-              </div>
-              <div class="d-flex justify-content-between mb-3">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Effective Tax Rate</span>
-                <% effective_rate = (scenario.taxable_income.to_f > 0 ? (scenario.tax_paid.to_f / scenario.taxable_income.to_f * 100.0) : 0.0) rescue 0.0 %>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= number_with_precision(effective_rate, precision: 2) %>%</span>
-              </div>
-                <div class="d-flex justify-content-between">
-                  <span style="font-size: 0.875rem; color: #a3a3a3;">Refund</span>
-                <% refund_amount = scenario.refund.to_f %>
-                <% if refund_amount > 0 %>
-                  <span style="font-size: 0.875rem; font-weight: 500; color: #6ee7b7;">$<%= number_with_delimiter(refund_amount.round(0)) %></span>
-                <% else %>
-                  <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$0</span>
-                <% end %>
-                </div>
+            <div class="space-y-2 text-sm">
+              <p class="flex justify-between"><span class="text-gray-500">Gross Income</span> <span class="font-medium text-gray-900"><%= number_to_currency(tax.gross_income || 0) %></span></p>
+              <p class="flex justify-between"><span class="text-gray-500">Tax Paid</span> <span class="font-medium <%= paid_color %>">-<%= number_to_currency(tax.tax_paid || 0) %></span></p>
+              <p class="flex justify-between border-t border-gray-100 pt-2 mt-2">
+                  <span class="text-gray-900 font-semibold">Effective Rate</span> 
+                  <span class="font-bold text-blue-600">
+                      <% rate = (tax.gross_income.to_f > 0 ? (tax.tax_paid.to_f / tax.gross_income.to_f * 100) : 0) %>
+                      <%= rate.round(1) %>%
+                  </span>
+              </p>
             </div>
-          </div>
-
-          <!-- Card: Bottom Section (Summary) -->
-          <div class="card-header" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
-            <div>
-              <!-- Highlighted After-Tax Income -->
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <span style="font-size: 1.125rem; font-weight: 600; color: #e5e5e5;">After-Tax Income</span>
-                <span style="font-size: 1.25rem; font-weight: 700; color: #93c5fd;">$<%= number_with_delimiter((scenario.after_tax_income rescue 0).round(0)) %></span>
-              </div>
-              <% if scenario.notes.present? %>
-                <div style="padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                  <span style="font-size: 0.875rem; font-weight: 600; color: #e5e5e5;">Notes</span>
-                  <p style="font-size: 0.875rem; color: #d4d4d4; margin: 0.25rem 0 0;"><%= scenario.notes %></p>
-                </div>
-              <% end %>
-            </div>
-          </div>
-        </div>
+        <% end %>
+      <% end %>
+    <% else %>
+      <div class="col-span-full text-center py-10 bg-white rounded-2xl border border-gray-200 text-gray-500">
+        No tax years found.
       </div>
     <% end %>
-  <% else %>
-    <div class="col-12">
-      <p class="text-muted text-center py-5">No tax years saved yet. Click "New Tax Year" to get started.</p>
-    </div>
+  </div>
+
+  <!-- New Tax Modal -->
+  <%= render 'shared/modal', title: "New Tax Year", target: "dialog" do %>
+    <%= form_with model: @tax, local: true, class: "space-y-4" do |f| %>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :name, "Name", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :name, class: "input-standard", required: true, placeholder: "e.g., 2024 Taxes" %>
+        </div>
+        <div>
+          <%= f.label :year, "Year", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :year, value: Date.today.year, class: "input-standard", required: true %>
+        </div>
+      </div>
+      
+       <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :gross_income, "Annual Income", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :gross_income, step: 1, class: "input-standard", required: true %>
+        </div>
+        <div>
+          <%= f.label :deductions, "Deductions", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :deductions, step: 1, class: "input-standard", required: true %>
+        </div>
+      </div>
+      
+       <div class="grid grid-cols-2 gap-4">
+        <div>
+           <%= f.label :taxable_income, "Taxable Income", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :taxable_income, step: 1, class: "input-standard", required: true %>
+        </div>
+        <div>
+           <%= f.label :tax_paid, "Tax Paid", class: "block text-sm font-medium text-gray-700 mb-1" %>
+           <%= f.number_field :tax_paid, step: 1, class: "input-standard", required: true %>
+        </div>
+      </div>
+      
+       <div>
+         <%= f.label :notes, "Notes", class: "block text-sm font-medium text-gray-700 mb-1" %>
+         <%= f.text_area :notes, rows: 2, class: "input-standard" %>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" data-action="modal#close" class="btn-secondary">Cancel</button>
+        <%= f.submit "Save Tax Year", class: "btn-primary cursor-pointer" %>
+      </div>
+    <% end %>
   <% end %>
 </div>
-
-<!-- New Tax Year Modal -->
-<div class="modal" id="newTaxYearModal" tabindex="-1" aria-labelledby="newTaxYearModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="newTaxYearModalLabel">New Tax Year</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <%= form_with model: @tax, local: true do |f| %>
-          <% if @tax.errors.any? %>
-            <div class="alert alert-danger">
-              <ul class="mb-0">
-                <% @tax.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-          
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :name, "Name", class: "form-label" %>
-                <%= f.text_field :name, class: "form-control", required: true, placeholder: "e.g., Tax Year 2024" %>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :year, "Year", class: "form-label" %>
-                <%= f.number_field :year, value: Date.today.year, class: "form-control", required: true %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :gross_income, "Annual Income", class: "form-label" %>
-                <%= f.number_field :gross_income, step: 1, class: "form-control", required: true, id: "newTaxIncome" %>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :deductions, "Deductions", class: "form-label" %>
-                <%= f.number_field :deductions, step: 1, class: "form-control", required: true, id: "newTaxDeductions" %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :taxable_income, "Taxable Income", class: "form-label" %>
-                <%= f.number_field :taxable_income, step: 1, class: "form-control", required: true, id: "newTaxTaxableIncome" %>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :tax_paid, "Tax Paid", class: "form-label" %>
-                <%= f.number_field :tax_paid, step: 1, class: "form-control", required: true %>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :refund, "Refund", class: "form-label" %>
-                <%= f.number_field :refund, step: 1, value: 0, class: "form-control", required: true %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="mb-3">
-                <%= f.label :notes, "Notes (optional)", class: "form-label" %>
-                <%= f.text_area :notes, class: "form-control", rows: 2 %>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= f.submit "Save Year", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-(function() {
-  function initAutoCalc() {
-    var incomeEl = document.getElementById('newTaxIncome');
-    var deductionsEl = document.getElementById('newTaxDeductions');
-    var taxableEl = document.getElementById('newTaxTaxableIncome');
-    if (!incomeEl || !deductionsEl || !taxableEl) return;
-
-    var manualOverride = false;
-    taxableEl.addEventListener('input', function() { manualOverride = true; });
-
-    function num(el) {
-      var v = parseFloat(el.value);
-      return isNaN(v) ? 0 : v;
-    }
-
-    function update() {
-      if (manualOverride) return;
-      var value = Math.max(0, num(incomeEl) - num(deductionsEl));
-      taxableEl.value = value;
-    }
-
-    incomeEl.addEventListener('input', update);
-    deductionsEl.addEventListener('input', update);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAutoCalc);
-  } else {
-    initAutoCalc();
-  }
-  document.addEventListener('turbo:load', initAutoCalc);
-})();
-</script>

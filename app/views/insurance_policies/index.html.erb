@@ -1,164 +1,75 @@
-<div class="page-header d-flex justify-content-between align-items-start mb-4">
-  <div>
-    <h1>Insurance</h1>
-    <p class="text-muted mb-0">Track your insurance policies</p>
-  </div>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPolicyModal">
-    <i class="bi bi-plus-circle"></i> New Policy
-  </button>
-</div>
+<div class="space-y-6 animate-fade-in" data-controller="modal">
+    <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-gray-900">Insurance Policies</h2>
+        <button data-action="modal#open" class="btn-primary">
+          New Policy
+        </button>
+    </div>
 
-<div class="mb-4">
-  <h2 style="font-size: 1.5rem; font-weight: 600; color: #fafafa;">Your Policies</h2>
-</div>
-
-<div class="row">
-  <% if @policies.any? %>
-    <% @policies.each do |policy| %>
-      <div class="col-md-4 mb-4">
-        <div class="card">
-          <div class="card-glow"></div>
-          <!-- Card: Top Section (Details) -->
-          <div class="card-body">
-            <!-- Card Header: Title & Actions -->
-            <div class="d-flex justify-content-between align-items-start mb-4">
-              <div>
-                <h2 style="font-size: 1.25rem; font-weight: 600; color: #fafafa; margin: 0;"><%= (policy.policy_type rescue 'life').to_s.humanize %></h2>
-                <p style="font-size: 0.875rem; color: #a3a3a3; margin: 0.25rem 0 0;"><%= policy.provider rescue 'N/A' %></p>
-              </div>
-              <!-- Action Buttons -->
-              <div class="d-flex gap-1">
-                <%= link_to edit_insurance_policy_path(policy), class: "p-2 rounded", style: "color: #a3a3a3; text-decoration: none; transition: all 0.2s; cursor: pointer;", onmouseover: "this.style.backgroundColor='rgba(255,255,255,0.05)'; this.style.color='#e5e5e5';", onmouseout: "this.style.backgroundColor='transparent'; this.style.color='#a3a3a3';" do %>
-                  <svg style="width: 20px; height: 20px; pointer-events: none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                  </svg>
-                <% end %>
-                <% confirm_message = "Are you sure you want to delete this insurance policy?" %>
-                <%= button_to insurance_policy_path(policy),
-                    method: :delete,
-                    form_class: "card-delete-form",
-                    class: "card-delete-btn",
-                    aria: { label: "Delete insurance policy" },
-                    title: "Delete insurance policy",
-                    data: { turbo_confirm: confirm_message } do %>
-                  <i class="bi bi-trash" style="pointer-events: none;"></i>
-                <% end %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% if @policies.any? %>
+      <% @policies.each do |policy| %>
+        <%= ui_card class: "p-6" do %>
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="font-bold text-lg text-gray-900"><%= (policy.policy_type rescue 'life').to_s.humanize %> Policy</h3>
+              <div class="flex gap-2 items-center">
+                  <%= ui_badge "Active", type: :neutral %>
+                  <%= link_to "Edit", edit_insurance_policy_path(policy), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
               </div>
             </div>
-
-            <!-- Details List -->
-            <div>
-              <div class="d-flex justify-content-between mb-3">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Coverage</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;">$<%= number_with_delimiter((policy.coverage_amount rescue 0).round(0)) %></span>
-              </div>
-              <div class="d-flex justify-content-between">
-                <span style="font-size: 0.875rem; color: #a3a3a3;">Term</span>
-                <span style="font-size: 0.875rem; font-weight: 500; color: #fafafa;"><%= policy.term_years rescue 0 %> years</span>
-              </div>
+            <div class="space-y-2 text-sm">
+              <p class="flex justify-between"><span class="text-gray-500">Provider</span> <span class="font-medium text-gray-900"><%= policy.provider rescue 'N/A' %></span></p>
+              <p class="flex justify-between"><span class="text-gray-500">Coverage</span> <span class="font-medium text-gray-900"><%= number_to_currency(policy.coverage_amount || 0) %></span></p>
+              <p class="flex justify-between"><span class="text-gray-500">Premium</span> <span class="font-medium text-gray-900"><%= number_to_currency(policy.premium || 0) %>/mo</span></p>
             </div>
-          </div>
-
-          <!-- Card: Bottom Section (Summary/Notes) -->
-          <div class="card-header" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
-            <div>
-              <!-- Highlighted Monthly Premium -->
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <span style="font-size: 1.125rem; font-weight: 600; color: #e5e5e5;">Monthly Premium</span>
-                <span style="font-size: 1.25rem; font-weight: 700; color: #93c5fd;">$<%= number_with_delimiter((policy.premium rescue 0).round(0)) %></span>
-              </div>
-              <% if policy.notes.present? %>
-                <div style="padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                  <span style="font-size: 0.875rem; font-weight: 600; color: #e5e5e5;">Notes</span>
-                  <p style="font-size: 0.875rem; color: #d4d4d4; margin: 0.25rem 0 0;"><%= policy.notes %></p>
-                </div>
-              <% end %>
-            </div>
-          </div>
-        </div>
+        <% end %>
+      <% end %>
+    <% else %>
+      <div class="col-span-full text-center py-10 bg-white rounded-2xl border border-gray-200 text-gray-500">
+        No policies found.
       </div>
     <% end %>
-  <% else %>
-    <div class="col-12">
-      <p class="text-muted text-center py-5">No policies saved yet. Click "New Policy" to get started.</p>
-    </div>
-  <% end %>
-</div>
-
-<!-- New Policy Modal -->
-<div class="modal" id="newPolicyModal" tabindex="-1" aria-labelledby="newPolicyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="newPolicyModalLabel">New Insurance Policy</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <%= form_with model: @policy, local: true do |f| %>
-          <% if @policy.errors.any? %>
-            <div class="alert alert-danger">
-              <ul class="mb-0">
-                <% @policy.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-          
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :policy_type, "Policy Type", class: "form-label" %>
-                <%= f.select :policy_type, options_for_select([
-                  ['Life', 'life'],
-                  ['Health', 'health'],
-                  ['Auto', 'auto'],
-                  ['Home', 'home']
-                ]), {}, { class: "form-select", required: true } %>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :provider, "Provider", class: "form-label" %>
-                <%= f.text_field :provider, class: "form-control", required: true %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :coverage_amount, "Coverage Amount", class: "form-label" %>
-                <%= f.number_field :coverage_amount, step: 0.01, class: "form-control", required: true %>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :premium, "Monthly Premium", class: "form-label" %>
-                <%= f.number_field :premium, step: 0.01, class: "form-control", required: true %>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :term_years, "Term (years)", class: "form-label" %>
-                <%= f.number_field :term_years, step: 0.25, class: "form-control", required: true %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="mb-3">
-                <%= f.label :notes, "Notes", class: "form-label" %>
-                <%= f.text_field :notes, class: "form-control" %>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= f.submit "Save Policy", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
   </div>
+
+  <!-- New Policy Modal -->
+  <%= render 'shared/modal', title: "New Insurance Policy", target: "dialog" do %>
+    <%= form_with model: @policy, local: true, class: "space-y-4" do |f| %>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :policy_type, "Policy Type", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.select :policy_type, options_for_select([['Life', 'life'], ['Health', 'health'], ['Auto', 'auto'], ['Home', 'home']]), {}, class: "input-standard" %>
+        </div>
+        <div>
+          <%= f.label :provider, "Provider", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :provider, class: "input-standard", required: true %>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4">
+         <div>
+          <%= f.label :coverage_amount, "Coverage Amount", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :coverage_amount, step: 0.01, class: "input-standard", required: true %>
+        </div>
+        <div>
+          <%= f.label :premium, "Monthly Premium", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :premium, step: 0.01, class: "input-standard", required: true %>
+        </div>
+      </div>
+      
+       <div>
+        <%= f.label :term_years, "Term (years)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.number_field :term_years, step: 0.25, class: "input-standard", required: true %>
+      </div>
+      
+      <div>
+         <%= f.label :notes, "Notes", class: "block text-sm font-medium text-gray-700 mb-1" %>
+         <%= f.text_area :notes, rows: 2, class: "input-standard" %>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4">
+        <button type="button" data-action="modal#close" class="btn-secondary">Cancel</button>
+        <%= f.submit "Save Policy", class: "btn-primary cursor-pointer" %>
+      </div>
+    <% end %>
+  <% end %>
 </div>

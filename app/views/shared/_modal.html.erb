@@ -1,0 +1,15 @@
+<dialog class="backdrop:bg-gray-900/50 backdrop:backdrop-blur-sm rounded-2xl shadow-xl p-0 w-full max-w-lg open:animate-fade-in bg-white text-gray-900" id="<%= id if local_assigns[:id] %>" data-controller="modal" data-modal-target="<%= target if local_assigns[:target] %>">
+  <div class="flex flex-col h-full">
+    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+      <h3 class="text-lg font-bold text-gray-900"><%= title %></h3>
+      <button type="button" data-action="modal#close" class="text-gray-400 hover:text-gray-600">
+        <%= icon('plus', size: 24, class: "rotate-45") %>
+      </button>
+    </div>
+    
+    <div class="p-6">
+      <%= yield %>
+    </div>
+  </div>
+</dialog>
+

@@ -1,480 +1,157 @@
-<div class="page-header d-flex justify-content-between align-items-start mb-4">
+<div class="space-y-8 animate-fade-in">
+  
+  <!-- Coinbase-style Header & Actions -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <div>
+      <h2 class="text-5xl font-medium text-gray-900 tracking-tight"><%= number_to_currency(@portfolio_value, precision: 2) %></h2>
+      <div class="flex items-center mt-2 text-sm font-medium text-gray-500">
+        <% 
+           # Determine color based on sign
+           change_amount = @annual_return_amount || 0
+           change_percent = @annual_return_percent || 0
+           is_positive = change_amount >= 0
+           color_class = is_positive ? 'text-emerald-600' : 'text-red-600'
+           icon_name = is_positive ? 'arrow_up_right' : 'arrow_down_right'
+        %>
+        <span class="<%= color_class %> flex items-center mr-2">
+          <%= icon(icon_name, size: 16, class: "mr-1") %> 
+          <%= number_to_currency(change_amount.abs) %> (<%= change_percent.abs %>%)
+        </span>
+        <span>YTD</span>
+      </div>
+    </div>
+    
+    <div class="flex gap-3">
+      <button class="btn-primary">Add Trade</button>
+      <button class="btn-secondary">Add Holding</button>
+    </div>
+  </div>
+
+  <!-- Summary Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <%= ui_card class: "p-6" do %>
+      <p class="text-gray-500 text-sm font-medium">Realized Gains</p>
+      <h2 class="text-3xl font-bold text-gray-900 mt-2"><%= number_to_currency(@realized_net, precision: 2) %></h2>
+      <p class="text-sm text-gray-400 mt-1">From <%= @trades&.select { |t| t.trade_type == 'sell' }&.count || 0 %> trades this year</p>
+    <% end %>
+
+    <%= ui_card class: "p-6" do %>
+      <p class="text-gray-500 text-sm font-medium">Benchmark (S&P 500)</p>
+      <div class="flex items-baseline gap-2 mt-2">
+        <h2 class="text-3xl font-bold text-gray-900"><%= @total_return_percent&.round(1) %>%</h2>
+        <span class="text-sm text-gray-400">vs <%= @sp500_return %>%</span>
+      </div>
+      <p class="text-sm text-emerald-600 mt-1 font-medium">
+        <%= (@vs_sp500 || 0) >= 0 ? 'Beating' : 'Trailing' %> market by <%= (@vs_sp500 || 0).abs.round(1) %>%
+      </p>
+    <% end %>
+
+    <%= ui_card class: "p-6" do %>
+      <p class="text-gray-500 text-sm font-medium">Day Gain</p>
+      <div class="flex items-baseline gap-2 mt-2">
+        <h2 class="text-3xl font-bold text-gray-900">$1,240</h2>
+        <span class="text-sm text-emerald-600 font-medium">+3.4%</span>
+      </div>
+      <p class="text-sm text-gray-400 mt-1">
+        Today's change
+      </p>
+    <% end %>
+  </div>
+
+  <!-- Portfolio Performance Chart -->
+  <%= ui_card class: "p-6", data: { controller: "portfolio-chart" } do %>
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-lg font-semibold text-gray-900">Portfolio Performance</h2>
+      <div class="flex gap-2">
+        <% ['1M', '3M', '6M', '1Y', 'ALL'].each do |period| %>
+          <button class="px-3 py-1 text-xs font-medium rounded-full <%= period == '1Y' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100' %>">
+            <%= period %>
+          </button>
+        <% end %>
+      </div>
+    </div>
+    <div class="h-72 relative">
+      <canvas></canvas>
+    </div>
+  <% end %>
+
+  <!-- Holdings Table -->
   <div>
-    <h1>Portfolio</h1>
-    <p class="text-muted mb-0">Manage your stocks, bonds, and assets</p>
-    <% if @portfolio&.persisted? && @holdings.any? %>
-      <% latest_update = @holdings.map { |h| h.last_price_update_date }.compact.max %>
-      <% if latest_update %>
-        <small class="text-muted" style="font-size: 0.75rem;">Last price update: <%= latest_update.strftime('%B %d, %Y') %></small>
-      <% else %>
-        <small class="text-muted" style="font-size: 0.75rem;">Prices not yet updated</small>
-      <% end %>
-    <% end %>
-  </div>
-  <div class="d-flex gap-2">
-    <% if @portfolio&.persisted? && @holdings.any? %>
-      <%= button_to update_prices_portfolios_path, method: :post, class: "btn btn-outline-primary", title: "Update stock prices for all holdings" do %>
-        <i class="bi bi-arrow-clockwise"></i> Update Prices
-      <% end %>
-    <% end %>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
-      <i class="bi bi-plus-circle"></i> Add Holding
-    </button>
-    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addTradeModal">
-      <i class="bi bi-plus-circle"></i> Add Trade
-    </button>
-  </div>
-</div>
-
-<!-- Summary Metrics Tile -->
-<div class="card mb-4">
-  <div class="card-glow"></div>
-  <!-- Card: Top Section (Title) -->
-  <div class="card-header">
-    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Portfolio Metrics</h2>
-  </div>
-  <!-- Card: Bottom Section (Metrics) -->
-  <div class="card-body">
-    <div class="metrics-grid">
-      <!-- Portfolio Value -->
-      <div class="metric-tile">
-        <div class="metric-label">Portfolio Value</div>
-        <div class="metric-value">$<%= number_with_delimiter(@portfolio_value.round(0)) %></div>
-      </div>
-      
-      <!-- Total Realized Return -->
-      <div class="metric-tile">
-        <div class="metric-label">Total Realized Return</div>
-        <div class="metric-value" style="color: <%= @realized_net >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-          <%= @realized_net >= 0 ? '+' : '' %>$<%= number_with_delimiter(@realized_net.round(0)) %>
-        </div>
-        <div class="metric-subtext"><%= @realized_net >= 0 ? '+' : '' %><%= number_with_precision(@realized_percent, precision: 2) %>%</div>
-      </div>
-      
-      <!-- Total Unrealized Return -->
-      <div class="metric-tile">
-        <div class="metric-label">Total Unrealized Return</div>
-        <div class="metric-value" style="color: <%= @total_return_amount >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-          <%= @total_return_amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(@total_return_amount.round(0)) %>
-        </div>
-        <div class="metric-subtext"><%= @total_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@total_return_percent, precision: 2) %>%</div>
-      </div>
-      
-      <!-- Annual Return (YTD Unrealized) -->
-      <div class="metric-tile">
-        <div class="metric-label">Annual Return</div>
-        <div class="metric-value" style="color: <%= @annual_return_amount >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-          <%= @annual_return_amount >= 0 ? '+' : '' %>$<%= number_with_delimiter(@annual_return_amount.round(0)) %>
-        </div>
-        <div class="metric-subtext"><%= @annual_return_percent >= 0 ? '+' : '' %><%= number_with_precision(@annual_return_percent, precision: 2) %>% (YTD Unrealized)</div>
-      </div>
-      
-      <!-- vs S&P 500 -->
-      <div class="metric-tile">
-        <div class="metric-label">vs S&P 500</div>
-        <div class="metric-value" style="color: <%= @vs_sp500 >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-          <%= @vs_sp500 >= 0 ? '+' : '' %><%= number_with_precision(@vs_sp500, precision: 2) %>% 
-        </div>
-        <div class="metric-subtext">S&P 500: <%= number_with_precision(@sp500_return, precision: 2) %>%</div>
-      </div>
-      
-      <!-- NASDAQ Comparison -->
-      <div class="metric-tile">
-        <div class="metric-label">NASDAQ Comparison</div>
-        <div class="metric-value" style="color: <%= @vs_nasdaq >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-          <%= @vs_nasdaq >= 0 ? '+' : '' %><%= number_with_precision(@vs_nasdaq, precision: 2) %>% 
-        </div>
-        <div class="metric-subtext">NASDAQ: <%= number_with_precision(@nasdaq_return, precision: 2) %>%</div>
-      </div>
-      
-      <!-- Sharpe Ratio -->
-      <div class="metric-tile">
-        <div class="metric-label">Sharpe Ratio</div>
-        <div class="metric-value"><%= number_with_precision(@sharpe_ratio, precision: 2) %></div>
-        <div class="metric-subtext">Risk-adjusted return</div>
-      </div>
-      
-      <!-- Std Deviation -->
-      <div class="metric-tile">
-        <div class="metric-label">Std Deviation</div>
-        <div class="metric-value"><%= number_with_precision(@std_deviation, precision: 2) %>%</div>
-        <div class="metric-subtext">Volatility measure</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Portfolio Chart -->
-<div class="card mb-4">
-  <div class="card-glow"></div>
-  <!-- Card: Top Section (Title) -->
-  <div class="card-header">
-    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Portfolio Value Over Time</h2>
-    <p class="text-muted mb-0 text-sm mt-1">Track your portfolio performance</p>
-  </div>
-  <!-- Card: Bottom Section (Chart) -->
-  <div class="card-body">
-    <div id="portfolioChartContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; background: #0a0a0a; margin-bottom: 1rem;">
-      <div id="portfolioChart" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></div>
-    </div>
-    
-    <!-- Controls below chart -->
-    <div class="chart-controls-container">
-      <!-- Time Range Group -->
-      <div class="chart-control-group">
-        <label class="chart-control-label">Time Range</label>
-        <div class="chart-button-group">
-          <button type="button" class="chart-button-toggle" data-time-range="ytd" data-chart-id="portfolio">
-            YTD
-          </button>
-          <button type="button" class="chart-button-toggle active" data-time-range="all" data-chart-id="portfolio">
-            All
-          </button>
-          <button type="button" class="chart-button-toggle" data-time-range="home" data-chart-id="portfolio" title="Auto resize to fit data">
-            Home
-          </button>
-        </div>
+    <div class="flex justify-between items-end mb-4">
+      <h3 class="text-xl font-medium text-gray-900">Your assets</h3>
+      <div class="flex gap-2">
+         <button class="btn-secondary text-xs py-1.5 px-3">
+            Add Trade
+         </button>
+         <button class="btn-secondary text-xs py-1.5 px-3">
+            Add Holding
+         </button>
+         <%= button_to update_prices_portfolios_path, method: :post, class: "btn-secondary text-xs py-1.5 px-3 flex items-center" do %>
+            <%= icon('arrow_up_right', size: 14, class: "mr-1") %> Update Prices
+         <% end %>
       </div>
     </div>
     
-  </div>
-</div>
-
-<!-- Holdings Section -->
-<% if @holdings.any? %>
-<div class="card mb-4">
-  <div class="card-glow"></div>
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div>
-      <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Holdings</h2>
-      <p class="text-muted mb-0 text-sm mt-1">Complete portfolio overview (includes cash)</p>
-    </div>
-    <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addHoldingModal">
-      <i class="bi bi-plus-circle"></i><span>Add Holding</span>
-    </button>
-  </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
+    <div class="bg-white rounded-none border-t border-gray-100">
+      <table class="w-full">
         <thead>
-          <tr>
-            <th>Ticker</th>
-            <th>Name</th>
-            <th>Shares</th>
-            <th>Avg Price</th>
-            <th>Current Price</th>
-            <th>Current Value</th>
-            <th>Today's Return</th>
-            <th>Unrealized Return</th>
-            <th>% of Portfolio</th>
-            <th>Actions</th>
+          <tr class="border-b border-gray-100">
+            <th class="text-left py-4 pl-2 text-sm font-medium text-gray-500">Name</th>
+            <th class="text-right py-4 text-sm font-medium text-gray-500">Balance</th>
+            <th class="text-right py-4 text-sm font-medium text-gray-500">Current price</th>
+            <th class="text-right py-4 text-sm font-medium text-gray-500">Change</th>
+            <th class="text-right py-4 text-sm font-medium text-gray-500">Allocation</th>
+            <th class="w-10"></th>
           </tr>
         </thead>
         <tbody>
-          <% @all_holdings.each do |holding| %>
-            <% current_val = holding.current_value %>
-            <% cost_basis = holding.total_cost_basis %>
-            <% avg_price = holding.average_cost %>
-            <% current_price_record = holding.latest_price %>
-            <% current_price = current_price_record ? (current_price_record.amount_cents / 100.0) : 0 %>
-            <% unrealized_return = holding.unrealized_return %>
-            <% unrealized_return_pct = holding.unrealized_return_percent %>
-            <% todays_return = holding.todays_return %>
-            <% todays_return_pct = holding.todays_return_percent %>
-            <% portfolio_pct = @portfolio_value > 0 ? (current_val / @portfolio_value * 100) : 0 %>
+          <% if @holdings.any? %>
+            <% @holdings.each do |h| %>
+              <% 
+                 current_val = h.current_value 
+                 price = h.prices.order(date: :desc).first&.amount_cents.to_f / 100 rescue 0
+                 price = h.average_cost if price == 0
+                 
+                 allocation = @portfolio_value > 0 ? (current_val / @portfolio_value * 100) : 0
+                 
+                 # Calculate gain/loss
+                 gain_loss_pct = h.total_cost_basis > 0 ? ((current_val - h.total_cost_basis) / h.total_cost_basis * 100) : 0
+              %>
+              <tr class="group hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-none">
+                <td class="py-4 pl-2">
+                  <div class="flex items-center gap-3">
+                    <div>
+                      <div class="font-medium text-gray-900"><%= h.name.presence || h.ticker %></div>
+                      <div class="text-xs text-gray-500"><%= h.ticker %></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-right py-4">
+                  <div class="font-medium text-gray-900"><%= number_to_currency(current_val) %></div>
+                  <div class="text-xs text-gray-500"><%= h.shares %> shares</div>
+                </td>
+                <td class="text-right py-4">
+                  <div class="font-medium text-gray-900"><%= number_to_currency(price) %></div>
+                </td>
+                <td class="text-right py-4">
+                  <div class="font-medium <%= gain_loss_pct >= 0 ? 'text-emerald-600' : 'text-red-600' %>">
+                    <%= gain_loss_pct >= 0 ? '+' : '' %><%= gain_loss_pct.round(2) %>%
+                  </div>
+                </td>
+                <td class="text-right py-4">
+                  <div class="font-medium text-gray-900"><%= allocation.round(2) %>%</div>
+                </td>
+                <td class="text-right py-4 pr-2">
+                  <button class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600">
+                    <%= icon('more_vertical', size: 16) %>
+                  </button>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
             <tr>
-              <td><strong><%= holding.ticker %></strong></td>
-              <td><%= holding.name || '-' %></td>
-              <td><%= number_with_precision(holding.shares, precision: 2, delimiter: ',') %></td>
-              <td>$<%= number_with_delimiter(number_with_precision(avg_price, precision: 2)) %></td>
-              <td>$<%= current_price > 0 ? number_with_delimiter(number_with_precision(current_price, precision: 2)) : '-' %></td>
-              <td>$<%= number_with_delimiter(current_val.round(0)) %></td>
-              <td style="color: <%= todays_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= todays_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(number_with_precision(todays_return, precision: 2)) %>
-                (<%= todays_return_pct >= 0 ? '+' : '' %><%= number_with_precision(todays_return_pct, precision: 2) %>%)
-              </td>
-              <td style="color: <%= unrealized_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= unrealized_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(unrealized_return.round(0)) %>
-                (<%= unrealized_return_pct >= 0 ? '+' : '' %><%= number_with_precision(unrealized_return_pct, precision: 2) %>%)
-              </td>
-              <td><%= number_with_precision(portfolio_pct, precision: 2) %>%</td>
-              <td>
-                <div class="d-flex gap-1">
-                  <%= link_to edit_portfolio_path(holding.id), class: "btn btn-sm btn-outline-primary" do %>
-                    <i class="bi bi-pencil"></i>
-                  <% end %>
-                  <% confirm_message = "Are you sure you want to delete this holding? This is different from a sell trade." %>
-                  <%= button_to portfolio_path(holding),
-                      method: :delete,
-                      class: "btn btn-sm btn-outline-danger",
-                      aria: { label: "Delete holding" },
-                      title: "Delete holding",
-                      data: { turbo_confirm: confirm_message } do %>
-                    <i class="bi bi-trash"></i>
-                  <% end %>
-                </div>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-        <tfoot>
-          <tr style="border-top: 2px solid rgba(255, 255, 255, 0.1);">
-            <td colspan="3"><strong>Total</strong></td>
-            <td></td>
-            <td></td>
-            <td><strong>$<%= number_with_delimiter(@portfolio_value.round(0)) %></strong></td>
-            <td colspan="2"></td>
-            <td><strong>100%</strong></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
-</div>
-<% end %>
-
-<!-- Add Holding Modal -->
-<div class="modal" id="addHoldingModal" tabindex="-1" aria-labelledby="addHoldingModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addHoldingModalLabel">Add Holding</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <%= form_with model: [@portfolio, @holding], url: portfolios_path, local: true do |f| %>
-          <%= hidden_field_tag :entry_type, 'holding' %>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :ticker, "Ticker/Symbol", class: "form-label" %>
-                <%= f.text_field :ticker, class: "form-control", required: true, placeholder: "e.g., GOOG, AAPL, BTC/USD" %>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :name, "Name (Optional)", class: "form-label" %>
-                <%= f.text_field :name, class: "form-control", placeholder: "e.g., Alphabet Inc." %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :entry_date, "Entry Date", class: "form-label" %>
-                <%= f.date_field :entry_date, class: "form-control", required: true, value: Date.today %>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :shares, "Shares", class: "form-label" %>
-                <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <%= f.label :average_cost, "Average Cost ($)", class: "form-label" %>
-                <%= f.number_field :average_cost, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
-                <small class="text-muted">Price per share</small>
-              </div>
-            </div>
-          </div>
-          <div class="alert alert-info">
-            <small><i class="bi bi-info-circle"></i> Holdings represent existing assets in your portfolio. They may show immediate gain/loss based on current market prices.</small>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= f.submit "Add Holding", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Add Trade Modal -->
-<div class="modal" id="addTradeModal" tabindex="-1" aria-labelledby="addTradeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addTradeModalLabel">Add Trade</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <%= form_with model: [@portfolio, @holding], url: portfolios_path, local: true do |f| %>
-          <%= hidden_field_tag :entry_type, 'trade' %>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :ticker, "Ticker/Symbol", class: "form-label" %>
-                <%= f.text_field :ticker, class: "form-control", required: true, placeholder: "e.g., GOOG, AAPL, BTC/USD" %>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= f.label :name, "Name (Optional)", class: "form-label" %>
-                <%= f.text_field :name, class: "form-control", placeholder: "e.g., Alphabet Inc." %>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-3">
-              <div class="mb-3">
-                <%= f.label :trade_type, "Trade Type", class: "form-label" %>
-                <%= f.select :trade_type, options_for_select([
-                  ['Buy', 'buy'],
-                  ['Sell', 'sell']
-                ], 'buy'), {}, { class: "form-select", required: true, id: "tradeTypeSelect" } %>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="mb-3">
-                <%= f.label :entry_date, "Trade Date", class: "form-label" %>
-                <%= f.date_field :entry_date, class: "form-control", required: true, value: Date.today %>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="mb-3">
-                <%= f.label :shares, "Shares", class: "form-label" %>
-                <%= f.number_field :shares, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="mb-3">
-                <%= f.label :average_cost, "Price ($)", class: "form-label" %>
-                <%= f.number_field :average_cost, step: 0.01, class: "form-control", required: true, placeholder: "0.00" %>
-                <small class="text-muted">Price per share</small>
-              </div>
-            </div>
-          </div>
-          <div class="alert alert-info" id="sellTradeInfo" style="display: none;">
-            <small><i class="bi bi-info-circle"></i> Sell trades will reduce shares from your existing holdings. Make sure you have enough shares to sell.</small>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= f.submit "Add Trade", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Trade History Section -->
-<div class="card mb-4">
-  <div class="card-glow"></div>
-  <!-- Card: Top Section (Title) -->
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div>
-      <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Trade History</h2>
-      <p class="text-muted mb-0 text-sm mt-1">View all your buy and sell trades</p>
-    </div>
-    <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addTradeModal">
-      <i class="bi bi-plus-circle"></i><span>Add Trade</span>
-    </button>
-  </div>
-  <!-- Card: Bottom Section (Content) -->
-  <div class="card-body">
-    <div id="tradeHistoryContent">
-        <% if @trades.any? %>
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Ticker</th>
-                  <th>Name</th>
-                  <th>Shares</th>
-                  <th>Price</th>
-                  <th>Unrealized Return</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @trades.each do |trade| %>
-                  <% current_val = trade.current_value %>
-                  <% cost_basis = trade.total_cost_basis %>
-                  <% unrealized_return = trade.unrealized_return %>
-                  <% unrealized_return_pct = trade.unrealized_return_percent %>
-                  <% trade_type_badge = trade.trade_type == 'sell' ? 'danger' : 'success' %>
-                  <% trade_type_label = trade.trade_type == 'sell' ? 'Sell' : 'Buy' %>
-                  <tr>
-                    <td><%= trade.entry_date&.strftime('%Y-%m-%d') || trade.created_at.strftime('%Y-%m-%d') %></td>
-                    <td>
-                      <span class="badge bg-<%= trade_type_badge %>"><%= trade_type_label %></span>
-                    </td>
-                    <td><strong><%= trade.ticker %></strong></td>
-                    <td><%= trade.name || '-' %></td>
-                    <td><%= number_with_delimiter(number_with_precision(trade.shares, precision: 2)) %></td>
-                    <td>$<%= number_with_delimiter(number_with_precision(trade.total_cost_basis / (trade.shares || 1), precision: 2)) %></td>
-                    <td style="color: <%= unrealized_return >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                      <%= unrealized_return >= 0 ? '+' : '' %>$<%= number_with_delimiter(unrealized_return.round(0)) %>
-                      (<%= unrealized_return_pct >= 0 ? '+' : '' %><%= number_with_precision(unrealized_return_pct, precision: 2) %>%)
-                    </td>
-                    <td>
-                      <span class="badge bg-success">Active</span>
-                    </td>
-                    <td>
-                      <div class="d-flex gap-1">
-                        <%= link_to edit_portfolio_path(trade.id), class: "btn btn-sm btn-outline-primary" do %>
-                          <i class="bi bi-pencil"></i>
-                        <% end %>
-                        <% confirm_message = "Are you sure you want to delete this trade?" %>
-                        <%= button_to portfolio_path(trade),
-                            method: :delete,
-                            class: "btn btn-sm btn-outline-danger",
-                            aria: { label: "Delete trade" },
-                            title: "Delete trade",
-                            data: { turbo_confirm: confirm_message } do %>
-                          <i class="bi bi-trash"></i>
-                        <% end %>
-                      </div>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </div>
-        <% else %>
-          <p class="text-muted text-center py-4">No trades found. Add your first trade using the "Add Trade" button above.</p>
-        <% end %>
-    </div>
-  </div>
-</div>
-
-<!-- Annualized Returns Summary Section -->
-<% if @holdings.any? %>
-<div class="card mb-4">
-  <div class="card-glow"></div>
-  <div class="card-header">
-    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Year-to-Date Returns</h2>
-    <p class="text-muted mb-0 text-sm mt-1">Portfolio performance for <%= Date.today.year %></p>
-  </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>End of Year Value</th>
-            <th>Total Return</th>
-            <th>Realized Gain/Loss</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @yearly_rollup.each do |year_data| %>
-            <tr>
-              <td><strong><%= year_data[:year] %><%= ' (YTD)' if year_data[:year] == Date.today.year %></strong></td>
-              <td>$<%= number_with_delimiter(year_data[:end_value].round(0)) %></td>
-              <td style="color: <%= year_data[:total_return] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= year_data[:total_return] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:total_return].round(0)) %>
-                (<%= year_data[:total_return_pct] >= 0 ? '+' : '' %><%= number_with_precision(year_data[:total_return_pct], precision: 2) %>%)
-              </td>
-              <td style="color: <%= year_data[:realized_gain_loss] >= 0 ? '#6ee7b7' : '#fca5a5' %>;">
-                <%= year_data[:realized_gain_loss] >= 0 ? '+' : '' %>$<%= number_with_delimiter(year_data[:realized_gain_loss].round(0)) %>
+              <td colspan="6" class="py-8 text-center text-gray-500">
+                No holdings found. Add a trade or holding to get started.
               </td>
             </tr>
           <% end %>
@@ -483,490 +160,3 @@
     </div>
   </div>
 </div>
-<% end %>
-
-<script>
-(function() {
-  let chartInstance = null;
-  let portfolioSeries = null;
-  let allData = {};
-  let currentSettings = {
-    timeRange: 'all' // 'all', 'ytd', 'home'
-  };
-
-  // Wait for Lightweight Charts to load
-  function initChart() {
-    const container = document.getElementById('portfolioChart');
-    if (!container) {
-      setTimeout(initChart, 100);
-      return;
-    }
-
-    // Force container to be visible and get actual dimensions
-    const containerParent = container.parentElement;
-    if (!containerParent) {
-      setTimeout(initChart, 100);
-      return;
-    }
-
-    // Wait for layout to settle
-    requestAnimationFrame(() => {
-      const containerRect = container.getBoundingClientRect();
-      if (containerRect.width === 0 || containerRect.height === 0) {
-        console.log('Container not ready, retrying...', containerRect);
-        setTimeout(initChart, 100);
-        return;
-      }
-
-      // Check if Lightweight Charts is loaded (standalone version)
-      if (!window.LightweightCharts) {
-        console.log('Waiting for Lightweight Charts...');
-        setTimeout(initChart, 100);
-        return;
-      }
-
-      const { createChart } = window.LightweightCharts;
-      
-      if (!createChart || typeof createChart !== 'function') {
-        console.error('createChart not available', window.LightweightCharts);
-        setTimeout(initChart, 100);
-        return;
-      }
-
-      try {
-        // Create chart exactly like TradingView example
-        console.log('Creating chart with dimensions:', containerRect.width, containerRect.height);
-        const chart = createChart(container, {
-          width: containerRect.width,
-          height: containerRect.height,
-          layout: {
-            background: { color: '#000000' },
-            textColor: '#ffffff',
-            fontSize: 12
-          },
-          grid: {
-            vertLines: { visible: false },
-            horzLines: { visible: false }
-          },
-          crosshair: {
-            mode: 1,
-            vertLine: {
-              color: '#4285F4',
-              width: 1,
-              style: 2,
-              labelBackgroundColor: '#4285F4'
-            },
-            horzLine: {
-              color: '#4285F4',
-              width: 1,
-              style: 2,
-              labelBackgroundColor: '#4285F4'
-            }
-          },
-          rightPriceScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            textColor: '#ffffff'
-          },
-          timeScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            textColor: '#ffffff'
-          }
-        });
-        
-        console.log('Chart created:', chart);
-        console.log('Chart methods:', Object.keys(chart).filter(k => typeof chart[k] === 'function'));
-
-        // Create portfolio line series
-        const LineSeries = window.LightweightCharts.LineSeries;
-        if (typeof chart.addLineSeries === 'function') {
-          portfolioSeries = chart.addLineSeries({
-            color: '#3b82f6',
-            lineWidth: 2,
-            priceLineVisible: false,
-            lastValueVisible: true
-          });
-        } else if (LineSeries && typeof chart.addSeries === 'function') {
-          portfolioSeries = chart.addSeries(LineSeries, {
-            color: '#3b82f6',
-            lineWidth: 2,
-            priceLineVisible: false,
-            lastValueVisible: true
-          });
-        }
-
-        // Fetch portfolio data from backend
-        fetch('/portfolios/chart_data', {
-          headers: { 'Accept': 'application/json' },
-          cache: 'no-cache'
-        })
-        .then(response => response.json())
-        .then(chartData => {
-          console.log('Received chart data:', chartData);
-          if (chartData.portfolio && chartData.portfolio.length > 0) {
-            allData.portfolio = chartData.portfolio;
-            
-            // Format and set data - ensure time is a number
-            const formattedData = chartData.portfolio.map(point => ({
-              time: Number(point.time),
-              value: Number(point.value)
-            }));
-            
-            console.log('Formatted data points:', formattedData.length);
-            
-            if (portfolioSeries) {
-              portfolioSeries.setData(formattedData);
-              // Fit content after setting data
-              setTimeout(() => {
-                updateChartTimeRange();
-              }, 100);
-            } else {
-              console.warn('Portfolio series not initialized');
-            }
-          } else {
-            console.warn('No portfolio data received');
-          }
-        })
-        .catch(error => {
-          console.error('Error loading portfolio chart data:', error);
-        });
-
-        // Handle resize
-        const resizeObserver = new ResizeObserver((entries) => {
-          for (const entry of entries) {
-            const { width, height } = entry.contentRect;
-            if (width > 0 && height > 0) {
-              chart.resize(width, height);
-            }
-          }
-        });
-        resizeObserver.observe(container);
-
-        // Store references
-        chartInstance = chart;
-        window._portfolioChart = chart;
-        window._portfolioResizeObserver = resizeObserver;
-        
-        // Setup control event listeners
-        setupControls(chart);
-        
-        console.log('Chart initialized successfully');
-        
-      } catch (error) {
-        console.error('Error initializing chart:', error);
-        container.innerHTML = '<p class="text-muted text-center py-5">Chart initialization failed: ' + error.message + '</p>';
-      }
-    });
-  }
-
-  // Update chart time range
-  function updateChartTimeRange() {
-    if (!chartInstance) return;
-    
-    if (currentSettings.timeRange === 'home') {
-      chartInstance.timeScale().fitContent();
-    } else if (currentSettings.timeRange === 'ytd') {
-      const currentYear = new Date().getFullYear();
-      const yearStart = new Date(currentYear, 0, 1).getTime() / 1000;
-      chartInstance.timeScale().setVisibleRange({
-        from: yearStart,
-        to: Math.floor(Date.now() / 1000)
-      });
-    } else {
-      chartInstance.timeScale().fitContent();
-    }
-  }
-
-  // Setup control event listeners
-  function setupControls(chart) {
-    // Time range buttons
-    document.querySelectorAll('.chart-button-toggle[data-time-range][data-chart-id="portfolio"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const timeRange = e.target.dataset.timeRange;
-        
-        // Remove active from all time range buttons
-        document.querySelectorAll('.chart-button-toggle[data-time-range][data-chart-id="portfolio"]').forEach(b => {
-          b.classList.remove('active');
-        });
-        
-        // Add active to clicked button
-        e.target.classList.add('active');
-        
-        currentSettings.timeRange = timeRange;
-        updateChartTimeRange();
-      });
-    });
-  }
-
-  // Cleanup function
-  function cleanup() {
-    if (window._portfolioChart) {
-      try {
-        window._portfolioChart.remove();
-      } catch (e) {
-        console.error('Error removing chart:', e);
-      }
-      window._portfolioChart = null;
-      chartInstance = null;
-      portfolioSeries = null;
-    }
-    if (window._portfolioResizeObserver) {
-      window._portfolioResizeObserver.disconnect();
-      window._portfolioResizeObserver = null;
-    }
-  }
-
-  // Start initialization
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initChart);
-  } else {
-    initChart();
-  }
-
-  // Handle Turbo events
-  document.addEventListener('turbo:load', function() {
-    cleanup();
-    setTimeout(initChart, 50);
-  });
-  document.addEventListener('turbo:before-cache', cleanup);
-})();
-
-// Show/hide sell trade info based on trade type selection
-(function() {
-  const tradeTypeSelect = document.getElementById('tradeTypeSelect');
-  const sellTradeInfo = document.getElementById('sellTradeInfo');
-  
-  if (tradeTypeSelect && sellTradeInfo) {
-    tradeTypeSelect.addEventListener('change', function() {
-      if (this.value === 'sell') {
-        sellTradeInfo.style.display = 'block';
-      } else {
-        sellTradeInfo.style.display = 'none';
-      }
-    });
-    
-    // Set initial state
-    if (tradeTypeSelect.value === 'sell') {
-      sellTradeInfo.style.display = 'block';
-    }
-  }
-})();
-</script>
-
-
-<style>
-  #portfolioChartContainer {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    overflow: hidden;
-    background: #000000;
-  }
-  
-  #portfolioChart {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
-  }
-  
-  /* Metrics Grid */
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-  }
-  
-  @media (min-width: 768px) {
-    .metrics-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  
-  @media (min-width: 1200px) {
-    .metrics-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  
-  .metric-tile {
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 0.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-  }
-  
-  .metric-tile:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
-  }
-  
-  .metric-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #a3a3a3;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-  }
-  
-  .metric-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #fafafa;
-    margin-bottom: 0.25rem;
-    line-height: 1.2;
-  }
-  
-  .metric-subtext {
-    font-size: 0.875rem;
-    color: #a3a3a3;
-    font-weight: 500;
-  }
-  
-  /* Trade History Collapse Icon Animation */
-  .collapse-icon {
-    font-size: 1.25rem;
-    color: #64748b;
-  }
-  
-  [data-bs-toggle="collapse"][aria-expanded="true"] .collapse-icon {
-    transform: rotate(180deg);
-  }
-  
-  
-  /* Modern Chart Controls - Dark Theme */
-  .chart-controls-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  @media (min-width: 768px) {
-    .chart-controls-container {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-  
-  .chart-control-group {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .chart-control-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #a3a3a3;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  }
-  
-  .chart-button-group {
-    display: flex;
-    gap: 0.25rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0.5rem;
-    padding: 0.25rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .chart-button-toggle {
-    flex: 1;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #a3a3a3;
-    background: transparent;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.15s ease;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  }
-  
-  .chart-button-toggle:hover {
-    color: #e5e5e5;
-  }
-  
-  .chart-button-toggle.active {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fafafa;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-  }
-  
-  .chart-button-toggle.active:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fafafa;
-  }
-  
-  /* Legacy styles for backward compatibility */
-  .chart-control-label-inline {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #64748b;
-    margin-bottom: 0.375rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  }
-  
-  .chart-segmented-control {
-    display: inline-flex;
-    background: #000000;
-    border: 1px solid #333333;
-    border-radius: 6px;
-    padding: 2px;
-    gap: 0;
-    position: relative;
-    z-index: 2;
-  }
-  
-  .segmented-input {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .segmented-label {
-    display: inline-block;
-    padding: 8px 16px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #ffffff;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.2s ease;
-    border-radius: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  }
-  
-  .segmented-input[type="checkbox"]:checked + .segmented-label {
-    background-color: #2a2a2a;
-    color: #ffffff;
-  }
-  
-  .segmented-input[type="radio"]:checked + .segmented-label {
-    background-color: #2a2a2a;
-    color: #ffffff;
-  }
-  
-  .segmented-input:checked + .segmented-label {
-    background-color: #2a2a2a;
-    color: #ffffff;
-  }
-  
-  .segmented-label:hover {
-    background-color: #1a1a1a;
-  }
-  
-  .segmented-input:checked + .segmented-label:hover {
-    background-color: #333333;
-  }
-</style>

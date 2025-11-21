@@ -1,0 +1,49 @@
+<aside class="hidden lg:block fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-10">
+  <div class="p-6 h-full flex flex-col">
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">S</div>
+      <span class="font-bold text-xl tracking-tight text-gray-900">Stratify</span>
+    </div>
+
+    <nav class="space-y-1 flex-1">
+      <% [
+           ['Dashboard', dashboard_index_path, 'layout_dashboard'],
+           ['Portfolio', portfolios_path, 'trending_up'],
+           ['Savings & Expenses', accounts_path, 'piggy_bank'],
+           ['Loans', loans_path, 'dollar_sign'],
+           ['Insurance', insurance_policies_path, 'shield_check'],
+           ['Taxes', taxes_path, 'receipt'],
+           ['Retirement', retirements_path, 'calendar_check'],
+           ['Settings', settings_path, 'settings']
+         ].each do |label, path, icon_name| %>
+         
+         <% active = current_page?(path) %>
+         <%= link_to path, class: "w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 #{active ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}" do %>
+           <%= icon(icon_name, size: 18, class: "mr-3 #{active ? 'text-blue-600' : 'text-gray-400'}") %>
+           <%= label %>
+         <% end %>
+      <% end %>
+    </nav>
+    
+    <!-- Sign Out Button and User Profile -->
+     <div class="border-t border-gray-100 bg-gray-50/50 p-4 -mx-6 -mb-6 mt-4">
+        <%= button_to logout_path, method: :delete, class: "w-full flex items-center px-3 py-2 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mb-2 bg-transparent border-0" do %>
+            <%= icon('log_out', size: 16, class: "mr-3") %>
+            Sign Out
+        <% end %>
+        
+        <% if current_user %>
+        <div class="flex items-center gap-3 pt-2">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+            <%= current_user.email.first(2).upcase %>
+          </div>
+          <div class="overflow-hidden">
+            <p class="text-sm font-bold text-gray-900 truncate"><%= current_user.email.split('@').first.capitalize %></p>
+            <p class="text-xs text-gray-500">Pro Member</p>
+          </div>
+        </div>
+        <% end %>
+    </div>
+  </div>
+</aside>
+
