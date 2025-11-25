@@ -101,13 +101,6 @@ class StockPriceService
       return "#{ticker_upper}/USD"
     end
     
-    # Check if it looks like a crypto ticker (short, all caps, common patterns)
-    # Most crypto tickers are 2-5 characters and don't match stock patterns
-    if ticker_upper.length <= 5 && ticker_upper.match?(/\A[A-Z0-9]+\z/) && !ticker_upper.match?(/\A[A-Z]{1,2}\z/)
-      # Try as crypto first - if API fails, can fallback to stock
-      return "#{ticker_upper}/USD"
-    end
-    
     # For stocks, use uppercase
     ticker.upcase
   end

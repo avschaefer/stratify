@@ -1,7 +1,12 @@
 class BalancesController < ApplicationController
-  before_action :find_account, only: [:create]
+  before_action :find_account, only: [:index, :create]
   before_action :find_balance, only: [:update, :destroy]
   
+  def index
+    @balances = @account.balances.order(balance_date: :desc)
+    @balance = @account.balances.build(balance_date: Date.today)
+  end
+
   def create
     @balance = @account.balances.build(balance_params)
     

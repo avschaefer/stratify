@@ -9,9 +9,13 @@ export default class extends Controller {
     this.initializeChart()
   }
 
-  async initializeChart() {
+  async initializeChart(period = 'ALL') {
     const canvas = this.element.querySelector('canvas')
     if (!canvas) return
+
+    if (this.chart) {
+      this.chart.destroy()
+    }
 
     const ctx = canvas.getContext('2d')
 
@@ -20,7 +24,10 @@ export default class extends Controller {
     let dataPoints = []
     
     try {
-      const dataUrl = this.dataUrlValue || '/portfolios/chart_data'
+      let dataUrl = this.dataUrlValue || '/portfolios/chart_data'
+      if (period) {
+        dataUrl += `?period=${period}`
+      }
       const response = await fetch(dataUrl)
       if (response.ok) {
         const json = await response.json()
@@ -48,7 +55,7 @@ export default class extends Controller {
     gradient.addColorStop(0, 'rgba(37, 99, 235, 0.1)')
     gradient.addColorStop(1, 'rgba(37, 99, 235, 0)')
 
-    new Chart(ctx, {
+    this.chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
@@ -109,5 +116,20 @@ export default class extends Controller {
         }
       }
     })
+  }
+
+  updatePeriod(event) {
+    // Remove active class from all buttons
+    this.element.querySelectorAll('button').forEach(btn => {
+      btn.classList.remove('bg-blue-100', 'text-blue-700')
+      btn.classList.add('text-gray-500', 'hover:bg-gray-100')
+    })
+
+    // Add active class to clicked button
+    event.currentTarget.classList.remove('text-gray-500', 'hover:bg-gray-100')
+    event.currentTarget.classList.add('bg-blue-100', 'text-blue-700')
+
+    const period = event.currentTarget.dataset.value
+    this.initializeChart(period)
   }
 }

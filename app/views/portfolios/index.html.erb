@@ -22,8 +22,8 @@
     </div>
     
     <div class="flex gap-3">
-      <button class="btn-primary">Add Trade</button>
-      <button class="btn-secondary">Add Holding</button>
+      <%= link_to "Add Trade", new_portfolio_path(entry_type: 'trade'), class: "btn-primary" %>
+      <%= link_to "Add Holding", new_portfolio_path(entry_type: 'holding'), class: "btn-secondary" %>
     </div>
   </div>
 
@@ -64,7 +64,10 @@
       <h2 class="text-lg font-semibold text-gray-900">Portfolio Performance</h2>
       <div class="flex gap-2">
         <% ['1M', '3M', '6M', '1Y', 'ALL'].each do |period| %>
-          <button class="px-3 py-1 text-xs font-medium rounded-full <%= period == '1Y' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100' %>">
+          <button 
+            data-action="click->portfolio-chart#updatePeriod" 
+            data-value="<%= period %>"
+            class="px-3 py-1 text-xs font-medium rounded-full <%= period == '1Y' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100' %>">
             <%= period %>
           </button>
         <% end %>
@@ -80,12 +83,8 @@
     <div class="flex justify-between items-end mb-4">
       <h3 class="text-xl font-medium text-gray-900">Your assets</h3>
       <div class="flex gap-2">
-         <button class="btn-secondary text-xs py-1.5 px-3">
-            Add Trade
-         </button>
-         <button class="btn-secondary text-xs py-1.5 px-3">
-            Add Holding
-         </button>
+         <%= link_to "Add Trade", new_portfolio_path(entry_type: 'trade'), class: "btn-secondary text-xs py-1.5 px-3" %>
+         <%= link_to "Add Holding", new_portfolio_path(entry_type: 'holding'), class: "btn-secondary text-xs py-1.5 px-3" %>
          <%= button_to update_prices_portfolios_path, method: :post, class: "btn-secondary text-xs py-1.5 px-3 flex items-center" do %>
             <%= icon('arrow_up_right', size: 14, class: "mr-1") %> Update Prices
          <% end %>

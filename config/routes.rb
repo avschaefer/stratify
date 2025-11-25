@@ -37,7 +37,7 @@ Rails.application.routes.draw do
     member do
       post :bulk_update_snapshots
     end
-    resources :balances, only: [:create, :update, :destroy], controller: 'balances'
+    resources :balances, only: [:index, :create, :update, :destroy], controller: 'balances'
   end
   
   resources :expenses do

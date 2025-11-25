@@ -32,7 +32,7 @@
     <%= ui_card class: "overflow-hidden" do %>
       <div class="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Cash Accounts</h3>
-          <button class="text-sm bg-black text-white px-3 py-1.5 rounded-full font-medium hover:bg-gray-900 transition-colors">New Account</button>
+          <%= link_to "New Account", new_account_path(account_type: 'checking'), class: "btn-primary text-xs py-1.5 px-3" %>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
@@ -52,8 +52,8 @@
                   </td>
                   <td class="px-6 py-4 text-right w-24">
                      <div class="flex flex-col gap-1 items-end">
-                        <%= link_to "Edit Info", edit_account_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
-                        <%= link_to "Balances", account_balances_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
+                        <%= link_to "Edit Account", edit_account_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
+                        <%= link_to "Edit Balances", account_balances_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
                      </div>
                   </td>
                 </tr>
@@ -70,7 +70,7 @@
     <%= ui_card class: "overflow-hidden" do %>
       <div class="p-6 border-b border-gray-100 flex justify-between items-center">
           <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Credit Cards</h3>
-          <button class="text-sm bg-black text-white px-3 py-1.5 rounded-full font-medium hover:bg-gray-900 transition-colors">New Account</button>
+          <%= link_to "New Account", new_account_path(account_type: 'credit_card'), class: "btn-primary text-xs py-1.5 px-3" %>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
@@ -90,8 +90,8 @@
                   </td>
                    <td class="px-6 py-4 text-right w-24">
                      <div class="flex flex-col gap-1 items-end">
-                        <%= link_to "Edit Info", edit_account_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
-                        <%= link_to "Balances", account_balances_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
+                        <%= link_to "Edit Account", edit_account_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
+                        <%= link_to "Edit Balances", account_balances_path(acc), class: "text-gray-400 hover:text-blue-600 font-medium text-xs" %>
                      </div>
                   </td>
                 </tr>

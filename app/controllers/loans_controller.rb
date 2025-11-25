@@ -10,13 +10,18 @@ class LoansController < ApplicationController
     @loan = Loan.new(user: current_user)
   end
   
+  def new
+    @loan = current_user.loans.build
+    render :edit
+  end
+  
   def create
     @loan = current_user.loans.build(loan_params)
     if @loan.save
       redirect_to loans_path, notice: 'Loan saved successfully.'
     else
       flash.now[:alert] = 'Error saving loan.'
-      render :index
+      render :edit
     end
   end
   

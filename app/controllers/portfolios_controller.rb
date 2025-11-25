@@ -124,12 +124,20 @@ class PortfoliosController < ApplicationController
     end
   end
   
+  def new
+    @portfolio = current_user.portfolio || current_user.build_portfolio
+    @holding = Holding.new(portfolio: @portfolio)
+    @holding.entry_type = params[:entry_type] || 'holding'
+    @holding.trade_type = params[:trade_type] || 'buy'
+    render :edit
+  end
+
   def create
     @portfolio = current_user.portfolio || current_user.build_portfolio
     @portfolio.save if @portfolio.new_record?
     
     # Set entry_type and entry_date
-    entry_type = params[:entry_type] || 'holding'
+    entry_type = params[:holding][:entry_type] || 'holding'
     trade_type = params[:holding][:trade_type] if params[:holding]
     
     if entry_type == 'trade' && trade_type == 'sell'
@@ -139,12 +147,8 @@ class PortfoliosController < ApplicationController
         redirect_to portfolios_path, notice: 'Sell trade processed successfully.'
       else
         flash.now[:alert] = result[:error]
-        @holdings = @portfolio.holdings.order(created_at: :desc)
-        @holdings ||= []
-        @all_holdings = @portfolio.holdings.order(:ticker)
-        @trades = @portfolio.holdings.trades.order(entry_date: :desc, created_at: :desc)
         @holding = Holding.new(portfolio: @portfolio)
-        render :index
+        render :edit
       end
     else
       # Handle buy trade or holding - create/update holding
@@ -154,12 +158,8 @@ class PortfoliosController < ApplicationController
         redirect_to portfolios_path, notice: "#{entry_type_name} added successfully."
       else
         flash.now[:alert] = result[:error]
-        @holdings = @portfolio.holdings.order(created_at: :desc)
-        @holdings ||= []
-        @all_holdings = @portfolio.holdings.order(:ticker)
-        @trades = @portfolio.holdings.trades.order(entry_date: :desc, created_at: :desc)
         @holding = Holding.new(portfolio: @portfolio)
-        render :index
+        render :edit
       end
     end
   end
@@ -373,19 +373,30 @@ class PortfoliosController < ApplicationController
     holdings = portfolio.holdings.includes(:prices)
     return render json: { portfolio: [] } if holdings.empty?
     
-    # Find first entry date
-    first_holding = holdings.order(:entry_date, :created_at).first
-    if first_holding && first_holding.entry_date
-      base_date = [first_holding.entry_date, Date.today - 365.days].min
-    elsif first_holding
-      base_date = [first_holding.created_at.to_date, Date.today - 365.days].min
-    else
-      base_date = Date.today - 365.days
-    end
+    # Determine date range based on period
+    period = params[:period] || 'ALL'
+    end_date = Date.today
     
-    # Generate daily dates from base_date to today
-    days_diff = (Date.today - base_date).to_i
-    daily_dates = (0..days_diff).map { |i| base_date + i.days }
+    start_date = case period
+                 when '1M' then end_date - 1.month
+                 when '3M' then end_date - 3.months
+                 when '6M' then end_date - 6.months
+                 when '1Y' then end_date - 1.year
+                 else
+                   # For ALL, find first entry date
+                   first_holding = holdings.order(:entry_date, :created_at).first
+                   if first_holding && first_holding.entry_date
+                     [first_holding.entry_date, end_date - 365.days].min
+                   elsif first_holding
+                     [first_holding.created_at.to_date, end_date - 365.days].min
+                   else
+                     end_date - 365.days
+                   end
+                 end
+    
+    # Generate daily dates from start_date to today
+    days_diff = (end_date - start_date).to_i
+    daily_dates = (0..days_diff).map { |i| start_date + i.days }
     
     # Calculate portfolio value for each date
     portfolio_data = daily_dates.map do |date|

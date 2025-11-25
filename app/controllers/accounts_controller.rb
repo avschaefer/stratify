@@ -93,6 +93,12 @@ class AccountsController < ApplicationController
     end
   end
   
+  def new
+    @account = current_user.accounts.build
+    @account.account_type = params[:account_type] if params[:account_type].present?
+    render :edit
+  end
+
   def create
     @account = current_user.accounts.build(account_params)
     # Set index to be last in the account type group
@@ -102,7 +108,7 @@ class AccountsController < ApplicationController
       redirect_to accounts_path, notice: 'Account added successfully.'
     else
       flash.now[:alert] = 'Error adding account.'
-      render :index
+      render :edit
     end
   end
   

@@ -1,0 +1,73 @@
+<div class="max-w-4xl mx-auto space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Balances for <%= @account.name %></h1>
+      <p class="text-gray-500 mt-1"><%= @account.account_type.humanize %> Account</p>
+    </div>
+    <%= link_to "Back to Accounts", accounts_path, class: "btn-secondary" %>
+  </div>
+
+  <!-- New Balance Form -->
+  <%= ui_card class: "p-6" do %>
+    <h3 class="text-lg font-bold text-gray-900 mb-4">Add Balance Record</h3>
+    <%= form_with model: [@account, @balance], local: true, class: "flex flex-wrap gap-4 items-end" do |f| %>
+      <div class="flex-1 min-w-[200px]">
+        <%= f.label :balance_date, "Date", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.date_field :balance_date, class: "input-standard", required: true %>
+      </div>
+      <div class="flex-1 min-w-[200px]">
+        <%= f.label :amount, "Balance Amount", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <div class="relative rounded-md shadow-sm">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <span class="text-gray-500 sm:text-sm">$</span>
+          </div>
+          <%= f.number_field :amount, step: 0.01, class: "input-standard pl-7", required: true, placeholder: "0.00", value: @balance.amount %>
+        </div>
+      </div>
+      <div class="pb-0.5">
+        <%= f.submit "Add Balance", class: "btn-primary" %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <!-- Balances Table -->
+  <%= ui_card class: "overflow-hidden" do %>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
+          <tr>
+            <th class="px-6 py-3">Date</th>
+            <th class="px-6 py-3 text-right">Amount</th>
+            <th class="px-6 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% if @balances.any? %>
+            <% @balances.each do |balance| %>
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 font-medium text-gray-900">
+                  <%= balance.balance_date.strftime("%b %d, %Y") %>
+                </td>
+                <td class="px-6 py-4 text-right font-mono">
+                  <%= number_to_currency(balance.amount) %>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <%= button_to account_balance_path(@account, balance), method: :delete, class: "text-red-500 hover:text-red-700 text-xs font-medium", form: { data: { turbo_confirm: "Are you sure?" } } do %>
+                    <%= icon('trash', size: 16) %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="3" class="px-6 py-8 text-center text-gray-500">
+                No balance history recorded yet.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
+

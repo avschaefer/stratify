@@ -6,9 +6,10 @@
 
 *= require_tree .
 *= require_self
- 
+
+/* Turbo Confirm Dialog - Clean Light Theme */
 .turbo-confirm-dialog {
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid #e5e7eb !important;
   border-radius: 1rem !important;
   padding: 0 !important;
   overflow: hidden !important;
@@ -17,40 +18,13 @@
   background: white !important;
   background-color: white !important;
   color: #1a1a1a !important;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.4);
-}
-
-/* Button styles for white modal background */
-.turbo-confirm-dialog .btn-danger {
-  background-color: #dc2626 !important;
-  color: white !important;
-  border-color: #dc2626 !important;
-}
-
-.turbo-confirm-dialog .btn-danger:hover {
-  background-color: #b91c1c !important;
-  color: white !important;
-  border-color: #b91c1c !important;
-}
-
-.turbo-confirm-dialog .btn-secondary {
-  background-color: #f3f4f6 !important;
-  color: #1f2937 !important;
-  border-color: #d1d5db !important;
-}
-
-.turbo-confirm-dialog .btn-secondary:hover {
-  background-color: #e5e7eb !important;
-  color: #111827 !important;
-  border-color: #9ca3af !important;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
 }
 
 .turbo-confirm-dialog__panel {
   padding: 1.5rem !important;
   background: white !important;
-  background-color: white !important;
   border-radius: 1rem !important;
-  overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -64,405 +38,54 @@
   width: 100% !important;
 }
 
+.turbo-confirm-dialog__header h2 {
+  color: #111827 !important;
+  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+  margin: 0 !important;
+}
+
 .turbo-confirm-dialog__body {
-  margin-bottom: 1.25rem !important;
-  color: #4a4a4a !important;
+  margin-bottom: 1.5rem !important;
+  color: #4b5563 !important;
   text-align: center !important;
   width: 100% !important;
-}
-
-.turbo-confirm-dialog__body p {
-  margin: 0 !important;
-  text-align: center !important;
-}
-
-/* Ensure header text is dark */
-.turbo-confirm-dialog__header h2 {
-  color: #1a1a1a !important;
-  font-weight: 600 !important;
-  margin: 0 !important;
-  text-align: center !important;
 }
 
 .turbo-confirm-dialog__footer {
   display: flex !important;
   justify-content: center !important;
-  align-items: center !important;
   gap: 0.75rem !important;
   width: 100% !important;
-  flex-wrap: wrap !important;
-}
-
-.turbo-confirm-dialog__footer button {
-  margin: 0 !important;
-  padding: 0.5rem 1.5rem !important;
 }
 
 .turbo-confirm-dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
 }
 
-/* Fix button focus/outline states - COMPREHENSIVE REMOVAL */
+/* Button Overrides to match Tailwind */
 .btn {
   outline: none !important;
   border: 1px solid transparent !important;
 }
 
-.btn:hover,
-.btn:focus,
-.btn:focus-visible,
-.btn:active,
-.btn.active {
-  outline: none !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
-}
-
-.btn-primary:hover,
-.btn-primary:focus,
-.btn-primary:focus-visible,
-.btn-primary:active,
-.btn-primary.active {
-  background-color: #e5e5e5 !important;
-  color: #171717 !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.btn-secondary:hover,
-.btn-secondary:focus,
-.btn-secondary:focus-visible,
-.btn-secondary:active,
-.btn-secondary.active {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #fafafa !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.btn-outline-primary:hover,
-.btn-outline-primary:focus,
-.btn-outline-primary:focus-visible,
-.btn-outline-primary:active,
-.btn-outline-primary.active {
-  background-color: white !important;
-  color: #171717 !important;
-  border-color: white !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.btn-outline-secondary:hover,
-.btn-outline-secondary:focus,
-.btn-outline-secondary:focus-visible,
-.btn-outline-secondary:active,
-.btn-outline-secondary.active {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  color: #fafafa !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.btn-outline-danger:hover,
-.btn-outline-danger:focus,
-.btn-outline-danger:focus-visible,
-.btn-outline-danger:active,
-.btn-outline-danger.active {
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  color: #fca5a5 !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.btn-danger:hover,
-.btn-danger:focus,
-.btn-danger:focus-visible,
-.btn-danger:active,
-.btn-danger.active {
-  background-color: rgba(239, 68, 68, 0.3) !important;
-  color: #fca5a5 !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Disable Bootstrap's default focus-ring */
-.btn:focus-visible::after,
-.btn::after {
-  display: none !important;
-}
-
-/* Override Bootstrap's focus-ring class if applied */
-.focus-ring {
-  --bs-focus-box-shadow: none !important;
-}
-
-.btn:is(:focus-visible) {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* Modal styling - ONLY appearance, let Bootstrap handle visibility/display */
-.modal-content {
-  background-color: #1b1b1b !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: #e5e5e5 !important;
-}
-
-.modal-header {
-  background-color: #1b1b1b !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-.modal-title {
-  color: #fafafa !important;
-}
-
-.modal-body {
-  background-color: #1b1b1b !important;
-  color: #e5e5e5 !important;
-}
-
-.modal-footer {
-  background-color: #1b1b1b !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
-.modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.8) !important;
-}
-
-/* Form controls in modals - styling only */
-.modal-body .form-control,
-.modal-body .form-select,
-.modal-body input,
-.modal-body select,
-.modal-body textarea {
-  background-color: #2b2b2b !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #e5e5e5 !important;
-}
-
-.modal-body .form-control::placeholder {
-  color: #a3a3a3 !important;
-}
-
-.modal-body label {
-  color: #e5e5e5 !important;
-}
-
-.modal-body .form-control:focus,
-.modal-body .form-select:focus,
-.modal-body input:focus,
-.modal-body select:focus,
-.modal-body textarea:focus {
-  background-color: #2b2b2b !important;
-  border-color: #3b82f6 !important;
-  color: #e5e5e5 !important;
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15) !important;
-  outline: none !important;
-}
-.modal-body p,
-.modal-body small {
-  color: #e5e5e5 !important;
-}
-
-.modal-body ul,
-.modal-body li {
-  color: #e5e5e5 !important;
-}
-
-/* Modal form groups */
-.modal-body .form-group {
-  color: #e5e5e5 !important;
-}
-
-/* Alert in modals */
-.modal-body .alert {
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  border-color: rgba(59, 130, 246, 0.3) !important;
-  color: #93c5fd !important;
-}
-
-.modal-body .alert-danger {
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-  color: #fca5a5 !important;
-}
-
-/* Export button padding */
-.btn-sm {
-  padding: 0.5rem 1rem !important;
-}
-
-.btn {
-  padding: 0.5rem 1rem !important;
-}
-
-.btn-primary.btn-sm,
-.btn-outline-primary.btn-sm {
-  padding: 0.5rem 1rem !important;
-}
-
-/* Dark theme dropdown/select styling */
-.form-select {
-  background-color: #2b2b2b !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: #e5e5e5 !important;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e5e5e5' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 0.75rem center !important;
-  background-size: 16px 12px !important;
-  padding-right: 2.5rem !important;
-}
-
-.form-select:hover {
-  background-color: #333333 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.form-select:focus {
-  background-color: #2b2b2b !important;
-  border-color: #3b82f6 !important;
-  color: #e5e5e5 !important;
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15) !important;
-  outline: none !important;
-}
-
-/* Select options dark theme */
-select option {
-  background-color: #2b2b2b !important;
-  color: #e5e5e5 !important;
-}
-
-select option:checked {
-  background: linear-gradient(#3b82f6, #3b82f6) !important;
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
-}
-
-select option:hover {
-  background: linear-gradient(#3b82f6, #3b82f6) !important;
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
-}
-
-/* Firefox dark select fix */
-select {
-  background-color: #2b2b2b !important;
-  color: #e5e5e5 !important;
-}
-
-/* Ensure all select elements get dark theme */
-select,
-textarea,
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="password"],
-input[type="search"],
-input[type="url"],
-input[type="tel"],
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"],
-input[type="month"],
-input[type="week"] {
-  background-color: #2b2b2b !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #e5e5e5 !important;
-}
-
-select:focus,
-textarea:focus,
-input[type="text"]:focus,
-input[type="number"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="search"]:focus,
-input[type="url"]:focus,
-input[type="tel"]:focus,
-input[type="date"]:focus,
-input[type="time"]:focus,
-input[type="datetime-local"]:focus,
-input[type="month"]:focus,
-input[type="week"]:focus {
-  background-color: #2b2b2b !important;
-  border-color: #3b82f6 !important;
-  color: #e5e5e5 !important;
-  outline: none !important;
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15) !important;
-}
-
-/* Bootstrap modal fix - Force visibility and editability when shown (overrides Tailwind/Bootstrap conflicts) */
-.modal:not(.show) {
-  opacity: 0 !important;
-}
-
-.modal.show {
-  opacity: 1 !important;
-}
-
-.modal.show .modal-dialog,
-.modal.show .modal-content,
-.modal.show .modal-header,
-.modal.show .modal-body,
-.modal.show .modal-footer {
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-}
-
-.modal .modal-dialog,
-.modal .modal-content,
-.modal .modal-header,
-.modal .modal-body,
-.modal .modal-footer,
-.modal input,
-.modal select,
-.modal textarea,
-.modal button,
-.modal .btn,
-.modal label {
-  pointer-events: auto !important;
-}
-
-/* Ensure form focus works inside shown modals */
-.modal.show .form-control:focus,
-.modal.show .form-select:focus,
-.modal.show input:focus,
-.modal.show select:focus,
-.modal.show textarea:focus {
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
+.btn:focus-visible {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000 !important;
 }
 
 /* Sortable drag-and-drop styles */
 .sortable-ghost {
   opacity: 0.4;
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: #f3f4f6 !important;
 }
 
 .sortable-chosen {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: #f9fafb !important;
 }
 
 .sortable-drag {
-  opacity: 0.8;
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  opacity: 0.9;
+  background-color: #fff !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
 }
-
-tbody.sortable-accounts tr[data-account-id] {
-  transition: background-color 0.2s ease;
-}
-
-tbody.sortable-accounts tr[data-account-id]:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-
